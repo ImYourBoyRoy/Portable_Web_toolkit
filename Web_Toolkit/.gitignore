@@ -1,0 +1,38 @@
+# Package installs / build output
+node_modules/
+dist/
+.astro/
+coverage/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+*.local
+
+# Runtime reports / generated artifacts
+.runtime/
+output/
+**/output/
+**/dist/
+.cf-agent/
+doctor.txt
+EXPORT-METADATA.json
+*.zip
+
+# Site profiles: keep only public examples under version control
+site-profiles/*.json
+!site-profiles/example-workers.json
+!site-profiles/example-pages.json
+!site-profiles/README.md
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db

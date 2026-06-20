@@ -1,0 +1,19 @@
+{
+    "name":  "setup-astro-environment",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "description":  "Portable Astro/Vite/Cloudflare environment doctor and fixer.",
+    "bin":  {
+                "astro-env-setup":  "./bin/astro-env-setup.mjs"
+            },
+    "scripts":  {
+                    "start":  "node ./bin/astro-env-setup.mjs",
+                    "doctor":  "node ./bin/astro-env-setup.mjs doctor",
+                    "fix":  "node ./bin/astro-env-setup.mjs fix",
+                    "verify":  "node ./bin/astro-env-setup.mjs verify",
+                    "prepare-project":  "node ./bin/astro-env-setup.mjs prepare-project"
+                }
+}

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "type": "open_graph",
+  "meta": {
+    "site_name": "Website",
+    "page_type": "website"
+  },
+  "content": {
+    "title": "Website",
+    "subtitle": "Clear supporting line",
+    "description": "Website preview",
+    "eyebrow": "EXAMPLE.COM"
+  },
+  "layout": {
+    "mode": "auto",
+    "alignment": "left",
+    "logo_placement": "auto",
+    "show_logo": true,
+    "show_portrait": true
+  },
+  "assets": {
+    "logo": "",
+    "portrait": "",
+    "background_image": ""
+  },
+  "colors": {
+    "background": "#08080d",
+    "accent": "#c45142",
+    "text_primary": "#ffffff",
+    "text_secondary": "#a0a0b0"
+  },
+  "output": {
+    "path": "public/assets/og-image.png",
+    "width": 1200,
+    "height": 630,
+    "format": "PNG"
+  },
+  "rules": {
+    "max_title_lines": 2,
+    "max_description_lines": 4,
+    "allow_truncation": true,
+    "require_contrast_check": true
+  }
+}

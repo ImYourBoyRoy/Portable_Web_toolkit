@@ -1,0 +1,11 @@
+{
+    "name":  "init-site-profile",
+    "version":  null,
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "init-site-profile":  "./bin/init-site-profile.mjs"
+            }
+}

@@ -1,0 +1,16 @@
+{
+    "name":  "sourcing-doctor",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "sourcing-doctor":  "./bin/sourcing-doctor.mjs"
+            },
+    "scripts":  {
+                    "start":  "node ./bin/sourcing-doctor.mjs",
+                    "extract":  "node ./bin/sourcing-doctor.mjs extract",
+                    "audit":  "node ./bin/sourcing-doctor.mjs audit"
+                }
+}

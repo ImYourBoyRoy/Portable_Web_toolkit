@@ -1,0 +1,452 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portable-toolkit.local/schemas/site-profile.schema.json",
+  "title": "Portable Astro + Cloudflare Site Profile",
+  "type": "object",
+  "required": [
+    "siteId",
+    "projectRoot",
+    "deployTarget",
+    "zone",
+    "hosts",
+    "commands",
+    "cloudflare"
+  ],
+  "properties": {
+    "siteId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectRoot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Project root path. Relative paths are resolved from the profile file location and are preferred for portability."
+    },
+    "deployTarget": {
+      "enum": [
+        "workers",
+        "pages"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "registrar": {
+          "type": "string"
+        },
+        "dnsProvider": {
+          "type": "string"
+        },
+        "emailEnabled": {
+          "type": "boolean"
+        },
+        "emailProvider": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "zone": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedNameservers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "hosts": {
+      "type": "object",
+      "required": [
+        "production"
+      ],
+      "properties": {
+        "production": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "development": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": true
+    },
+    "commands": {
+      "type": "object",
+      "required": [
+        "install",
+        "check",
+        "build"
+      ],
+      "properties": {
+        "install": {
+          "type": "string"
+        },
+        "check": {
+          "type": "string"
+        },
+        "build": {
+          "type": "string"
+        },
+        "preview": {
+          "type": "string"
+        },
+        "tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "type": "object",
+          "properties": {
+            "development": {
+              "type": "string"
+            },
+            "production": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "sourcing": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "wordpress",
+            "wix",
+            "squarespace"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "includeMedia": {
+          "type": "boolean",
+          "default": true
+        },
+        "apiRoot": {
+          "type": "string",
+          "description": "Optional override for REST API root."
+        }
+      },
+      "additionalProperties": true
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "qualitySmoke": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sitemapCandidates": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "assetSampleSize": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxRootDurationMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxRouteDurationMs": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": true
+        },
+        "browserDiagnostics": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "settleMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxLoadMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxFcpMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxLcpMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxCls": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": true
+        },
+        "integrations": {
+          "type": "object",
+          "properties": {
+            "analytics": {
+              "type": "object"
+            },
+            "forms": {
+              "type": "object"
+            },
+            "email": {
+              "type": "object"
+            },
+            "auth": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "branding": {
+      "type": "object",
+      "properties": {
+        "colors": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string",
+              "default": "#08080d"
+            },
+            "accent": {
+              "type": "string",
+              "default": "#c45142"
+            },
+            "text_primary": {
+              "type": "string",
+              "default": "#ffffff"
+            },
+            "text_secondary": {
+              "type": "string",
+              "default": "#a0a0b0"
+            },
+            "glow": {
+              "type": "string",
+              "default": "#c45142"
+            }
+          },
+          "additionalProperties": true
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "title_font": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer",
+                  "default": 100
+                }
+              }
+            },
+            "body_font": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer",
+                  "default": 36
+                }
+              }
+            },
+            "eyebrow_font": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer",
+                  "default": 34
+                }
+              }
+            },
+            "subtitle_font": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer",
+                  "default": 32
+                }
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "visuals": {
+          "type": "object",
+          "properties": {
+            "og_layout": {
+              "enum": [
+                "master-polish-5.5",
+                "minimal"
+              ],
+              "default": "master-polish-5.5"
+            },
+            "signature_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "signature_delimiter": {
+              "type": "string",
+              "default": "|"
+            },
+            "signature_offset_px": {
+              "type": "integer",
+              "default": 1
+            },
+            "glow_passes": {
+              "type": "integer",
+              "default": 5
+            },
+            "aurora_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "aurora_blur": {
+              "type": "integer",
+              "default": 160
+            },
+            "noise_intensity": {
+              "type": "number",
+              "default": 0.005
+            },
+            "portrait_blur_radius": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          "additionalProperties": true
+        },
+        "assets": {
+          "type": "object",
+          "properties": {
+            "logo": {
+              "type": "string"
+            },
+            "portrait": {
+              "type": "string"
+            },
+            "favicon_source": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "cloudflare": {
+      "type": "object",
+      "properties": {
+        "workerNames": {
+          "type": "object",
+          "properties": {
+            "production": {
+              "type": "string"
+            },
+            "development": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "account": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "pagesProject": {
+          "type": "string"
+        },
+        "resourceConfig": {
+          "type": "string"
+        },
+        "devResourceConfig": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "object"
+        },
+        "dns": {
+          "type": "object"
+        },
+        "crawlPolicy": {
+          "type": "object"
+        },
+        "cachePurge": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

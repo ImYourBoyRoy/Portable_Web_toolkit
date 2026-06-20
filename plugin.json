@@ -1,0 +1,11 @@
+{
+  "name": "portable-web-toolkit",
+  "description": "Agent skills for the Portable Astro + Cloudflare Web Toolkit — site profiles, discovery-doctor, cf-agent.",
+  "author": {
+    "name": "Roy Dawson IV"
+  },
+  "homepage": "https://github.com/imyourboyroy/Portable_Web_toolkit",
+  "repository": "https://github.com/imyourboyroy/Portable_Web_toolkit",
+  "license": "UNLICENSED",
+  "skills": "./skills"
+}

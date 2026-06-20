@@ -1,0 +1,11 @@
+{
+    "name":  "setup-agent-environment",
+    "version":  null,
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "agent-env-setup":  "./bin/agent-env-setup.mjs"
+            }
+}

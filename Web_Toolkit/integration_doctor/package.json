@@ -1,0 +1,11 @@
+{
+    "name":  "portable-integration-doctor",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "scripts":  {
+                    "start":  "node ./bin/integration-doctor.mjs"
+                }
+}

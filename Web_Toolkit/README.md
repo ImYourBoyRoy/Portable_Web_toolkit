@@ -1,0 +1,132 @@
+# Portable Astro + Cloudflare Toolkit [ROY-STANDARD]
+
+## What this is
+
+A reusable operator + AI toolkit for standing up, checking, diagnosing, hardening, and shipping high-fidelity Astro/Vite websites on Cloudflare.
+
+This toolkit is **highly portable**, **spec-driven**, and **AI-Ready**. It is designed to be the "Connective Tissue" between a fresh project and a production-grade, premium deployment.
+
+## The Brain: `site-profile.json`
+
+Every tool in this toolkit is an execution engine for the **[Master Site Specification](./site-profile.schema.json)**.
+
+- **Single Source of Truth**: Site branding, deployment routes, and performance targets live in your `site-profiles/*.json`.
+- **Stateless Operation**: Tools read the specification and the target project's `.env`, leaving the toolkit itself completely clean and portable.
+
+---
+
+## 🎛️ Command Center
+
+### [Optimize_Loop.bat](./Optimize_Loop.bat)
+
+The premium automated CI loop. It unifies the build, deploy, purge, and verify phases into a single command.
+
+- **Usage**: `.\Web_Toolkit\Optimize_Loop.bat [--site-profile <path>]`
+
+---
+
+## 🔍 Phase 1: Discovery & Content
+
+Determine project requirements and retrieve legacy assets.
+
+- **[Discovery Doctor](./discovery_doctor/README.md)**: Zenith-level technical & SEO audit. The primary verification tool for all AI-Native markers.
+- **[Sourcing Doctor](./sourcing_doctor/README.md)**: High-fidelity content extraction (WordPress/Wix REST API to JSON).
+- **[Privacy Check](./privacy_check/README.md)**: Scans for credentials and sensitive data before exporting or sharing the toolkit.
+
+---
+
+## 🛠️ Phase 2: Readiness & Setup
+
+Prepare the workstation and target project for development.
+
+- **[Setup Agent Environment](./Setup_agent_environment/README.md)**: Manifest-driven, OS-native workstation bootstrap for Codex/Antigravity/Cloudflare work with early elevation, latest-current Node enforcement, `pyenv-native` Python management, Linux official Node archives, and macOS Command Line Tools detection.
+- **[Setup Astro Environment](./Setup_astro_environment/README.md)**: Non-destructive project bootstrapping and "hole-finding."
+- **[Init Site Profile](./init_site_profile/README.md)**: Helper to generate a new spec-driven site profile.
+- **[Integration Doctor](./integration_doctor/README.md)**: Validates `.env` posture and live API connectivity (Forms, Analytics, Auth).
+
+---
+
+## 🎨 Phase 3: Artistic Restoration & Media
+
+Automate high-fidelity branding and asset generation.
+
+- **[Brand Doctor](./brand_doctor/README.md)**: The "Luxe 6.0" branding automation engine. Generates signature headlines, favicons, and OG images via spec-driven visual tokens.
+- **[Image Pipeline](./image_pipeline/README.md)**: Rationalizes media assets, converting eligible raster images to lossless WebP and enforcing format discipline.
+
+---
+
+## ☁️ Phase 4: Edge Deployment & Hardening
+
+Standardize the Cloudflare posture and ship the site.
+
+- **[Cloudflare Agent](./cloudflare-agent-toolkit/README.md)**: Audit and repair DNS, WAF rules, and deployment routes.
+- **Cloudflare Agent Performance Audit**: AI-agent-only JSON audit of speed-critical Cloudflare switches (`performance audit`).
+- **[Cache Purge](./cache_purge/README.md)**: Targeted edge invalidation for Astro/Cloudflare sites.
+- **[Registrar](./registrar/README.md)**: Delegation automation (e.g., Porkbun -> Cloudflare).
+
+---
+
+## 🏁 Phase 5: Zenith Verification
+
+Verify that the site meets all performance and quality targets.
+
+- **[Smoke Doctor](./smoke_doctor/README.md)**: High-speed post-deployment header and cache verification.
+- **[PageSpeed Diagnostics](./pagespeed_diagnostics/README.md)**: Automated Google PSI metrics tracking.
+- **PageSpeed Agent Batch/Diff**: JSON-only, problem-only PageSpeed batch runner and regression comparator for AI agents.
+- **[Site Quality Smoke](./site_quality_smoke/README.md)**: SEO and metadata posture checks.
+- **[Browser Diagnostics](./browser_diagnostics/README.md)**: Real-browser error scraping and request classification.
+- **[Site Doctor](./site_doctor/README.md)**: Combined local + cloud health diagnostics.
+
+---
+
+## 🧹 Phase 6: Toolkit Integrity
+
+Keeping the portable workspace clean and validated.
+
+- **[Toolkit Purge](./toolkit_purge/README.md)**: Removes runtime residue from the toolkit directory.
+- **[Junk Purge](./junk_purge/README.md)**: Cleans build-junk and cache files from the target project.
+- **[Toolkit Verify](./toolkit_verify/README.md)**: Self-validation pass for the toolkit logic.
+- **[Toolkit Report](./toolkit_report/README.md)**: Generates a project readiness snapshot.
+
+---
+
+## Multi-Site Publishing Posture
+
+The publishable toolkit source should contain code, docs, shared helpers, and public example profiles only.
+
+- Public examples: `site-profiles/example-workers.json`, `site-profiles/example-pages.json`.
+- Generic discovery references: `templates/discovery/`.
+- Private profiles: keep outside the published repository and pass them with `--site-profile <path>`.
+- Secrets: keep in the target project root `.env` or shell environment; never commit toolkit `.env`.
+- Before publishing or zipping, run:
+
+```powershell
+node .\toolkit_purge\bin\toolkit-purge.mjs --apply
+node .\toolkit_verify\bin\toolkit-verify.mjs
+node .\privacy_check\bin\privacy-check.mjs scan --root . --json
+```
+
+## Output and Input Standard
+
+- **Inputs**: site profile JSON + target project root `.env` + explicit CLI flags.
+- **Target-project reports**: `<projectRoot>/output/` for diagnostics tied to a specific website.
+- **Toolkit runtime reports**: `Web_Toolkit/.runtime/` for toolkit self-checks, exports, sessions, and Cloudflare-agent operational reports.
+- **Generated site assets**: written into the target project only when a command is explicitly applied, for example `--apply`.
+- **Exported toolkit copies**: created under `.runtime/exports/` by default and sanitized before sharing.
+
+## MCP Direction
+
+Recommended path:
+
+1. Keep this CLI toolkit as the source of truth first.
+2. Add a local MCP wrapper that exposes stable CLI commands as tools for nearby agents.
+3. Add a Cloudflare-hosted remote MCP only for safe read-only audits and agent status/report retrieval.
+4. Keep mutating operations local or require explicit auth, dry-run, and apply gates before any remote execution.
+
+This keeps the toolkit useful for many sites without turning a remote MCP into a high-risk deployment/secrets surface.
+
+---
+*Created by: Roy Dawson IV*  
+*GitHub: [https://github.com/imyourboyroy](https://github.com/imyourboyroy)*
+
+

@@ -1,0 +1,59 @@
+{
+  "name": "@imyourboyroy/web-toolkit",
+  "version": "0.1.0",
+  "description": "AI-agent-first portable website diagnostics, Cloudflare, PageSpeed, and publishing toolkit.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "Roy Dawson IV",
+  "homepage": "https://github.com/imyourboyroy",
+  "bin": {
+    "brand-doctor": "./brand_doctor/bin/brand-doctor.mjs",
+    "browser-diagnostics": "./browser_diagnostics/bin/browser-diagnostics.mjs",
+    "cache-purge": "./cache_purge/bin/cache-purge.mjs",
+    "cf-agent": "./cloudflare-agent-toolkit/bin/cf-agent.mjs",
+    "discovery-doctor": "./discovery_doctor/bin/discovery-doctor.mjs",
+    "image-pipeline": "./image_pipeline/bin/image-pipeline.mjs",
+    "init-site-profile": "./init_site_profile/bin/init-site-profile.mjs",
+    "integration-doctor": "./integration_doctor/bin/integration-doctor.mjs",
+    "junk-purge": "./junk_purge/bin/junk-purge.mjs",
+    "pagespeed-diagnostics": "./pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs",
+    "performance-fixes": "./performance_fixes/bin/performance-fixes.mjs",
+    "privacy-check": "./privacy_check/bin/privacy-check.mjs",
+    "project-init": "./project_init/bin/project-init.mjs",
+    "site-doctor": "./site_doctor/bin/site-doctor.mjs",
+    "site-quality-smoke": "./site_quality_smoke/bin/site-quality-smoke.mjs",
+    "sourcing-doctor": "./sourcing_doctor/bin/sourcing-doctor.mjs",
+    "stylesheet-check": "./stylesheet_check/bin/stylesheet-check.mjs",
+    "toolkit-purge": "./toolkit_purge/bin/toolkit-purge.mjs",
+    "toolkit-report": "./toolkit_report/bin/toolkit-report.mjs",
+    "toolkit-verify": "./toolkit_verify/bin/toolkit-verify.mjs"
+  },
+  "scripts": {
+    "check:syntax": "node ./scripts/check-syntax.mjs",
+    "verify": "node ./toolkit_verify/bin/toolkit-verify.mjs",
+    "purge": "node ./toolkit_purge/bin/toolkit-purge.mjs",
+    "purge:apply": "node ./toolkit_purge/bin/toolkit-purge.mjs --apply",
+    "privacy": "node ./privacy_check/bin/privacy-check.mjs scan --root . --json",
+    "styles:check": "node ./stylesheet_check/bin/stylesheet-check.mjs scan --root ..",
+    "export": "node ./scripts/export-portable-toolkit.mjs",
+    "export:zip": "node ./scripts/export-portable-toolkit.mjs --zip",
+    "prepublishOnly": "npm run check:syntax && npm run verify && npm run privacy"
+  },
+  "files": [
+    ".env.example",
+    "**/*",
+    "!**/.runtime/**",
+    "!**/output/**",
+    "!**/dist/**",
+    "!**/node_modules/**",
+    "!**/__pycache__/**",
+    "!.env",
+    "!.env.*",
+    "!.git/**",
+    "!MEMORY.md",
+    "!brand_doctor/ToDo_OG.md"
+  ],
+  "engines": {
+    "node": ">=25.9.0"
+  }
+}

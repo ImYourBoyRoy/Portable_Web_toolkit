@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "type": "icons",
+  "assets": {
+    "source": ""
+  },
+  "output": {
+    "dir": "public/assets/icons"
+  },
+  "targets": {
+    "favicon_png": [16, 32],
+    "favicon_ico": [16, 32, 48, 64],
+    "apple_touch": [180],
+    "generic": [192, 512],
+    "maskable": [192, 512]
+  }
+}

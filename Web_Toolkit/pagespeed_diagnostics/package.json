@@ -1,0 +1,11 @@
+{
+    "name":  "portable-pagespeed-diagnostics",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "pagespeed-diagnostics":  "./bin/pagespeed-diagnostics.mjs"
+            }
+}

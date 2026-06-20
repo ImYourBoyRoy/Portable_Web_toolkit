@@ -1,0 +1,11 @@
+{
+    "name":  "portable-image-pipeline",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "image-pipeline":  "./bin/image-pipeline.mjs"
+            }
+}

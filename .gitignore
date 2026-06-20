@@ -1,0 +1,45 @@
+# build output
+dist/
+output/
+.wrangler/
+.runtime/
+.cf-agent/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/*
+!tmp/.gitkeep
+
+# environment variables / secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+*.local
+
+# private site profiles stay outside published toolkit copies
+Private_Site_Profiles/
+
+# generated export artifacts
+EXPORT-METADATA.json
+*.zip
+doctor.txt
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# python
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/

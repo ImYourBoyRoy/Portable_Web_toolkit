@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "portable-web-toolkit-skills",
+  "description": "Agent skills for the Portable Astro + Cloudflare Web Toolkit.",
+  "owner": {
+    "name": "Roy Dawson IV",
+    "url": "https://github.com/imyourboyroy"
+  },
+  "plugins": [
+    {
+      "name": "portable-web-toolkit",
+      "source": {
+        "source": "github",
+        "repo": "imyourboyroy/Portable_Web_toolkit"
+      },
+      "description": "Site-profile-driven deploy, discovery-doctor, cf-agent, and staged launch workflows.",
+      "homepage": "https://github.com/imyourboyroy/Portable_Web_toolkit",
+      "license": "UNLICENSED",
+      "keywords": ["astro", "cloudflare", "discovery", "deploy", "site-profile"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+    "name":  "brand-doctor",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "author":  "Roy Dawson IV",
+    "license":  "ISC",
+    "bin":  {
+                "brand-doctor":  "./bin/brand-doctor.mjs"
+            }
+}

@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "site": {
+    "name": "Website",
+    "domain": "example.com",
+    "theme": "dark"
+  },
+  "brand": {
+    "primary_logo": "",
+    "secondary_logo": "",
+    "wordmark": "",
+    "accent": "#c45142",
+    "background": "#08080d",
+    "text_primary": "#ffffff",
+    "text_secondary": "#a0a0b0"
+  },
+  "typography": {
+    "title_font": {
+      "path": "",
+      "size": 72,
+      "min_size": 40
+    },
+    "subtitle_font": {
+      "path": "",
+      "size": 30,
+      "min_size": 20
+    },
+    "body_font": {
+      "path": "",
+      "size": 34,
+      "min_size": 22
+    },
+    "eyebrow_font": {
+      "path": "",
+      "size": 20,
+      "min_size": 16
+    },
+    "fallback_stack": ["DejaVuSans.ttf", "arial.ttf", "segoeui.ttf"]
+  },
+  "defaults": {
+    "layout": "auto",
+    "alignment": "left",
+    "logo_placement": "auto",
+    "allow_portrait": true,
+    "allow_text_only": true
+  },
+  "paths": {
+    "output_dir": "public/assets",
+    "og_output": "public/assets/og-image.png",
+    "icon_output_dir": "public/assets/icons"
+  },
+  "rules": {
+    "max_title_lines": 2,
+    "max_description_lines": 4,
+    "allow_truncation": true,
+    "require_contrast_check": true
+  }
+}

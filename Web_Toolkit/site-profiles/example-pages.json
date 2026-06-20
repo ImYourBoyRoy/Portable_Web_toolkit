@@ -1,0 +1,75 @@
+{
+  "$schema": "../site-profile.schema.json",
+  "siteId": "example-pages",
+  "projectRoot": "../../example-pages-site",
+  "deployTarget": "pages",
+  "zone": {
+    "name": "example.com",
+    "expectedNameservers": []
+  },
+  "metadata": {
+    "registrar": "example-registrar",
+    "dnsProvider": "cloudflare",
+    "emailEnabled": false,
+    "emailProvider": "",
+    "notes": [
+      "Public example profile. Replace every example value before live use."
+    ]
+  },
+  "hosts": {
+    "production": [
+      "example.com",
+      "www.example.com"
+    ],
+    "development": []
+  },
+  "commands": {
+    "install": "npm install",
+    "check": "npm run check",
+    "build": "npm run build",
+    "preview": "npm run preview",
+    "tests": [],
+    "deploy": {
+      "development": "npx wrangler pages deploy dist --project-name example-pages-site --branch preview",
+      "production": "npx wrangler pages deploy dist --project-name example-pages-site --branch main"
+    }
+  },
+  "diagnostics": {
+    "qualitySmoke": {
+      "routes": [
+        "/"
+      ],
+      "sitemapCandidates": [
+        "/sitemap-index.xml",
+        "/sitemap.xml"
+      ],
+      "assetSampleSize": 3
+    }
+  },
+  "cloudflare": {
+    "account": {
+      "name": "",
+      "id": ""
+    },
+    "crawlPolicy": {
+      "production": "allow",
+      "development": "block"
+    },
+    "cachePurge": {
+      "defaultMode": "url",
+      "defaultEnvironment": "production"
+    },
+    "dns": {
+      "expectedRecords": [],
+      "expectedNameservers": []
+    },
+    "pagesProject": "example-pages-site"
+  },
+  "branding": {
+    "seo": {
+      "siteName": "Example Site",
+      "titleDefault": "Example Site",
+      "descriptionDefault": "Replace with the real site description."
+    }
+  }
+}
