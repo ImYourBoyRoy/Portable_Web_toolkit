@@ -27,7 +27,7 @@ This report tracks the original red-team findings and the hardening work applied
 - Root `package.json` no longer hardcodes site profile/project names.
 - Added ESM-safe `scripts/cf-deploy-pages.mjs` and neutral `scripts/site-tool.mjs`.
 - Root `.gitignore` now ignores private profiles, runtime residue, and secrets consistently.
-- Node baseline pinned to latest current line via `.node-version` and `engines.node >=25.9.0`.
+- Node baseline pinned to latest current line via `.node-version` (`26.4.0`) and `engines.node >=26`.
 
 ### Runtime hygiene
 - `toolkit_purge` no longer deletes arbitrary nested `output/` / `dist/` trees.

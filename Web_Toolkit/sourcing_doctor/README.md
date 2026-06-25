@@ -39,5 +39,5 @@ Checks if the target WordPress site's REST API is accessible and healthy.
 
 ## Development
 
-This tool uses native Node.js ESM modules. Ensure you are using **Node.js 18.x or higher** for built-in `fetch` support.
+This tool uses native Node.js ESM modules. Requires **Node.js 26+** (repo baseline).
 

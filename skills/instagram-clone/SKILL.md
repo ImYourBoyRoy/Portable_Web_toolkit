@@ -32,7 +32,7 @@ Also document in `.env.example`. Optional site profile:
 
 ## Commands
 
-```powershell
+```bash
 # Clone (uses .env)
 node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs clone --project-root .
 

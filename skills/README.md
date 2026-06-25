@@ -2,13 +2,18 @@
 
 Install all skills once (user/global scope):
 
-```powershell
-./scripts/install-agent-skills.ps1 -Agent all
+```bash
+node ./scripts/install-agent-skills.mjs
 ```
 
-```bash
-./scripts/install-agent-skills.sh --agent all
-```
+Platform wrappers (optional):
+
+| OS | Command |
+|----|---------|
+| Windows | `pwsh ./scripts/install-agent-skills.ps1 -Agent all` |
+| macOS / Linux | `bash ./scripts/install-agent-skills.sh --agent all` |
+
+Cross-platform conventions: [`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md)
 
 ## Skills (invoke by name)
 
@@ -34,4 +39,4 @@ Portable_Web_toolkit/
   skills/           ← this folder
 ```
 
-Client sites are **separate folders** with a `Web_Toolkit` junction.
+Client sites are **separate folders** with a `Web_Toolkit` link (junction or symlink).

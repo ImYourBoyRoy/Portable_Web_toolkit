@@ -1,45 +1,37 @@
 # Web Toolkit: Reusable Template Guide
 
-This document identifies the battle-tested "Golden Configuration" templates for Cloudflare Pages, Astro static builds, and high-fidelity branding.
+Battle-tested templates for Astro + Cloudflare client sites live in the **repository root**, not inside `Web_Toolkit/`.
 
-## 🚀 Infrastructure Templates
+## New client sites — start here
 
-### 1. [astro.config.mjs](./astro.config.mjs)
+| Template | Path | Use |
+|----------|------|-----|
+| Workers (SSR) | [`../../site-starter/workers.package.json`](../../site-starter/workers.package.json) | `output: 'server'` + `@astrojs/cloudflare` |
+| Pages (static) | [`../../site-starter/pages.package.json`](../../site-starter/pages.package.json) | `output: 'static'` |
+| Wrangler (Workers) | [`../../site-starter/workers.wrangler.toml`](../../site-starter/workers.wrangler.toml) | Worker deploy |
+| Wrangler (Pages) | [`../../site-starter/pages.wrangler.toml`](../../site-starter/pages.wrangler.toml) | Pages deploy |
+| Env scaffold | [`../../site-starter/.env.example`](../../site-starter/.env.example) | Client secrets template |
+| Helper scripts | [`../../site-starter/scripts/`](../../site-starter/scripts/) | readiness, headers, cache clean |
 
-- **Why**: Contains the critical `imageService: 'passthrough'` and `output: 'static'` configuration.
-- **Value**: Prevents the common "Broken Image" bug on Cloudflare by ensuring assets are statically optimized or passed through cleanly without requiring a dynamic image worker.
+Full walkthrough: [`../../site-starter/README.md`](../../site-starter/README.md)
 
-### 2. [package.json](./package.json)
+## Discovery generators
 
-- **Why**: Contains the `optimize:loop` sequence.
-- **Value**: Standardizes the "Build -> Deploy -> Purge -> Audit" cycle into a single command.
+Generic, copy-ready starters (no client domains baked in):
 
-### 3. [wrangler.toml](./wrangler.toml)
+- [`./templates/discovery/`](./templates/discovery/) — `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`
 
-- **Why**: Explicitly maps the `./dist/client` directory for Pages.
-- **Value**: Eliminates ambiguity during deployment.
+Extend inside each site repo with your route manifest or content collections.
 
-### 4. [.env.example](./.env.example)
+## Astro package templates (reference)
 
-- **Why**: Lists all necessary API tokens.
-- **Value**: Essential for onboarding new projects or troubleshooting environment issues.
+- [`../../templates/package.astro-workers.json`](../../templates/package.astro-workers.json)
+- [`../../templates/package.astro-static.json`](../../templates/package.astro-static.json)
 
-## 🎨 Layout & Branding Templates
+## Branding
 
-### 1. [Discovery generators](./templates/discovery/)
-
-- **Why**: Generic, copy-ready `robots.txt`, `sitemap.xml`, `llms.txt`, and `llms-full.txt` starters.
-- **Value**: No client domains or project branding baked in. Extend inside each site repo with collections, CMS data, or database queries.
-
-### 2. [og.spec.json](./og.spec.json)
-
-- **Why**: The declarative manifest for the `brand_doctor`.
-- **Value**: Shows how to map site fonts and colors into automated asset generation.
-
-### 3. [Layout.astro](./src/layouts/Layout.astro) (Theme Shell)
-
-- **Why**: A high-fidelity "Head & SEO" theme template.
-- **Value**: Includes pre-configured preconnects, OpenGraph logic, Twitter cards, and the dynamic canonical URL system. It serves as the master structural shell for the entire site.
+Use **[Brand Doctor](./brand_doctor/README.md)** with each client's `BRAND_GUIDE.md` and site profile — do not copy OG/layout files from another project.
 
 ---
-*Reference these files when bootstrapping new projects to ensure consistency and performance.*
+
+*Reference these paths when bootstrapping new projects for consistency and performance.*

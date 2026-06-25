@@ -5,7 +5,7 @@
 # Usage:
 #   ./scripts/install-agent-skills.sh --agent all
 #   ./scripts/install-agent-skills.sh --agent cursor --scope project
-#   ./scripts/install-agent-skills.sh --repo-url https://github.com/imyourboyroy/pyenv-native
+#   ./scripts/install-agent-skills.sh --repo-url https://github.com/imyourboyroy/Portable_Web_toolkit
 #
 set -euo pipefail
 

@@ -1,259 +1,99 @@
 # Portable Web Toolkit
 
-**Version:** `0.2.0` · **npm package:** `@imyourboyroy/web-toolkit` · **Repo:** [github.com/imyourboyroy/Portable_Web_toolkit](https://github.com/imyourboyroy/Portable_Web_toolkit)
+**Version:** `0.2.1` · [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
 
-A spec-driven operator toolkit for **Astro + Cloudflare** client sites: audit, scaffold, deploy, discover, and verify — built for humans and coding agents alike.
+A toolkit for building and shipping **Astro + Cloudflare** websites with help from AI coding agents (Cursor, Claude, Copilot, and others).
 
----
-
-## For humans (60 seconds)
-
-1. **Clone** this repo (or keep one copy on your machine).
-2. **Install agent skills** once — so Cursor/Claude/Copilot know how to use the toolkit.
-3. **Create client sites in separate folders** — link `Web_Toolkit` via junction/symlink; never build websites inside this repo root.
-4. **On each client site:** run `npm run readiness` (or `site-readiness`) before build/deploy.
-
-| You want to… | Do this |
-|--------------|---------|
-| Install skills for all agents | `./scripts/install-agent-skills.ps1 -Agent all` |
-| Check for updates | `node ./scripts/check-toolkit-update.mjs` |
-| Update toolkit + skills | `./scripts/update-toolkit.ps1` |
-| New client site | Copy [`site-starter/`](./site-starter/README.md) templates |
-| Full operator manual | [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) |
+You get ready-made **agent skills**, **command-line tools** for build/deploy/discovery, and **starter templates** for new sites. Your actual website lives in its own project folder — not in this repo.
 
 ---
 
-## For AI agents (zero research)
+## Get started (use your AI agent)
 
-**Read [`START_HERE.md`](./START_HERE.md) only** — then follow installed skills.
-
-**Every session:**
+Paste this into your coding agent **once per machine**:
 
 ```text
-1. node scripts/check-toolkit-update.mjs  → if update available, run scripts/update-toolkit.ps1
-2. site-readiness run --project-root <client-site>
-3. Follow output/site-readiness-*.json nextSteps
+Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work. On any client site, run site-readiness first and follow its report.
 ```
 
-**Install skills (user/global, once):**
+The agent installs the skills and runs toolkit commands for you. **You do not need to run install scripts yourself** unless you want to.
+
+### Working on a site
+
+Tell your agent something like:
 
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user scope). Run scripts/install-agent-skills.ps1 -Agent all on Windows or scripts/install-agent-skills.sh --agent all on macOS/Linux.
+Use the portable-web-toolkit skills on this project. Run site-readiness and fix anything it reports before we build or deploy.
 ```
 
-**Skills:** `portable-web-toolkit` (master) · `site-readiness` · `site-starter` · `toolkit-update` · `instagram-clone`
+Each client site is a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder (your agent can do this with `scripts/link-web-toolkit.mjs`).
 
 ---
 
-## What this repo is (and is not)
+## Optional: prepare your computer
 
-| This repo **is** | This repo **is not** |
-|------------------|----------------------|
-| Toolkit CLIs under `Web_Toolkit/` | A deployable client website |
-| Agent skills under `skills/` | Where client secrets live |
-| `site-starter/` copy templates | Your client's `src/` or content |
+On a **new machine**, you may need Git, Node.js, Python, or browser automation tools. Run the **interactive setup wizard** — it lists everything, lets you opt in or out, then installs only what you chose.
 
-**Client sites** (e.g. `EmmyBarney/`) are **separate folders** with:
+| Platform | Run |
+|----------|-----|
+| **Windows** | Double-click [`Setup_Agent_Environment.bat`](./Setup_Agent_Environment.bat) |
+| **macOS** | Double-click [`Setup_Agent_Environment.command`](./Setup_Agent_Environment.command) or run `./Setup_Agent_Environment.sh` |
+| **Linux** | `bash ./Setup_Agent_Environment.sh` |
 
-- `package.json`, `src/`, `astro.config.mjs`
-- `*.site-profile.json` + `.env` (secrets)
-- `Web_Toolkit` → junction to this repo's `Web_Toolkit/`
+Administrator (Windows) or `sudo` (macOS/Linux) may be required. See [`Web_Toolkit/Setup_agent_environment/README.md`](./Web_Toolkit/Setup_agent_environment/README.md) for details.
 
----
-
-## Repository file tree
-
-```text
-Portable_Web_toolkit/
-├── START_HERE.md              ← AI: read first (zero research)
-├── VERSION                    ← Semver for releases/tags
-├── CHANGELOG.md               ← Release notes
-├── README.md                  ← You are here
-├── AGENTS.md                  ← Repo rules for agents editing toolkit
-│
-├── skills/                    ← Install into Cursor, Claude, Copilot, etc.
-│   ├── portable-web-toolkit/  ← Master skill (full CLI reference)
-│   ├── site-readiness/        ← Run-all checks every session
-│   ├── site-starter/          ← New client site scaffold
-│   ├── toolkit-update/        ← Pull + reinstall skills
-│   └── instagram-clone/       ← Public IG gallery (no Meta API)
-│
-├── site-starter/              ← Copy to NEW client project root
-│   ├── workers.package.json   → rename to package.json (Workers/SSR)
-│   ├── pages.package.json     → rename to package.json (Pages/static)
-│   ├── workers.wrangler.toml
-│   ├── pages.wrangler.toml
-│   └── scripts/               ← readiness, build-headers, etc.
-│
-├── scripts/
-│   ├── install-agent-skills.* ← Cross-platform skill installer
-│   ├── update-toolkit.*       ← git pull + reinstall skills + verify
-│   ├── check-toolkit-update.mjs ← Compare local vs GitHub latest tag
-│   └── site/                  ← Optional helpers copied into client sites
-│
-├── docs/agent-skills/         ← Per-agent install guides
-│
-└── Web_Toolkit/               ← ★ The toolkit product (all CLIs)
-    ├── package.json           ← @imyourboyroy/web-toolkit
-    ├── OPERATIONS.md          ← Canonical numbered deploy sequence
-    ├── RUNBOOKS.md            ← Task-specific flows
-    ├── site-profile.schema.json
-    ├── site-profiles/         ← Public examples only
-    └── <modules>/             ← One folder per CLI (see table below)
-```
-
-**Gitignored (never publish):** `Private_Site_Profiles/`, `.env`, `.runtime/`, `smoke-manifest.json`, client secrets.
+**pyenv-native** — included in core setup — is a modern Rust-based Python version manager. It replaces classic pyenv on macOS/Linux and adds first-class Python management on Windows (where traditional pyenv is not officially supported).
 
 ---
 
-## Toolkit modules (`Web_Toolkit/`)
+## What’s in this repo
 
-Each module has `bin/<tool>.mjs` and a `README.md`. Invoke:  
-`node ./Web_Toolkit/<module>/bin/<tool>.mjs --help`
-
-### Start here
-
-| Module | CLI | What it does |
-|--------|-----|--------------|
-| **site_readiness** | `site-readiness` | **Run first** — sandbox-aware run-all; writes `output/site-readiness-*.json` with next steps |
-| project_init | `project-init` | Bootstrap README, MEMORY, `.gitignore`, `.env.example` (non-destructive) |
-| init_site_profile | `init-site-profile` | Interactive `*.site-profile.json` creator |
-| toolkit_report | `toolkit-report` | Fast static readiness snapshot |
-
-### Build, discovery, quality
-
-| Module | CLI | What it does |
-|--------|-----|--------------|
-| Setup_astro_environment | `astro-env-setup` | Astro/Vite/Wrangler doctor + safe fix |
-| discovery_doctor | `discovery-doctor` | Verify robots, sitemap, llms, JSON-LD, APIs |
-| stylesheet_check | `stylesheet-check` | External CSS + token policy enforcement |
-| site_quality_smoke | `site-quality-smoke` | Live SEO, headers, cache smoke |
-| browser_diagnostics | `browser-diagnostics` | Console, network, runtime errors |
-| pagespeed_diagnostics | `pagespeed-diagnostics` | Google PageSpeed Insights |
-| site_doctor | `site-doctor` | Unified live triage (combines many doctors) |
-
-### Cloudflare & deploy
-
-| Module | CLI | What it does |
-|--------|-----|--------------|
-| cloudflare-agent-toolkit | `cf-agent` | DNS, WAF, workers, permissions — **dry-run before --apply** |
-| headers_deploy | `headers-deploy` | `public/_headers` scaffold + deploy merge |
-| cache_purge | `cache-purge` | Targeted edge cache invalidation |
-| registrar | `registrar` | Domain NS delegation (e.g. Porkbun → Cloudflare) |
-| integration_doctor | `integration-doctor` | `.env` + live API connectivity |
-
-### Content, media, brand
-
-| Module | CLI | What it does |
-|--------|-----|--------------|
-| instagram_clone | `instagram-clone` | Public IG → `feed.json` + local media (`INSTAGRAM_USERNAME` in client `.env`) |
-| brand_doctor | `brand-doctor` | Favicon, OG, meta asset audit |
-| image_pipeline | `image-pipeline` | WebP / media rationalization |
-| sourcing_doctor | `sourcing-doctor` | WordPress/Wix content extraction |
-
-### Toolkit hygiene
-
-| Module | CLI | What it does |
-|--------|-----|--------------|
-| toolkit_verify | `toolkit-verify` | Self-validation of toolkit logic |
-| privacy_check | `privacy-check` | Scan for secrets before publish |
-| toolkit_purge | `toolkit-purge` | Remove runtime residue before export |
-| junk_purge | `junk-purge` | Clean client project build junk |
+| Path | Purpose |
+|------|---------|
+| [`skills/`](./skills/README.md) | Agent skills — install once, use in every session |
+| [`Web_Toolkit/`](./Web_Toolkit/README.md) | CLI tools (readiness, deploy, discovery, Cloudflare, etc.) |
+| [`site-starter/`](./site-starter/README.md) | Templates to bootstrap a new client site |
+| [`START_HERE.md`](./START_HERE.md) | Short guide for AI agents (zero research) |
 
 ---
 
-## Quick start
+## Common tasks (for you or your agent)
 
-### Install agent skills (once)
+| Goal | What to ask or run |
+|------|-------------------|
+| Check a site before deploy | `site-readiness` on the client project |
+| New site from scratch | `site-starter` skill + copy templates |
+| Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
+| Update toolkit + skills | `toolkit-update` skill or `node scripts/update-toolkit.mjs` |
+| Verify discovery layer | `discovery-doctor` on `dist/` or live URL |
 
-**Windows (PowerShell 7+):**
-
-```powershell
-git clone https://github.com/imyourboyroy/Portable_Web_toolkit.git
-cd Portable_Web_toolkit
-./scripts/install-agent-skills.ps1 -Agent all
-```
-
-**macOS / Linux:**
-
-```bash
-git clone https://github.com/imyourboyroy/Portable_Web_toolkit.git
-cd Portable_Web_toolkit
-chmod +x ./scripts/install-agent-skills.sh
-./scripts/install-agent-skills.sh --agent all
-```
-
-### Check & update
-
-```powershell
-node ./scripts/check-toolkit-update.mjs   # exit 2 = update available
-./scripts/update-toolkit.ps1              # pull + reinstall skills + verify
-```
-
-### Verify toolkit health
-
-```powershell
-cd Web_Toolkit
-node ./toolkit_verify/bin/toolkit-verify.mjs
-node ./privacy_check/bin/privacy-check.mjs scan --root . --json
-```
-
-### New client site
-
-See [`site-starter/README.md`](./site-starter/README.md) — copy `workers.package.json` or `pages.package.json`, junction `Web_Toolkit`, run `site-readiness --apply-safe-fixes`.
-
-### Existing client site (every session)
-
-```powershell
-cd <client-project>
-npm run readiness
-# read output/site-readiness-*.json
-```
+Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portable-web-toolkit` skill.
 
 ---
 
-## Configuration model
+## Configuration
 
-| Data | Where |
+| What | Where |
 |------|-------|
-| API tokens, account IDs | Client `.env` (never commit) |
-| Domains, worker names, deploy commands | `*.site-profile.json` |
-| Brand voice, colors, logos | Client `BRAND_GUIDE.md` |
-| Toolkit defaults (optional) | `Web_Toolkit/.env.example` only |
-
-**Deploy targets:** `workers` (SSR + `@astrojs/cloudflare`) or `pages` (static) — must match `site-starter` template choice.
+| API keys and secrets | Client project `.env` (never commit) |
+| Domains, worker names, deploy commands | `*.site-profile.json` in the client project |
+| Brand colors, voice, logos | Client `BRAND_GUIDE.md` |
 
 ---
 
-## Hard rules (toolkit contract)
+## Documentation
 
-- **Custom discovery only** — never `@astrojs/sitemap` / `@astrojs/robots`
-- **Dry-run first** — cf-agent, registrar, cache purge, zone harden
-- **Staging → smoke → production** — unless operator waives
-- **No client-specific data** in tracked toolkit source
+| Doc | For |
+|-----|-----|
+| [`START_HERE.md`](./START_HERE.md) | AI agents |
+| [`skills/CROSS_PLATFORM.md`](./skills/CROSS_PLATFORM.md) | Windows / macOS / Linux notes |
+| [`Web_Toolkit/OPERATIONS.md`](./Web_Toolkit/OPERATIONS.md) | Build and deploy sequence |
+| [`docs/agent-skills/`](./docs/agent-skills/README.md) | Per-agent skill install notes |
 
----
+## Requirements
 
-## Releases & tags
-
-Releases use semver tags: `v0.2.0`, `v0.2.1`, …  
-See [`CHANGELOG.md`](./CHANGELOG.md).
-
-```powershell
-git fetch --tags
-node ./scripts/check-toolkit-update.mjs
-```
-
----
-
-## Documentation map
-
-| Doc | Audience |
-|-----|----------|
-| [`START_HERE.md`](./START_HERE.md) | AI agents — zero research |
-| [`AGENTS.md`](./AGENTS.md) | Agents editing toolkit source |
-| [`Web_Toolkit/OPERATIONS.md`](./Web_Toolkit/OPERATIONS.md) | Full deploy sequence |
-| [`docs/agent-skills/`](./docs/agent-skills/README.md) | Per-platform skill install |
+- **Node.js 26+** (see `.node-version` in this repo)
+- Client sites: Astro 7 + Cloudflare (Workers or Pages) — templates in [`site-starter/`](./site-starter/README.md)
 
 ---
 
@@ -261,4 +101,4 @@ node ./scripts/check-toolkit-update.mjs
 
 **Roy Dawson IV** · [@imyourboyroy](https://github.com/imyourboyroy)
 
-Toolkit author metadata in packages identifies the **tool author**. Client names, domains, and branding belong in each project's site profile and `.env` — not in this repository.
+Client names, domains, and branding belong in each project’s site profile — not in this repository.

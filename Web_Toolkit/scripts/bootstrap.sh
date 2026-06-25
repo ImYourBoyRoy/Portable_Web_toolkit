@@ -15,6 +15,7 @@ SKIP_WORKSPACE_CHECKS=false
 ALLOW_INSTALLS=true
 INSTALL_OPTIONAL_TOOLS=true
 INSTALL_PYTHON_PLAYWRIGHT=true
+OPTIONAL_TOOLS=""
 SUDO_KEEPALIVE_PID=""
 
 TMP_DIR="${TMPDIR:-/tmp}/portable-web-toolkit-bootstrap.$$"
@@ -120,6 +121,7 @@ parse_args() {
       --allow-installs) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && ALLOW_INSTALLS=true || ALLOW_INSTALLS=false ;;
       --install-optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && INSTALL_OPTIONAL_TOOLS=true || INSTALL_OPTIONAL_TOOLS=false ;;
       --install-python-playwright) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && INSTALL_PYTHON_PLAYWRIGHT=true || INSTALL_PYTHON_PLAYWRIGHT=false ;;
+      --optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && OPTIONAL_TOOLS="${args[$((i+1))],,}" ;;
     esac
   done
   COMMAND="${COMMAND,,}"
@@ -313,6 +315,19 @@ ensure_python_playwright_posix() {
   report_add installed "Python Playwright" "" "$before" "$after" "pyenv-native venv" "installed" "Installed $package + $browser"
 }
 
+optional_tool_selected() {
+  local tool="$1"
+  [[ "$INSTALL_OPTIONAL_TOOLS" == true ]] || return 1
+  [[ "$tool" == "python-playwright" ]] && return 1
+  [[ -z "$OPTIONAL_TOOLS" ]] && return 0
+  local item
+  IFS=',' read -r -a _optional_selected <<<"$OPTIONAL_TOOLS"
+  for item in "${_optional_selected[@]}"; do
+    [[ "${item// /}" == "$tool" ]] && return 0
+  done
+  return 1
+}
+
 ensure_optional_posix() {
   [[ "$INSTALL_OPTIONAL_TOOLS" == true ]] || { report_add skipped "Optional host tools" "" "" "" "manifest" "skipped" "Flag disabled"; return; }
   local tool_keys pm suffix formula pkg before after display command_name
@@ -320,6 +335,7 @@ ensure_optional_posix() {
   IFS=',' read -r -a tool_keys <<<"$(manifest_get "tool.optional.order")"
   for tool in "${tool_keys[@]}"; do
     [[ "$tool" == "python-playwright" ]] && continue
+    optional_tool_selected "$tool" || { report_add skipped "$tool" "" "" "" "manifest" "skipped" "Not selected in setup menu"; continue; }
     display="$tool"; [[ "$tool" == "bun" ]] && display="Bun"; [[ "$tool" == "gh" ]] && display="GitHub CLI"; [[ "$tool" == "dotnet" ]] && display=".NET SDK"
     command_name="$tool"; [[ "$tool" == "dotnet" ]] && command_name="dotnet"
     before="$(command_version "$command_name" --version || true)"

@@ -2,21 +2,34 @@
 setlocal
 cd /d "%~dp0"
 
-echo [Agent Environment Setup]
-echo Unblocking PowerShell scripts...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%CD%' -Recurse -Filter *.ps1 -File | Unblock-File -ErrorAction SilentlyContinue"
-
-echo Running Bootstrap...
-powershell -NoProfile -ExecutionPolicy Bypass -File Web_Toolkit\scripts\bootstrap.ps1 prepare-host %*
-set exitcode=%errorlevel%
-
 echo.
-if %exitcode% neq 0 (
-    echo [NOTICE] Please review the PowerShell window for details on what is missing or requires attention.
-) else (
-    echo [SUCCESS] Setup completed successfully!
+echo  Portable Web Toolkit - Machine Setup
+echo  ====================================
+echo  This wizard shows what will be installed and lets you opt in or out.
+echo  Administrator approval may be required for missing tools.
+echo.
+
+where node >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Node.js is required to run the setup wizard.
+    echo         Install Node from https://nodejs.org/ then run this file again.
+    goto :finish
 )
 
+node "%~dp0Web_Toolkit\scripts\setup-interactive.mjs" --workspace "%CD%" %*
+set exitcode=%errorlevel%
+goto :done
+
+:finish
+set exitcode=1
+
+:done
+echo.
+if %exitcode% neq 0 (
+    echo [NOTICE] Setup finished with warnings or errors. See the output above.
+) else (
+    echo [SUCCESS] Setup completed.
+)
 echo.
 pause
 exit /b %exitcode%

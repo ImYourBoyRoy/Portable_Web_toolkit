@@ -3,7 +3,7 @@
 ## Project Snapshot
 
 - Toolkit: AI-agent-first portable website diagnostics, PageSpeed, Cloudflare, media, profile, and publishing tools.
-- Publish posture: root package metadata exists at `package.json`; package name is `@imyourboyroy/web-toolkit`; license is currently conservative `UNLICENSED` pending Roy's final license decision.
+- Publish posture: root package metadata at `package.json`; package name is `@imyourboyroy/web-toolkit`; license **MIT** (see root `LICENSE`).
 - Private profiles must live outside the published toolkit and be passed with `--site-profile <path>`.
 - **Default site stack for new web work**: Astro on Vite, deployed to Cloudflare (Pages + Workers first, free tier preferred).
 
@@ -20,17 +20,17 @@ Use these authoritative sources before pinning versions or recommending APIs. **
 | Cloudflare Workers | https://developers.cloudflare.com/workers/ | edge logic, bindings, limits, free-tier fit |
 | Wrangler CLI | https://developers.cloudflare.com/workers/wrangler/ | deploy commands, config shape, secrets |
 | `@astrojs/cloudflare` | https://docs.astro.build/en/guides/integrations-guide/cloudflare/ | adapter setup, output dirs, preview/deploy |
-| Node.js releases | https://nodejs.org/en/about/previous-releases | runtime baseline (repo currently targets `>=25.9.0`) |
+| Node.js releases | https://nodejs.org/en/about/previous-releases | runtime baseline (repo targets `>=26`, pin `26.4.0`) |
 | npm package versions | https://www.npmjs.com/ or `npm view <pkg> version` | exact package pins (`astro`, `wrangler`, etc.) |
 | Rust releases | https://releases.rs/ | toolchain/edition verification when Cargo is in scope |
 | crates.io | https://crates.io/ | Rust crate versions for Workers WASM or CLI tools |
 
 ### Repo-pinned baseline (confirmed in workspace — re-verify before bumps)
 
-- **Node**: `>=25.9.0` (`.node-version` = `25.9.0` at workspace + toolkit roots) — source: root/toolkit `package.json`, `.node-version`
-- **Astro**: `^6.1.6` — source: root `package.json` (2026-06-15)
-- **`@astrojs/cloudflare`**: `^13.1.1` — source: root `package.json` (2026-06-15)
-- **Wrangler**: `^4.82.2` — source: root `package.json` (2026-06-15)
+- **Node**: `>=26` (`.node-version` = `26.4.0` at workspace + toolkit roots) — verified 2026-06-25 via nodejs.org dist index
+- **Astro**: `^7.0.2` — source: `site-starter/workers.package.json` (2026-06-25)
+- **`@astrojs/cloudflare`**: `^14.0.0` — source: `site-starter/workers.package.json` (2026-06-25)
+- **Wrangler**: `^4.104.0` — source: `site-starter/workers.package.json` (2026-06-25)
 - **Sharp**: `^0.34.5` — source: root `package.json` (2026-06-15)
 
 ### Research delta log (update when verified versions differ from prior assumptions)

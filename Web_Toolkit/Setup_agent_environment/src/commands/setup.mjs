@@ -15,7 +15,7 @@ import { commandAvailable, runCommand } from '../lib/exec.mjs';
 import { prettyJson, printCheck, printSection, toBool } from '../lib/format.mjs';
 import { loadPortableEnv } from '../lib/env.mjs';
 
-const DEFAULT_NODE_RANGE = '>=25.9.0';
+const DEFAULT_NODE_RANGE = '>=26';
 const REQUIRED_TOOL_KEYS = ['git', 'node', 'npm', 'npx', 'python', 'pip'];
 const OPTIONAL_INSTALL_TOOL_KEYS = ['pnpm', 'bun', 'uv', 'gh', 'dotnet'];
 

@@ -2,8 +2,12 @@
   "name": "@imyourboyroy/portable-web-toolkit-repo",
   "private": true,
   "description": "Toolkit distribution repository — not a deployable website. Copy site-starter/ into a new client project folder.",
-  "version": "0.2.0",
+  "version": "0.2.1",
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "verify:toolkit": "node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs",
     "privacy:scan": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json"

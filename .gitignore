@@ -1,5 +1,5 @@
 # build output / generated reports
-example-pages-site/output/
+example-pages-site/
 **/output/site-quality-smoke-*
 **/output/site-readiness-*
 output/
@@ -44,6 +44,16 @@ doctor.txt
 
 # macOS-specific files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# test / coverage artifacts
+coverage/
+
+# key material (never commit)
+*.pem
+*.key
+!**/*.example.key
 
 # jetbrains setting folder
 .idea/

@@ -15,7 +15,7 @@
       },
       "description": "Site-profile-driven deploy, discovery-doctor, cf-agent, and staged launch workflows.",
       "homepage": "https://github.com/imyourboyroy/Portable_Web_toolkit",
-      "license": "UNLICENSED",
+      "license": "MIT",
       "keywords": ["astro", "cloudflare", "discovery", "deploy", "site-profile"]
     }
   ]

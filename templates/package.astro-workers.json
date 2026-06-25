@@ -54,7 +54,7 @@
       "Replace cf:deploy route/name flags from site profile — never copy from another site.",
       "For static prerender sites, set output: static in astro.config; adapter still required for Workers deploy.",
       "Static sites that use Node-only prerender APIs: adapter prerenderEnvironment: 'node'.",
-      "Link Web_Toolkit: mklink /J Web_Toolkit ..\\Portable_Web_toolkit\\Web_Toolkit",
+      "Link Web_Toolkit: node <Portable_Web_toolkit>/scripts/link-web-toolkit.mjs --toolkit-path <Web_Toolkit-abs> --project-root .",
       "Optional: cross-env CLOUDFLARE_VITE_PLUGIN_SKIP_PREVIEW=true on build if preview plugin conflicts during CI."
     ]
   }

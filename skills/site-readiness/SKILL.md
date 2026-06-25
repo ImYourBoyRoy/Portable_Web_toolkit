@@ -9,7 +9,7 @@ description: Runs sandbox-aware run-all readiness checks on an Astro client site
 
 ## Command
 
-```powershell
+```bash
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<name>.site-profile.json
 ```
 

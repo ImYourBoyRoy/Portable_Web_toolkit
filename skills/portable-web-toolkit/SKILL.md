@@ -6,16 +6,17 @@ description: Master skill for the Portable Astro + Cloudflare Web Toolkit. Use f
 # Portable Web Toolkit (master skill)
 
 **Zero-research entry:** repo `START_HERE.md` at root.  
+**Cross-platform:** all CLIs are Node — see `skills/CROSS_PLATFORM.md`.  
 **Session start (every time):** check for updates, then `site-readiness run`.
 
 ## Session start (mandatory)
 
-```powershell
+```bash
 # 1. Check for toolkit/skills updates (from toolkit repo root or clone)
 node ./scripts/check-toolkit-update.mjs
 
-# 2. If exit code 2 → run update
-./scripts/update-toolkit.ps1
+# 2. If exit code 2 → run update (any OS)
+node ./scripts/update-toolkit.mjs
 
 # 3. On client site — readiness first
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .
@@ -33,7 +34,7 @@ Portable_Web_toolkit/          ← toolkit GitHub repo (NOT a website)
 ClientSite/                    ← separate folder per client
   package.json, src/, .env
   *.site-profile.json
-  Web_Toolkit/ → junction to Portable_Web_toolkit/Web_Toolkit
+  Web_Toolkit/ → junction/symlink to Portable_Web_toolkit/Web_Toolkit
   output/                      ← reports (readiness, site-doctor, etc.)
 ```
 
@@ -41,7 +42,7 @@ ClientSite/                    ← separate folder per client
 |---------|----------|
 | Secrets | Client `.env` only |
 | Deploy spec | `*.site-profile.json` |
-| Toolkit code | `Web_Toolkit/` junction |
+| Toolkit code | `Web_Toolkit/` link (junction or symlink) |
 | Never commit | `.env`, `Private_Site_Profiles/`, `smoke-manifest.json` |
 
 ## Skill routing (which skill to load)
@@ -56,7 +57,7 @@ ClientSite/                    ← separate folder per client
 
 ## Session start (every client site)
 
-```powershell
+```bash
 cd <client-project-root>
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<site>.site-profile.json
 ```
@@ -117,7 +118,7 @@ Pages sites: `"deployTarget": "pages"` + `cloudflare.pagesProject`.
 
 ## Build and deploy sequence
 
-```powershell
+```bash
 # 1. Readiness
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .
 
@@ -186,7 +187,7 @@ In sandbox/offline: use `site-readiness --skip-network`. Skip live smoke, integr
 
 ## Live site broken?
 
-```powershell
+```bash
 node ./Web_Toolkit/site_doctor/bin/site-doctor.mjs run --site-profile <profile>
 ```
 
@@ -194,19 +195,34 @@ Skip flags: `--skip-cloudflare`, `--skip-browser-diagnostics`, `--skip-quality-s
 
 ## Publishing toolkit to GitHub
 
-```powershell
+```bash
 node ./Web_Toolkit/toolkit_purge/bin/toolkit-purge.mjs --apply
 node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json
 node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs
 ```
 
-## Install / update skills
+## Install / update skills (agent handles this)
 
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user scope).
+Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope).
 ```
 
-See **toolkit-update** skill for `scripts/update-toolkit.ps1`.
+```bash
+node ./scripts/install-agent-skills.mjs
+node ./scripts/update-toolkit.mjs
+```
+
+Do **not** ask end users to run manual one-shot git clone install flows unless they prefer to.
+
+## Machine setup (user runs — admin/sudo)
+
+Direct the user to the interactive wizard when host tools are missing:
+
+| OS | `Setup_Agent_Environment.bat` / `.command` / `.sh` |
+
+Core includes **pyenv-native** (Rust Python manager — Windows, macOS, Linux). User opts in/out of optional tools in the wizard.
+
+See **toolkit-update** skill for pull + reinstall flow.
 
 ## Verification checklist
 
@@ -225,4 +241,4 @@ See **toolkit-update** skill for `scripts/update-toolkit.ps1`.
 | Astro sitemap integration | Violates contract |
 | Secrets in toolkit `.env` | Client project only |
 | cf-agent apply without audit | Always dry-run first |
-| Toolkit repo = website | Separate client folder + junction |
+| Toolkit repo = website | Separate client folder + Web_Toolkit link |

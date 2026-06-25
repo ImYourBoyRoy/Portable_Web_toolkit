@@ -14,8 +14,10 @@ export function buildRecommendedFixes({ steps = [], capabilities = {}, flags = {
   if (!capabilities.toolkitLinked) {
     fixes.push({
       id: 'link-toolkit',
-      command: 'cmd /c mklink /J Web_Toolkit ..\\Portable_Web_toolkit\\Web_Toolkit',
-      description: 'Link the portable toolkit into the project root.',
+      command:
+        'node <path-to-Portable_Web_toolkit>/scripts/link-web-toolkit.mjs --toolkit-path <Web_Toolkit-abs> --project-root .',
+      description:
+        'Link the portable toolkit into the project root (junction on Windows, symlink on macOS/Linux).',
       auto: false,
     });
   }

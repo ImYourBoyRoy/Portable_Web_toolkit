@@ -1,13 +1,50 @@
 # Setup Agent Environment
 
-Prepare a workstation for **Codex / Antigravity / Astro / Cloudflare** work before touching a client site.
+Prepare a workstation for **AI-assisted Astro / Cloudflare** development.
+
+## Interactive wizard (recommended)
+
+Shows every component, lets you **opt in or out**, then installs only what you chose.
+
+| Platform | Run |
+|----------|-----|
+| **Windows** (repo root) | `Setup_Agent_Environment.bat` |
+| **macOS** (repo root) | `Setup_Agent_Environment.command` |
+| **Linux** (repo root) | `bash Setup_Agent_Environment.sh` |
+| From `Web_Toolkit/` | `Setup_Agent_Environment.bat` / `.sh` |
+
+Requires **Node.js** to launch the menu. Administrator (Windows) or **sudo** (macOS/Linux) may be requested for installs.
+
+Menu config: `config/setup-menu.json`  
+Engine: `scripts/setup-interactive.mjs` → `bootstrap.ps1` / `bootstrap.sh`
+
+## What the wizard can install
+
+### Core (required bundle)
+
+- Git
+- Node.js (current line from manifest)
+- **pyenv-native** — Rust rewrite of pyenv; recommended on all platforms (major upgrade on Windows)
+- Python 3.13+ via pyenv-native
+- pip in a workspace-named virtual environment
+
+### Optional (you choose each)
+
+- pnpm, Bun, uv
+- GitHub CLI
+- .NET SDK
+- Python Playwright + Chromium (in the managed venv)
+
+### macOS prerequisite
+
+- Xcode Command Line Tools (triggered automatically when missing)
 
 ## Kickoff behavior
 
 The launcher wrappers now own the host setup flow directly:
 
-- **Windows**: `Setup_Agent_Environment.bat` unblocks local PowerShell scripts, launches `scripts/bootstrap.ps1` with `-NoProfile -ExecutionPolicy Bypass`, requests **UAC elevation first** for install flows, and performs the host provisioning natively.
-- **macOS / Linux**: `Setup_Agent_Environment.command` / `Setup_Agent_Environment.sh` call `scripts/bootstrap.sh`, which requests **sudo once at the beginning**, keeps the sudo ticket warm during installs, and performs host provisioning natively.
+- **Windows**: `Setup_Agent_Environment.bat` runs the interactive wizard, then `bootstrap.ps1` with **UAC elevation** when installs are needed.
+- **macOS / Linux**: `Setup_Agent_Environment.sh` / `.command` runs the wizard, then `bootstrap.sh` with **sudo** when installs are needed.
 - A single manifest now drives the install policy: `Setup_agent_environment/config/host-bootstrap.manifest.json`.
 - If the machine is **already configured**, the bootstrap reports those tools under **Already current** instead of reinstalling them.
 
@@ -27,7 +64,7 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ### Required host tools
 
 - Git
-- Node.js **25.9.0 or newer**
+- Node.js **26.0.0 or newer** (pinned `.node-version` = `26.4.0`)
 - npm
 - npx
 - `pyenv-native` **0.2.9 or newer**
@@ -64,7 +101,7 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ## Manifest-driven policy
 
 - The source of truth is now `Setup_agent_environment/config/host-bootstrap.manifest.json`.
-- Node policy is **latest/current only** and currently targets **25.9.0**.
+- Node policy is **latest/current only** — minimum **26.x**; Linux bootstrap tarball targets **26.4.0** (verify against https://nodejs.org/dist/ before bumps).
 - `pyenv-native` is the only supported Python installation path.
 - The workspace venv name is derived from the normalized workspace folder name.
 - Older Node lines are treated as out-of-policy and are never silently accepted or downgraded into compatibility.
@@ -122,7 +159,7 @@ Automatic repair now treats **Node separately** from the distro package manager:
 - `--skip-workspace-checks`
 - `--allow-installs true|false`
 - `--install-optional-tools true|false`
-- `--install-python-playwright true|false`
+- `--optional-tools pnpm,gh` (only install selected optional tools from the menu)
 
 ## Example flows
 

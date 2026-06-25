@@ -1,0 +1,53 @@
+{
+  "title": "Portable Web Toolkit — machine setup",
+  "subtitle": "Prepares your computer for Astro + Cloudflare development with AI coding agents.",
+  "adminNote": "Installing missing tools may require administrator (Windows) or sudo (macOS/Linux). You choose what to install before anything runs.",
+  "required": [
+    {
+      "id": "core",
+      "name": "Core host tools",
+      "description": "Git, Node.js 26+ (current line), pyenv-native, Python 3.13+ workspace venv, and pip",
+      "default": true,
+      "locked": true
+    }
+  ],
+  "optional": [
+    {
+      "id": "pnpm",
+      "name": "pnpm",
+      "description": "Fast Node package manager (optional; npm is included with Node)"
+    },
+    {
+      "id": "bun",
+      "name": "Bun",
+      "description": "Alternative JavaScript runtime and package manager"
+    },
+    {
+      "id": "uv",
+      "name": "uv",
+      "description": "Fast Python package installer (complements pyenv-native venvs)"
+    },
+    {
+      "id": "gh",
+      "name": "GitHub CLI",
+      "description": "GitHub from the terminal (repos, PRs, auth)"
+    },
+    {
+      "id": "dotnet",
+      "name": ".NET SDK",
+      "description": "Only if you work on .NET projects alongside web sites"
+    },
+    {
+      "id": "python-playwright",
+      "name": "Python Playwright + Chromium",
+      "description": "Browser automation inside your project Python venv (for AI agent browser tools)"
+    }
+  ],
+  "workspace": {
+    "id": "workspace-checks",
+    "name": "Project folder checks",
+    "description": "Verify README, package.json, Astro config, and related files in the target workspace",
+    "default": true
+  },
+  "pyenvNativeBlurb": "pyenv-native is a Rust rewrite of pyenv — the recommended Python version manager on Windows, macOS, and Linux. It installs runtimes and per-project virtual environments without conflicting with system Python."
+}

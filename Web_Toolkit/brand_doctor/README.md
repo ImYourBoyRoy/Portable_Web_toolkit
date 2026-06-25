@@ -59,7 +59,7 @@ Refer to `Web_Toolkit/site-profile.schema.json` for the full machine-readable sp
 
 ## Requirements
 
-- **Node.js**: 18+
+- **Node.js**: 26+
 - **Python**: 3.10+
 - **Dependencies**: `Pillow`, `CairoSVG`, `sharp`, `chalk`.
 

@@ -43,7 +43,7 @@ function printHelp() {
     notes: [
       'Native bootstrap wrappers are now the only supported install/repair path.',
       'This Node CLI is retained for post-bootstrap read-only diagnostics.',
-      'Required baseline: Git, Node 25.9.0+, pyenv-native 0.2.9+, Python 3.13+, and pip inside the pyenv-managed workspace venv.'
+      'Required baseline: Git, Node 26+, pyenv-native 0.2.9+, Python 3.13+, and pip inside the pyenv-managed workspace venv.'
     ],
     exitCodes: [
       { name: '0', description: 'Healthy or successfully repaired.' },

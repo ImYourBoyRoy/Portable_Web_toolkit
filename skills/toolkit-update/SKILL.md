@@ -5,33 +5,52 @@ description: Updates the Portable_Web_toolkit repo, reinstalls agent skills for 
 
 # Toolkit Update
 
-## One command
+Cross-platform conventions: `skills/CROSS_PLATFORM.md`
 
-```powershell
-cd C:\path\to\Portable_Web_toolkit
-./scripts/update-toolkit.ps1
-```
+## One command (any OS)
 
 ```bash
-cd /path/to/Portable_Web_toolkit && ./scripts/update-toolkit.sh
+cd /path/to/Portable_Web_toolkit
+node ./scripts/update-toolkit.mjs
 ```
+
+Platform-specific wrappers (optional):
+
+| OS | Command |
+|----|---------|
+| **Windows** | `pwsh ./scripts/update-toolkit.ps1` |
+| **macOS / Linux** | `bash ./scripts/update-toolkit.sh` |
+| **Any (pwsh installed)** | `pwsh ./scripts/update-toolkit.ps1` |
 
 ## Steps performed
 
 1. `git pull --ff-only`  
-2. `install-agent-skills -Agent all` (user scope)  
+2. `install-agent-skills` (user scope, all agents)  
 3. `toolkit_verify` + `privacy_check`  
 
-## From GitHub URL only
+## Install skills from GitHub URL only
 
-```powershell
-./scripts/install-agent-skills.ps1 -RepoUrl "https://github.com/imyourboyroy/Portable_Web_toolkit" -Agent all
+```bash
+node ./scripts/install-agent-skills.mjs -- -RepoUrl "https://github.com/imyourboyroy/Portable_Web_toolkit" -Agent all
+```
+
+Or:
+
+```bash
+bash ./scripts/install-agent-skills.sh --repo-url "https://github.com/imyourboyroy/Portable_Web_toolkit" --agent all
+```
+
+## Check for updates (every session)
+
+```bash
+node ./scripts/check-toolkit-update.mjs   # exit 2 = update available
+node ./scripts/update-toolkit.mjs         # when exit code 2
 ```
 
 ## After update
 
-```powershell
-cd <client-site>
+```bash
+cd /path/to/client-site
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .
 ```
 

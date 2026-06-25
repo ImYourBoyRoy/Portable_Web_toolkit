@@ -2,49 +2,28 @@
 
 Install structured agent workflows for **portable-web-toolkit** across mainstream coding agents (Cursor, Claude Code, Gemini CLI, Antigravity, GitHub Copilot, Windsurf, OpenCode, Kiro).
 
-**Start here:** [getting-started.md](./getting-started.md) (all platforms + one-shot install)
+**Start here:** [getting-started.md](./getting-started.md)
+
 ## Tell your agent (copy-paste)
 
-Use this prompt in **any** supported agent:
-
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit
+Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work.
 ```
 
-The agent should clone the repo and run the cross-platform installer for your platform.
-
-## Quick install
-
-### Windows (PowerShell 7+)
-
-```powershell
-git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git
-cd Portable_Web_toolkit
-./scripts/install-agent-skills.ps1 -Agent all
-```
-
-### macOS / Linux
+## Optional: install yourself
 
 ```bash
 git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git
 cd Portable_Web_toolkit
-chmod +x ./scripts/install-agent-skills.sh
-./scripts/install-agent-skills.sh --agent all
+node ./scripts/install-agent-skills.mjs
 ```
 
-### From GitHub URL only (no local clone)
+## Platform wrappers (optional)
 
-**Windows:**
-
-```powershell
-./scripts/install-agent-skills.ps1 -RepoUrl "https://github.com/imyourboyroy/Portable_Web_toolkit" -Agent all
-```
-
-**macOS / Linux:**
-
-```bash
-./scripts/install-agent-skills.sh --repo-url "https://github.com/imyourboyroy/Portable_Web_toolkit" --agent all
-```
+| OS | Command |
+|----|---------|
+| Windows | `pwsh ./scripts/install-agent-skills.ps1 -Agent all` |
+| macOS / Linux | `bash ./scripts/install-agent-skills.sh --agent all` |
 
 ### Project-scoped (single repo)
 
@@ -87,14 +66,15 @@ Read `AGENTS.md` and `Web_Toolkit/OPERATIONS.md`. Always pass `--site-profile` f
 
 ## Update
 
-```powershell
-git pull
-./scripts/install-agent-skills.ps1 -Agent all
+```bash
+node ./scripts/update-toolkit.mjs
 ```
+
+Or:
 
 ```bash
 git pull
-./scripts/install-agent-skills.sh --agent all
+node ./scripts/install-agent-skills.mjs
 ```
 
 ## Repo layout

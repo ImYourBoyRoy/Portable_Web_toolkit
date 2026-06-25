@@ -6,6 +6,7 @@
   },
   "homepage": "https://github.com/imyourboyroy/Portable_Web_toolkit",
   "repository": "https://github.com/imyourboyroy/Portable_Web_toolkit",
-  "license": "UNLICENSED",
+  "version": "0.2.1",
+  "license": "MIT",
   "skills": "./skills"
 }

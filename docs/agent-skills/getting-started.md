@@ -1,6 +1,6 @@
 # Getting started with agent skills
 
-Each Roy toolkit repo ships a **`skills/`** folder with structured workflows agents follow instead of guessing CLI/API behavior.
+Each toolkit repo ships a **`skills/`** folder with structured workflows agents follow instead of guessing CLI/API behavior.
 
 ## Supported agents
 
@@ -15,50 +15,30 @@ Each Roy toolkit repo ships a **`skills/`** folder with structured workflows age
 | **Windsurf** | `.windsurfrules` or Global Rules (paste skill content) |
 | **OpenCode** | Workspace `AGENTS.md` + `skills/` |
 
-Cross-platform installers: `scripts/install-agent-skills.ps1` (Windows/macOS/Linux **PowerShell 7+**) and `scripts/install-agent-skills.sh` (macOS/Linux **bash**).
+Cross-platform installers (pick one):
 
-## Tell your agent (works in any tool)
+| Method | Command |
+|--------|---------|
+| **Any OS (recommended)** | `node ./scripts/install-agent-skills.mjs` |
+| PowerShell 7+ | `./scripts/install-agent-skills.ps1 -Agent all` |
+| bash (macOS/Linux) | `./scripts/install-agent-skills.sh --agent all` |
+
+See also [`skills/CROSS_PLATFORM.md`](../../skills/CROSS_PLATFORM.md).
+
+## Tell your agent (copy-paste)
 
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Run scripts/install-agent-skills.ps1 -Agent all on Windows (PowerShell 7+) or scripts/install-agent-skills.sh --agent all on macOS/Linux. For any Astro + Cloudflare client site, read START_HERE.md, run site-readiness first, then follow portable-web-toolkit skill.
+Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work — run site-readiness first on client projects.
 ```
 
-## One-shot install (no manual cd)
+The agent should install skills itself (`node ./scripts/install-agent-skills.mjs`). Users do not need manual one-shot install flows.
 
-### Windows (PowerShell 7+)
-
-```powershell
-$repo = "https://github.com/imyourboyroy/Portable_Web_toolkit"
-$dir = Join-Path $env:TEMP "agent-skills-$(Get-Random)"
-git clone --depth 1 $repo $dir
-& (Join-Path $dir "scripts/install-agent-skills.ps1") -RepoRoot $dir -Agent all
-```
-
-### macOS / Linux (bash)
+## Optional: install skills yourself
 
 ```bash
-repo="https://github.com/imyourboyroy/Portable_Web_toolkit"
-dir="$(mktemp -d)"
-git clone --depth 1 "$repo" "$dir"
-chmod +x "$dir/scripts/install-agent-skills.sh"
-"$dir/scripts/install-agent-skills.sh" --repo-root "$dir" --agent all
-```
-
-### From GitHub URL only (installer script not on disk yet)
-
-**Windows:**
-
-```powershell
-git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit $env:TEMP\skills-install
-pwsh -File "$env:TEMP\skills-install\scripts\install-agent-skills.ps1" -RepoUrl "https://github.com/imyourboyroy/Portable_Web_toolkit" -Agent all
-```
-
-**macOS / Linux:**
-
-```bash
-git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit /tmp/skills-install
-chmod +x /tmp/skills-install/scripts/install-agent-skills.sh
-/tmp/skills-install/scripts/install-agent-skills.sh --repo-url "https://github.com/imyourboyroy/Portable_Web_toolkit" --agent all
+git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git
+cd Portable_Web_toolkit
+node ./scripts/install-agent-skills.mjs
 ```
 
 ## Project-scoped install
@@ -82,17 +62,20 @@ Run from a **client project root** to install into that repo only:
 
 ## Update
 
-```powershell
-./scripts/update-toolkit.ps1
+```bash
+node ./scripts/update-toolkit.mjs
 ```
 
+Or platform wrappers:
+
 ```bash
-./scripts/update-toolkit.sh
+pwsh ./scripts/update-toolkit.ps1    # Windows or anywhere with pwsh
+bash ./scripts/update-toolkit.sh     # macOS / Linux
 ```
 
 Or manually:
 
-```powershell
+```bash
 git pull
-./scripts/install-agent-skills.ps1 -Agent all
+node ./scripts/install-agent-skills.mjs
 ```

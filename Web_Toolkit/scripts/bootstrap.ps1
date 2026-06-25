@@ -57,6 +57,7 @@ function Parse-BootstrapArgs {
         'allow-installs' = $true
         'install-optional-tools' = $true
         'install-python-playwright' = $true
+        'optional-tools' = @()
     }
     $command = 'prepare-host'
     if ($RawArgs.Count -gt 0 -and $RawArgs[0] -notmatch '^--') { $command = $RawArgs[0] }
@@ -69,6 +70,7 @@ function Parse-BootstrapArgs {
             '--allow-installs' { if ($i + 1 -lt $RawArgs.Count) { $flags['allow-installs'] = @('1', 'true', 'yes', 'on') -contains $RawArgs[$i + 1].ToLowerInvariant() } }
             '--install-optional-tools' { if ($i + 1 -lt $RawArgs.Count) { $flags['install-optional-tools'] = @('1', 'true', 'yes', 'on') -contains $RawArgs[$i + 1].ToLowerInvariant() } }
             '--install-python-playwright' { if ($i + 1 -lt $RawArgs.Count) { $flags['install-python-playwright'] = @('1', 'true', 'yes', 'on') -contains $RawArgs[$i + 1].ToLowerInvariant() } }
+            '--optional-tools' { if ($i + 1 -lt $RawArgs.Count) { $flags['optional-tools'] = @($RawArgs[$i + 1] -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ }) } }
         }
     }
     @{ command = $command.ToLowerInvariant(); flags = $flags }
@@ -358,10 +360,18 @@ function Ensure-PythonPlaywright($Manifest, [hashtable]$Report, [hashtable]$Flag
     }
 }
 
+function Test-OptionalToolSelected([string]$ToolKey, [hashtable]$Flags) {
+    if (-not $Flags['install-optional-tools']) { return $false }
+    $selected = $Flags['optional-tools']
+    if ($selected -and $selected.Count -gt 0) { return $selected -contains $ToolKey.ToLowerInvariant() }
+    return $true
+}
+
 function Ensure-OptionalWindowsTools($Manifest, [hashtable]$Report, [hashtable]$Flags) {
     if (-not $Flags['install-optional-tools']) { Add-ReportEntry $Report skipped 'Optional host tools' '' '' '' 'manifest' 'skipped' 'Flag disabled'; return }
     foreach ($toolKey in (Get-ManifestValue $Manifest 'tool.optional.order').Split(',')) {
         if ($toolKey -eq 'python-playwright') { continue }
+        if (-not (Test-OptionalToolSelected $toolKey $Flags)) { Add-ReportEntry $Report skipped ($toolKey) '' '' '' 'manifest' 'skipped' 'Not selected in setup menu'; continue }
         $name = switch ($toolKey) { 'bun' { 'Bun' } 'gh' { 'GitHub CLI' } 'dotnet' { '.NET SDK' } default { $toolKey } }
         $commandName = switch ($toolKey) { 'gh' { 'gh' } 'dotnet' { 'dotnet' } default { $toolKey } }
         $before = Get-CommandVersion $commandName

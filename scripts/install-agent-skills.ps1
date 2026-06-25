@@ -18,7 +18,7 @@
 .EXAMPLE
   ./scripts/install-agent-skills.ps1 -Agent all
   ./scripts/install-agent-skills.ps1 -Agent cursor -Scope project
-  ./scripts/install-agent-skills.ps1 -RepoUrl https://github.com/imyourboyroy/pyenv-native
+  ./scripts/install-agent-skills.ps1 -RepoUrl https://github.com/imyourboyroy/Portable_Web_toolkit
 #>
 [CmdletBinding(DefaultParameterSetName = 'Local')]
 param(

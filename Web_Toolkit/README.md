@@ -63,6 +63,7 @@ Standardize the Cloudflare posture and ship the site.
 
 - **[Cloudflare Agent](./cloudflare-agent-toolkit/README.md)**: Audit and repair DNS, WAF rules, and deployment routes.
 - **Cloudflare Agent Performance Audit**: AI-agent-only JSON audit of speed-critical Cloudflare switches (`performance audit`).
+- **[Headers Deploy](./headers_deploy/README.md)**: `public/_headers` scaffold and deploy-time merge.
 - **[Cache Purge](./cache_purge/README.md)**: Targeted edge invalidation for Astro/Cloudflare sites.
 - **[Registrar](./registrar/README.md)**: Delegation automation (e.g., Porkbun -> Cloudflare).
 
@@ -72,7 +73,7 @@ Standardize the Cloudflare posture and ship the site.
 
 Verify that the site meets all performance and quality targets.
 
-- **[Smoke Doctor](./smoke_doctor/README.md)**: High-speed post-deployment header and cache verification.
+- **[Site Quality Smoke](./site_quality_smoke/README.md)**: Post-deployment header, cache, SEO, and metadata verification (replaces legacy smoke_doctor).
 - **[PageSpeed Diagnostics](./pagespeed_diagnostics/README.md)**: Automated Google PSI metrics tracking.
 - **PageSpeed Agent Batch/Diff**: JSON-only, problem-only PageSpeed batch runner and regression comparator for AI agents.
 - **[Site Quality Smoke](./site_quality_smoke/README.md)**: SEO and metadata posture checks.
