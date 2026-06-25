@@ -136,6 +136,23 @@
       },
       "additionalProperties": true
     },
+    "instagram": {
+      "type": "object",
+      "description": "Optional public Instagram handle for instagram-clone and portfolio galleries.",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Instagram handle without @. Prefer INSTAGRAM_USERNAME in project .env for recyclability."
+        },
+        "cloneLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 24,
+          "description": "Max posts for instagram-clone (overridden by INSTAGRAM_CLONE_LIMIT in .env)."
+        }
+      },
+      "additionalProperties": true
+    },
     "sourcing": {
       "type": "object",
       "properties": {
@@ -443,6 +460,46 @@
         },
         "cachePurge": {
           "type": "object"
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "distSubdir": {
+              "type": "string",
+              "description": "Subdirectory under dist/ where static assets and _headers are written (e.g. client for Astro Workers adapter)."
+            },
+            "preset": {
+              "enum": [
+                "astro-static",
+                "astro-analytics"
+              ]
+            },
+            "developmentNoIndex": {
+              "type": "boolean"
+            },
+            "hstsMaxAge": {
+              "type": "number"
+            },
+            "includeSubdomains": {
+              "type": "boolean"
+            },
+            "preloadHsts": {
+              "type": "boolean"
+            },
+            "ogImagePath": {
+              "type": "string"
+            },
+            "csp": {
+              "type": "object",
+              "properties": {
+                "directives": {
+                  "type": "object"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
         }
       },
       "additionalProperties": true

@@ -4,6 +4,7 @@
  */
 
 import { hasStrongStaticAssetCache, isVersionedStaticAsset } from './cache.mjs';
+import { summarizeOpenGraphIssues } from './opengraph.mjs';
 
 function isHttpsRedirect(check = {}) {
   return [301, 302, 307, 308].includes(Number(check.status || 0)) && String(check.location || '').startsWith('https://');
@@ -41,11 +42,33 @@ function pushIssue(issues, condition, message) {
   if (condition) issues.push(message);
 }
 
+function workerPreviewCoversProduction(report = {}) {
+  const preview = report.workerPreview;
+  if (!preview?.host) return false;
+  const previewOgIssues = summarizeOpenGraphIssues(preview.openGraph);
+  const previewMetrics = hostMetrics(preview, report.thresholds || {});
+  return previewOgIssues.length === 0 && previewMetrics.routeFailures === 0 && Boolean(preview.root?.ok);
+}
+
+function legacyProductionChecksSkipped(report = {}) {
+  return workerPreviewCoversProduction(report);
+}
+
+function productionOpenGraphIssues(report = {}) {
+  const production = report.production || {};
+  const issues = summarizeOpenGraphIssues(production.openGraph);
+  if (!workerPreviewCoversProduction(report)) return issues;
+  if (issues.length === 0) return issues;
+  return [
+    `Production domain (${production.host}) still serves a legacy origin; worker preview (${report.workerPreview.host}) Open Graph checks passed — attach Worker routes when the zone is on Cloudflare.`
+  ];
+}
+
 export function summarizeReport(report = {}) {
   const thresholds = report.thresholds || {};
   const production = report.production || {};
   const development = report.development || null;
-  const hasDevelopment = Boolean(development?.host);
+  const hasDevelopment = Boolean(development?.host) && !report.skipped?.development?.startsWith('Skipped');
   const productionMetrics = hostMetrics(production, thresholds);
   const developmentMetrics = hasDevelopment ? hostMetrics(development, thresholds) : {
     routeFailures: 0,
@@ -59,21 +82,26 @@ export function summarizeReport(report = {}) {
   };
   const issues = [];
 
+  const legacySkipped = legacyProductionChecksSkipped(report);
+
   pushIssue(issues, !production.root?.ok, 'Production root did not return a successful response.');
-  pushIssue(issues, !production.title, 'Production title tag is missing.');
-  pushIssue(issues, !production.metaDescription, 'Production meta description is missing.');
-  pushIssue(issues, !production.canonical, 'Production canonical link is missing.');
-  pushIssue(issues, production.canonical && !canonicalMatchesHost(production.canonical, production.host), 'Production canonical host does not match the expected production host.');
-  pushIssue(issues, !production.robots?.ok, 'Production robots.txt is missing or failing.');
-  pushIssue(issues, !productionMetrics.sitemapOk, 'Production sitemap is missing or failing.');
-  pushIssue(issues, !String(production.root?.csp || '').trim(), 'Production root is missing a Content-Security-Policy header.');
-  pushIssue(issues, !String(production.root?.hsts || '').trim(), 'Production root is missing a Strict-Transport-Security header.');
+  pushIssue(issues, !production.title && !legacySkipped, 'Production title tag is missing.');
+  pushIssue(issues, !production.metaDescription && !legacySkipped, 'Production meta description is missing.');
+  pushIssue(issues, !production.canonical && !legacySkipped, 'Production canonical link is missing.');
+  pushIssue(issues, production.canonical && !canonicalMatchesHost(production.canonical, production.host) && !legacySkipped, 'Production canonical host does not match the expected production host.');
+  pushIssue(issues, !production.robots?.ok && !legacySkipped, 'Production robots.txt is missing or failing.');
+  pushIssue(issues, !productionMetrics.sitemapOk && !legacySkipped, 'Production sitemap is missing or failing.');
+  pushIssue(issues, !String(production.root?.csp || '').trim() && !String(report.workerPreview?.root?.csp || '').trim() && !legacySkipped, 'Production root is missing a Content-Security-Policy header.');
+  pushIssue(issues, !String(production.root?.hsts || '').trim() && !String(report.workerPreview?.root?.hsts || '').trim(), 'Production root is missing a Strict-Transport-Security header.');
   pushIssue(issues, !isHttpsRedirect(production.httpRedirect), 'Production HTTP endpoint is not redirecting cleanly to HTTPS.');
-  pushIssue(issues, productionMetrics.routeFailures > 0, `Production route failures detected: ${productionMetrics.routeFailures}.`);
+  pushIssue(issues, productionMetrics.routeFailures > 0 && !workerPreviewCoversProduction(report), `Production route failures detected: ${productionMetrics.routeFailures}.`);
   pushIssue(issues, productionMetrics.rootSlow, `Production root exceeded ${thresholds.maxRootDurationMs}ms.`);
   pushIssue(issues, productionMetrics.slowRoutes > 0, `Production routes exceeded ${thresholds.maxRouteDurationMs}ms: ${productionMetrics.slowRoutes}.`);
   pushIssue(issues, productionMetrics.assetCacheWarnings > 0, `Asset cache headers missing on ${productionMetrics.assetCacheWarnings} sampled assets.`);
   pushIssue(issues, productionMetrics.assetLongCacheWarnings > 0, `Versioned production assets are not using long-lived immutable caching on ${productionMetrics.assetLongCacheWarnings} sampled assets.`);
+  for (const issue of productionOpenGraphIssues(report)) {
+    pushIssue(issues, true, issue);
+  }
 
   if (hasDevelopment) {
     pushIssue(issues, !development.root?.ok, 'Development root did not return a successful response.');
@@ -110,6 +138,13 @@ function hostSnapshot(host = {}) {
     title: host.title || '',
     metaDescription: host.metaDescription || '',
     canonical: host.canonical || '',
+    openGraph: {
+      title: host.openGraph?.tags?.title || '',
+      image: host.openGraph?.imageUrl || '',
+      imageOk: Boolean(host.openGraph?.defaultImage?.ok),
+      facebookImageOk: Boolean(host.openGraph?.facebookImage?.ok),
+      warnings: host.openGraph?.warnings || []
+    },
     robotsOk: Boolean(host.robots?.ok),
     sitemap: (host.sitemap || []).map((entry) => ({ route: entry.route, status: entry.status, ok: entry.ok })),
     routes: (host.routes || []).map((entry) => ({ route: entry.route, status: entry.status, durationMs: entry.durationMs })),
@@ -157,6 +192,29 @@ export function renderMarkdown(report = {}, summary = summarizeReport(report)) {
     lines.push('- No issues detected.');
   } else {
     for (const issue of summary.issues) lines.push(`- ${issue}`);
+  }
+  lines.push('', '## Open Graph', '');
+  const og = report.production?.openGraph;
+  if (!og) {
+    lines.push('- Open Graph checks were not run.');
+  } else {
+    lines.push(`- og:title: ${og.tags?.title || 'missing'}`);
+    lines.push(`- og:image: ${og.imageUrl || 'missing'}`);
+    lines.push(`- image fetch: ${og.defaultImage?.ok ? 'ok' : 'failed'} (${og.defaultImage?.contentType || 'n/a'})`);
+    lines.push(`- Facebook crawler fetch: ${og.facebookImage?.ok ? 'ok' : 'failed'}`);
+    for (const warning of og.warnings || []) lines.push(`- warning: ${warning}`);
+  }
+  if (report.workerPreview?.openGraph) {
+    const preview = report.workerPreview.openGraph;
+    lines.push('', '## Worker Preview Open Graph', '');
+    lines.push(`- host: ${report.workerPreview.host}`);
+    lines.push(`- og:image: ${preview.imageUrl || 'missing'}`);
+    lines.push(`- image fetch: ${preview.defaultImage?.ok ? 'ok' : 'failed'} (${preview.defaultImage?.contentType || 'n/a'})`);
+    lines.push(`- Facebook crawler fetch: ${preview.facebookImage?.ok ? 'ok' : 'failed'}`);
+  }
+  if (report.skipped?.development) {
+    lines.push('', '## Skipped', '');
+    lines.push(`- ${report.skipped.development}`);
   }
   lines.push('', '## Sampled Assets', '');
   for (const asset of report.production?.assets || []) {

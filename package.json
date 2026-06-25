@@ -1,42 +1,11 @@
 {
-  "name": "[PROJECT_NAME]",
-  "version": "1.0.0",
+  "name": "@imyourboyroy/portable-web-toolkit-repo",
+  "private": true,
+  "description": "Toolkit distribution repository — not a deployable website. Copy site-starter/ into a new client project folder.",
+  "version": "0.2.0",
   "type": "module",
-  "engines": {
-    "node": ">=25.9.0"
-  },
   "scripts": {
-    "dev": "astro dev",
-    "build": "cross-env CLOUDFLARE_VITE_PLUGIN_SKIP_PREVIEW=true astro build",
-    "check": "astro check",
-    "cf:deploy:pages": "node ./scripts/cf-deploy-pages.mjs",
-    "cf:deploy:workers": "node ./scripts/cf-deploy-workers.mjs",
-    "cf:deploy": "node ./scripts/cf-deploy-pages.mjs",
-    "cf:deploy:clean": "npm run build && npm run cf:deploy",
-    "cf:purge": "node ./scripts/site-tool.mjs cache-purge",
-    "cf:purge:apply": "node ./scripts/site-tool.mjs cache-purge --apply",
-    "perf": "node ./scripts/site-tool.mjs perf",
-    "perf:mobile": "node ./scripts/site-tool.mjs perf --strategy mobile",
-    "perf:desktop": "node ./scripts/site-tool.mjs perf --strategy desktop",
-    "optimize:loop": "node ./scripts/site-tool.mjs optimize-loop",
-    "optimize:loop:apply": "node ./scripts/site-tool.mjs optimize-loop --apply",
-    "clean:cache": "node ./scripts/clean-local-cache.mjs",
-    "styles:check": "node ./Web_Toolkit/stylesheet_check/bin/stylesheet-check.mjs scan --root ."
-  },
-  "dependencies": {
-    "@astrojs/cloudflare": "^13.1.1",
-    "astro": "^6.1.6",
-    "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "sharp": "^0.34.5"
-  },
-  "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@cloudflare/workers-types": "^4.20260413.1",
-    "@types/node": "^25.6.0",
-    "cross-env": "^10.1.0",
-    "rimraf": "^6.1.3",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.82.2"
+    "verify:toolkit": "node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs",
+    "privacy:scan": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json"
   }
 }

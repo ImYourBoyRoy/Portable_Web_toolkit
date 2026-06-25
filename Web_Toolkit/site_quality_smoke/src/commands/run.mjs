@@ -5,6 +5,7 @@
 
 import fs from 'node:fs';
 import { canonicalFromHtml, assetUrlsFromHtml, metaDescriptionFromHtml, titleFromHtml } from '../lib/extract.mjs';
+import { openGraphReport } from '../lib/opengraph.mjs';
 import { requestUrl } from '../lib/http.mjs';
 import { outputPaths } from '../lib/reports.mjs';
 import { resolveProfile, resolveProjectRoot } from '../lib/paths.mjs';
@@ -58,16 +59,17 @@ async function sitemapReport(origin, candidates = []) {
   return checks;
 }
 
-async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSampleSize = 3) {
-  const origin = `https://${host}`;
+async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSampleSize = 3, ogOptions = {}) {
+  const normalizedHost = String(host || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+  const origin = `https://${normalizedHost}`;
   const root = await requestUrl(origin);
   const assets = await assetReport(assetUrlsFromHtml(root.body, origin, assetSampleSize));
   const robots = await requestUrl(`${origin}/robots.txt`);
   const sitemapChecks = await sitemapReport(origin, sitemapCandidates);
   const routeChecks = await routeReport(origin, routes);
-  const httpRedirect = await requestUrl(`http://${host}`, { followRedirects: false });
+  const httpRedirect = await requestUrl(`http://${normalizedHost}`, { followRedirects: false });
   return {
-    host,
+    host: normalizedHost,
     origin,
     root: {
       ok: root.status >= 200 && root.status < 400,
@@ -87,6 +89,7 @@ async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSa
     title: titleFromHtml(root.body),
     metaDescription: metaDescriptionFromHtml(root.body),
     canonical: canonicalFromHtml(root.body),
+    openGraph: await openGraphReport(root.body, { origin, host: normalizedHost, requestUrl, ...ogOptions }),
     robots: {
       ok: robots.status >= 200 && robots.status < 400,
       status: robots.status,
@@ -107,6 +110,15 @@ async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSa
   };
 }
 
+function shouldSkipDevelopmentHost(host = '', quality = {}) {
+  if (quality.skipDevelopment === true) return true;
+  const normalized = String(host || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+  if (!normalized) return true;
+  if (/^localhost(?::\d+)?$/i.test(normalized)) return true;
+  if (/^127\.0\.0\.1(?::\d+)?$/i.test(normalized)) return true;
+  return false;
+}
+
 export async function runQualitySmoke(flags = {}) {
   const resolved = resolveProfile(flags);
   const { profile } = resolved;
@@ -121,9 +133,12 @@ export async function runQualitySmoke(flags = {}) {
   };
   const productionHost = profile.hosts?.production?.[0];
   const developmentHost = profile.hosts?.development?.[0] || '';
+  const workerPreviewHost = quality.workerPreviewHost || '';
   if (!productionHost) {
     throw new Error('Missing profile.hosts.production[0].');
   }
+
+  const skipDevelopment = shouldSkipDevelopmentHost(developmentHost, quality);
 
   const report = {
     checkedAt: new Date().toISOString(),
@@ -131,9 +146,16 @@ export async function runQualitySmoke(flags = {}) {
     projectRoot,
     thresholds,
     production: await hostRootReport(productionHost, routes, sitemapCandidates, assetSampleSize),
-    development: developmentHost ? await hostRootReport(developmentHost, routes, sitemapCandidates, assetSampleSize) : null,
+    workerPreview: workerPreviewHost
+      ? await hostRootReport(workerPreviewHost, routes, sitemapCandidates, assetSampleSize, { allowCrossHostUrl: true })
+      : null,
+    development: !skipDevelopment && developmentHost
+      ? await hostRootReport(developmentHost, routes, sitemapCandidates, assetSampleSize)
+      : null,
     skipped: {
-      development: developmentHost ? '' : 'No development host configured.'
+      development: skipDevelopment
+        ? (developmentHost ? `Skipped development checks for ${developmentHost}.` : 'No development host configured.')
+        : (developmentHost ? '' : 'No development host configured.')
     }
   };
   const summary = summarizeReport(report);

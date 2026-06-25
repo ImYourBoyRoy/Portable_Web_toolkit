@@ -1,0 +1,9 @@
+{
+  "$comment": "Copy to smoke-manifest.json (gitignored) and list your operator site profiles.",
+  "sites": [
+    {
+      "id": "example-pages",
+      "profile": "../site-profiles/example-pages.json"
+    }
+  ]
+}

@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { assertPublicHttpUrl, fetchPublicText } from '../../shared/lib/url-safety.mjs';
+import { auditDistTree } from '../../headers_deploy/src/lib/audit-lib.mjs';
 
 const REQUIRED_PATHS = [
   { path: '/sitemap.xml', label: 'Vision-Ready Sitemap', format: 'xml' },
@@ -106,23 +107,20 @@ async function checkBuild(distPath) {
     }
   }
 
-  // Check for Security Headers signature if _headers exists
-  const headersPaths = [
-    path.join(distPath, '_headers'),
-    path.join(distPath, 'client', '_headers')
-  ];
-  let headersFound = false;
-  for (const p of headersPaths) {
-    if (fs.existsSync(p)) {
-      const content = fs.readFileSync(p, 'utf-8');
-      if (content.includes('Strict-Transport-Security')) {
-        console.log(`[PASS] ${'Security Hardening'.padEnd(25)}: ✅ HSTS Detected in _headers`);
-        headersFound = true;
-        break;
-      }
+  const headerAudit = auditDistTree(distPath);
+  if (headerAudit.filePath && headerAudit.ok) {
+    console.log(`[PASS] ${'Security Hardening'.padEnd(25)}: ✅ Full baseline in ${path.relative(distPath, headerAudit.filePath)}`);
+    for (const header of headerAudit.present) {
+      console.log(`       ✓ ${header}`);
     }
+  } else if (headerAudit.filePath) {
+    console.warn(`[FAIL] ${'Security Hardening'.padEnd(25)}: ❌ Incomplete _headers at ${path.relative(distPath, headerAudit.filePath)}`);
+    for (const header of headerAudit.missing) {
+      console.warn(`       ✗ ${header}`);
+    }
+  } else {
+    console.warn(`[FAIL] ${'Security Hardening'.padEnd(25)}: ❌ _headers missing under dist/`);
   }
-  if (!headersFound) console.warn(`[FAIL] ${'Security Hardening'.padEnd(25)}: ❌ HSTS Missing in _headers`);
 
   // Check homepage for JSON-LD
   const indexPaths = [

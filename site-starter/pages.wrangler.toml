@@ -1,0 +1,8 @@
+# Copy to project root as wrangler.toml (Cloudflare Pages static Astro sites).
+# Pages deploy is usually driven by npm run cf:deploy and your site profile.
+# This file is optional for local preview; set name to your Pages project slug.
+
+name = "[PAGES_PROJECT_NAME]"
+compatibility_date = "2026-06-15"
+
+# Static Astro output lands in dist/ — wrangler pages deploy dist uses that folder.

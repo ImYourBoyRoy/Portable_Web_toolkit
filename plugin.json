@@ -1,6 +1,6 @@
 {
   "name": "portable-web-toolkit",
-  "description": "Agent skills for the Portable Astro + Cloudflare Web Toolkit — site profiles, discovery-doctor, cf-agent.",
+  "description": "Agent skills for the Portable Astro + Cloudflare Web Toolkit — portable-web-toolkit, site-readiness, site-starter, toolkit-update, instagram-clone.",
   "author": {
     "name": "Roy Dawson IV"
   },

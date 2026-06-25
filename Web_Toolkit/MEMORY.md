@@ -118,6 +118,7 @@ Use these authoritative sources before pinning versions or recommending APIs. **
 - Updated export metadata to report actual included example profiles.
 - Expanded purge/export rules to exclude `.git`, runtime, generated outputs, and package residue.
 - Pre-push audit removed RCCinema/rccinema client debris from the workspace wrapper and replaced it with generic discovery templates.
+- **2026-06-25:** Zero-research layer: `START_HERE.md`, skills suite (`portable-web-toolkit` master, `site-readiness`, `site-starter`, `toolkit-update`, `instagram-clone`), `scripts/update-toolkit.*`, OPERATIONS/AGENTS lead with site-readiness.
 - Expanded `AGENT.md` §11: custom discovery generators (no Astro sitemap/robots), `llms.txt` on every build, project-local Brand Guide (create if missing), no default logos/icons, SVG-first + autonomous WebP pipeline.
 - Major `AGENT.md` upgrade: user-agnostic operator profile (no hardcoded identity), AGENT vs AGENTS, JS/TS rules, full Zenith discovery layer (llms-full, APIs, humans, security.txt, JSON-LD, `_headers`), a11y/perf, meta baseline, §15 integrations, site launch workflow (staging → smoke → discovery pass), verification-before-completion, secrets hygiene. Synced `AGENTS.md` deploy gate.
 

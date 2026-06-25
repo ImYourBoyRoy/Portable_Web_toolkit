@@ -1,0 +1,7 @@
+{
+  "name": "@imyourboyroy/instagram-clone",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Clone public Instagram profile media into local feed JSON for portfolio sites."
+}

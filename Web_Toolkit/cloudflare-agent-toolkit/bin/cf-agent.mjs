@@ -38,6 +38,10 @@ import { runEnvSync } from '../src/commands/env-sync.mjs';
 import { runEmailAudit } from '../src/commands/email-audit.mjs';
 import { runRulesAudit } from '../src/commands/rules-audit.mjs';
 import { runRobotsAudit, runRobotsFix } from '../src/commands/robots-management.mjs';
+import { runStack as runHeadersStack } from '../../headers_deploy/src/commands/stack.mjs';
+import { runScaffoldPublic } from '../../headers_deploy/src/commands/scaffold-public.mjs';
+import { runWriteDeploy } from '../../headers_deploy/src/commands/write-deploy.mjs';
+import { runAudit as runHeadersAudit } from '../../headers_deploy/src/commands/audit.mjs';
 
 function printHelp() {
   console.log(`
@@ -94,6 +98,9 @@ Commands:
 
   robots <audit|fix> [--site-profile <path>] [--apply]
       Audit or fix Cloudflare managed robots.txt/content-signal posture.
+
+  headers <stack|scaffold-public|write-deploy|audit> [--site-profile <path>] [--project-root <path>] [--environment production|development] [--apply]
+      Manage Cloudflare Pages _headers baseline, deploy merge, and audits (delegates to headers-deploy).
 
   env sync
       Legacy no-op. The toolkit now reads the target project root .env directly.
@@ -305,6 +312,13 @@ async function main() {
   if (primary === 'pages') {
     enforceTemporarySession();
     return runPagesDomain(secondary || 'list', flags);
+  }
+
+  if (primary === 'headers') {
+    if (secondary === 'stack') return runHeadersStack(flags);
+    if (secondary === 'scaffold-public') return runScaffoldPublic(flags);
+    if (secondary === 'write-deploy') return runWriteDeploy(flags);
+    if (secondary === 'audit') return runHeadersAudit(flags);
   }
 
   console.error(`Unknown command: ${[primary, secondary].filter(Boolean).join(' ')}`);

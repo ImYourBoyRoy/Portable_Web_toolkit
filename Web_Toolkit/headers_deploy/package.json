@@ -1,0 +1,7 @@
+{
+  "name": "@imyourboyroy/headers-deploy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Pages _headers scaffolding, deploy merge, and audits for the portable Web Toolkit."
+}

@@ -27,6 +27,13 @@ site-profiles/*.json
 !site-profiles/example-pages.json
 !site-profiles/README.md
 
+# Operator-only batch smoke manifest (copy from smoke-manifest.example.json)
+scripts/smoke-manifest.json
+
+# Per-project Cloudflare resource snapshots
+cloudflare.resources.json
+**/cloudflare.resources.json
+
 # Python
 __pycache__/
 **/__pycache__/

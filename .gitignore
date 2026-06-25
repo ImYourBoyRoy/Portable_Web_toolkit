@@ -1,5 +1,7 @@
-# build output
-dist/
+# build output / generated reports
+example-pages-site/output/
+**/output/site-quality-smoke-*
+**/output/site-readiness-*
 output/
 .wrangler/
 .runtime/
@@ -26,6 +28,14 @@ tmp/*
 
 # private site profiles stay outside published toolkit copies
 Private_Site_Profiles/
+
+# operator-only batch smoke manifests (use smoke-manifest.example.json in repo)
+**/smoke-manifest.json
+!**/smoke-manifest.example.json
+
+# per-project / operator Cloudflare resource snapshots
+**/cloudflare.resources.json
+**/cf-agent/
 
 # generated export artifacts
 EXPORT-METADATA.json

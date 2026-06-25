@@ -31,6 +31,8 @@ Determine project requirements and retrieve legacy assets.
 
 - **[Discovery Doctor](./discovery_doctor/README.md)**: Zenith-level technical & SEO audit. The primary verification tool for all AI-Native markers.
 - **[Sourcing Doctor](./sourcing_doctor/README.md)**: High-fidelity content extraction (WordPress/Wix REST API to JSON).
+- **[Site Readiness](./site_readiness/README.md)**: Run-all sandbox-aware readiness pass with next-step report for client projects.
+- **[Instagram Clone](./instagram_clone/README.md)**: Public-profile clone → `feed.json` + local media (no Meta API). Set `INSTAGRAM_USERNAME` in the target project `.env`.
 - **[Privacy Check](./privacy_check/README.md)**: Scans for credentials and sensitive data before exporting or sharing the toolkit.
 
 ---

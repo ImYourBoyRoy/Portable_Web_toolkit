@@ -202,3 +202,15 @@ else
 fi
 
 echo "Done. See docs/agent-skills/README.md for per-agent details."
+
+STAMP_DIR="${HOME}/.portable-web-toolkit"
+VERSION_FILE="$REPO_ROOT/VERSION"
+VERSION="0.0.0"
+[[ -f "$VERSION_FILE" ]] && VERSION="$(tr -d '\r\n' < "$VERSION_FILE")"
+COMMIT=""
+[[ -d "$REPO_ROOT/.git" ]] && COMMIT="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || true)"
+mkdir -p "$STAMP_DIR"
+cat > "$STAMP_DIR/install-stamp.json" <<EOF
+{"version":"$VERSION","installedAt":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","repoRoot":"$REPO_ROOT","commit":"$COMMIT"}
+EOF
+echo "Install stamp: v$VERSION ($COMMIT)"

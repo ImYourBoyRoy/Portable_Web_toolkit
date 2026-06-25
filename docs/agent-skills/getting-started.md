@@ -20,7 +20,7 @@ Cross-platform installers: `scripts/install-agent-skills.ps1` (Windows/macOS/Lin
 ## Tell your agent (works in any tool)
 
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit. Clone the repo, then run scripts/install-agent-skills.ps1 -Agent all on Windows (PowerShell 7+) or scripts/install-agent-skills.sh --agent all on macOS/Linux.
+Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Run scripts/install-agent-skills.ps1 -Agent all on Windows (PowerShell 7+) or scripts/install-agent-skills.sh --agent all on macOS/Linux. For any Astro + Cloudflare client site, read START_HERE.md, run site-readiness first, then follow portable-web-toolkit skill.
 ```
 
 ## One-shot install (no manual cd)
@@ -75,18 +75,24 @@ Run from a **client project root** to install into that repo only:
 
 ## After install
 
-- Invoke by name: e.g. "Follow the **portable-web-toolkit** skill"
+- Invoke by name: `portable-web-toolkit`, `site-readiness`, `site-starter`, `toolkit-update`, `instagram-clone`
+- Blind agents: repo **`START_HERE.md`** at root
 - Read repo **`AGENTS.md`** when editing toolkit source
 - Per-agent details: see the other guides in this folder
 
 ## Update
 
 ```powershell
-git pull
-./scripts/install-agent-skills.ps1 -Agent all
+./scripts/update-toolkit.ps1
 ```
 
 ```bash
+./scripts/update-toolkit.sh
+```
+
+Or manually:
+
+```powershell
 git pull
-./scripts/install-agent-skills.sh --agent all
+./scripts/install-agent-skills.ps1 -Agent all
 ```

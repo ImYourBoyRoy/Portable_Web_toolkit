@@ -62,7 +62,13 @@ Install skills into the **current project** (`.cursor/skills`, `.github/skills`,
 
 | Skill | Purpose |
 |-------|---------|
-| `portable-web-toolkit` | Site-profile-driven Astro/Cloudflare deploy, discovery-doctor, cf-agent workflows |
+| `portable-web-toolkit` | **Master** — deploy, discovery, cf-agent, full CLI reference |
+| `site-readiness` | **Start every client session** — run-all + next steps |
+| `site-starter` | New client site from `site-starter/` templates |
+| `toolkit-update` | `git pull` + reinstall skills + verify |
+| `instagram-clone` | Public Instagram gallery (env-driven handle) |
+
+**Zero-research:** repo root [`START_HERE.md`](../START_HERE.md)
 
 Read `AGENTS.md` and `Web_Toolkit/OPERATIONS.md`. Always pass `--site-profile` for client sites.
 
@@ -94,11 +100,13 @@ git pull
 ## Repo layout
 
 ```text
-skills/portable-web-toolkit/SKILL.md   # skill entry point
-AGENTS.md                        # repo agent rules
-docs/agent-skills/               # install guides (this folder)
-scripts/install-agent-skills.*   # cross-platform installer
-plugin.json                      # Antigravity / plugin manifest
-.claude-plugin/plugin.json       # Claude Code plugin metadata
+skills/portable-web-toolkit/SKILL.md   # Master skill — load if only one
+skills/site-readiness/SKILL.md         # Run-all first on client sites
+skills/site-starter/SKILL.md           # New client site scaffold
+skills/toolkit-update/SKILL.md         # Pull + reinstall skills
+skills/instagram-clone/SKILL.md        # Public Instagram gallery
+skills/README.md                       # Skill index
+START_HERE.md                          # Zero-research entry (repo root)
+AGENTS.md                              # Repo agent rules
 ```
 

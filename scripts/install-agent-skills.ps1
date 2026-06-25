@@ -215,3 +215,19 @@ foreach ($t in $targets) {
 }
 
 Write-Host "Done. See docs/agent-skills/README.md for per-agent details."
+
+$stampDir = Join-Path $UserHome '.portable-web-toolkit'
+$versionFile = Join-Path $RepoRoot 'VERSION'
+$version = if (Test-Path $versionFile) { (Get-Content $versionFile -Raw).Trim() } else { '0.0.0' }
+$commit = ''
+if (Test-Path (Join-Path $RepoRoot '.git')) {
+    $commit = (git -C $RepoRoot rev-parse --short HEAD 2>$null)
+}
+if (-not (Test-Path $stampDir)) { New-Item -ItemType Directory -Path $stampDir -Force | Out-Null }
+@{
+    version = $version
+    installedAt = (Get-Date).ToString('o')
+    repoRoot = $RepoRoot
+    commit = $commit
+} | ConvertTo-Json | Set-Content -Path (Join-Path $stampDir 'install-stamp.json') -Encoding utf8
+Write-Host "Install stamp: v$version ($commit)"

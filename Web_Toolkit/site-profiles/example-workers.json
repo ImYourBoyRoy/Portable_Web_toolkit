@@ -63,6 +63,12 @@
       "defaultMode": "url",
       "defaultEnvironment": "production"
     },
+    "headers": {
+      "distSubdir": "client",
+      "preset": "astro-static",
+      "developmentNoIndex": true,
+      "ogImagePath": "/assets/og-image.png"
+    },
     "dns": {
       "expectedRecords": [],
       "expectedNameservers": []
