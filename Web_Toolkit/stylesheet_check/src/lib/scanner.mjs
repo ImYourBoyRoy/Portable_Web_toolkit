@@ -3,7 +3,7 @@
  * Stylesheet architecture scanner for Astro/Svelte/Vue/Tauri web UI projects.
  *
  * Enforces externalized CSS, token segregation, file size limits, and duplicate
- * custom-property definitions aligned with AGENT.md stylesheet rules.
+ * custom-property definitions aligned with AGENTS.md stylesheet rules.
  */
 
 import fs from 'node:fs';

@@ -8,11 +8,11 @@ Repo-local rules for AI agents using the **Portable Astro + Cloudflare Web Toolk
 
 1. **[`START_HERE.md`](./START_HERE.md)** — zero-research bootstrap (skills, layout, first commands)
 2. Installed **skills** in `skills/` (especially `portable-web-toolkit`, `site-readiness`)
-3. `Web_Toolkit/OPERATIONS.md` — full numbered deploy sequence
+3. `Web_Toolkit/OPERATIONS.md` — full numbered deploy sequence (reference)
 4. `Web_Toolkit/README.md` — module phases
-5. `Web_Toolkit/MEMORY.md` — recent validated facts only
+5. Local **`Web_Toolkit/MEMORY.md`** (gitignored) — copy from `Web_Toolkit/MEMORY.example.md` for operator session notes
 
-**Do not** use `Web_Toolkit/AGENT.md` — deprecated.
+**Do not** load `docs/templates/AGENT.template.md` for toolkit work — that template is for other projects.
 
 ## Toolkit root
 
@@ -81,7 +81,7 @@ Pass `--site-profile <path>` whenever the target site is not the default example
 - [ ] Dry-run outputs reviewed before any `--apply`
 - [ ] `discovery-doctor` passes on `dist/` (and live URL if deployed)
 - [ ] No secrets in committed files or toolkit export
-- [ ] `MEMORY.md` updated with verified version/deploy notes when material
+- [ ] Local `Web_Toolkit/MEMORY.md` updated when versions/deploy change (file is gitignored)
 
 ## Cursor skill
 

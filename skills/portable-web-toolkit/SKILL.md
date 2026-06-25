@@ -6,21 +6,21 @@ description: Master skill for the Portable Astro + Cloudflare Web Toolkit. Use f
 # Portable Web Toolkit (master skill)
 
 **Zero-research entry:** repo `START_HERE.md` at root.  
-**Cross-platform:** all CLIs are Node — see `skills/CROSS_PLATFORM.md`.  
-**Session start (every time):** check for updates, then `site-readiness run`.
+**Cross-platform:** all CLIs are Node — see `skills/CROSS_PLATFORM.md`.
 
 ## Session start (mandatory)
 
 ```bash
-# 1. Check for toolkit/skills updates (from toolkit repo root or clone)
+# Toolkit repo — check for updates
 node ./scripts/check-toolkit-update.mjs
+# exit 2 → node ./scripts/update-toolkit.mjs
 
-# 2. If exit code 2 → run update (any OS)
-node ./scripts/update-toolkit.mjs
-
-# 3. On client site — readiness first
-node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .
+# Client site — readiness first (always)
+cd <client-project-root>
+node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<site>.site-profile.json
 ```
+
+Read `output/site-readiness-*.json` → execute `nextSteps` and `recommendedFixes`.
 
 ## Architecture (memorize)
 
@@ -43,9 +43,9 @@ ClientSite/                    ← separate folder per client
 | Secrets | Client `.env` only |
 | Deploy spec | `*.site-profile.json` |
 | Toolkit code | `Web_Toolkit/` link (junction or symlink) |
-| Never commit | `.env`, `Private_Site_Profiles/`, `smoke-manifest.json` |
+| Never commit | `.env`, `Private_Site_Profiles/`, `smoke-manifest.json`, toolkit `MEMORY.md` |
 
-## Skill routing (which skill to load)
+## Skill routing
 
 | Situation | Skill |
 |-----------|-------|
@@ -54,15 +54,6 @@ ClientSite/                    ← separate folder per client
 | Instagram gallery | **instagram-clone** |
 | Pull latest toolkit/skills | **toolkit-update** |
 | Everything else | **this skill** |
-
-## Session start (every client site)
-
-```bash
-cd <client-project-root>
-node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<site>.site-profile.json
-```
-
-Read `output/site-readiness-*.json` → execute `nextSteps` and `recommendedFixes`.
 
 ## Full CLI reference
 
@@ -169,7 +160,7 @@ Generate on every build — **custom generators only**:
 | Assets | No stock favicons/heroes; SVG + WebP |
 | Workers-first | Prefer CF Workers/KV/D1/R2 over external SaaS |
 | Versions | Verify Astro/Wrangler/Node from repo — not model memory |
-| Ignore | `Web_Toolkit/AGENT.md` (deprecated) |
+| Do not load | `docs/templates/AGENT.template.md` for toolkit work |
 
 ## Environment variables (client `.env`)
 
@@ -231,7 +222,7 @@ See **toolkit-update** skill for pull + reinstall flow.
 - [ ] `discovery-doctor` pass on `dist/` and live URL
 - [ ] Staging smoke before production
 - [ ] No secrets in git
-- [ ] `MEMORY.md` updated when versions/deploy change
+- [ ] Client `MEMORY.md` updated when versions/deploy change (not toolkit operator MEMORY)
 
 ## Rationalizations (reject these)
 

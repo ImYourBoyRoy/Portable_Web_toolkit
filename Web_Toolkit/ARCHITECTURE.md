@@ -4,61 +4,84 @@
 
 The toolkit is split so one project/client cannot quietly contaminate the shared core.
 
-## Shape
+## Repository layout
 
-### Canonical docs
-- `README.md`
-- `AGENTS.md`
-- `OPERATIONS.md`
-- `ARCHITECTURE.md`
-- `RUNBOOKS.md`
-- `CHECKLIST.md`
-- `MEMORY.md`
+```
+Portable_Web_toolkit/          ← distribution repo (skills, docs, site-starter)
+  START_HERE.md                ← blind-agent entry (read first)
+  AGENTS.md                    ← repo-local agent rules
+  skills/                      ← installable agent skills
+  site-starter/                ← new client site templates
+  scripts/                     ← link-toolkit, update, install-skills
 
-### Config
-- `site-profiles/*.json`
-- project root `.env` preferred for live settings
-- `Web_Toolkit/.env.example` as a reference template only
+  Web_Toolkit/                 ← all CLIs (link into client projects)
+    site_readiness/            ← session orchestrator (JSON next steps)
+    shared/lib/                ← env, profile, runtime helpers
+    site-profiles/             ← public examples only
+    templates/discovery/       ← copy-ready discovery generators
+    .runtime/                  ← generated toolkit reports (gitignored)
+```
 
-### Shared logic
-- `shared/lib/`
-- centralizes env parsing, profile loading, relative project-root resolution, and runtime-path handling
+Client sites are **separate folders** with a junction/symlink to `Web_Toolkit/`.
 
-### Tools
-- each tool lives in its own folder
-- `project_init/` covers fresh-project bootstrap without overwriting existing work
-- `toolkit_verify/` proves the portable toolkit still works
-- `toolkit_report/` summarizes what is ready, missing, or pending for a target project
-- `registrar/` manages NS delegation at the domain registrar (Porkbun) to point domains at Cloudflare
-- shared helpers should be preferred over copy-pasted path/env/profile logic
+## Canonical docs (committed)
 
-### Runtime state
-- `Web_Toolkit/.runtime/`
-- exports, reports, sessions, and other deletable portable-generated artifacts belong here
+- `README.md`, `OPERATIONS.md`, `ARCHITECTURE.md`, `RUNBOOKS.md`, `CHECKLIST.md`
+- `MEMORY.example.md`, `RED_TEAM_REPORT.example.md` — copy to gitignored local files
 
-## How to extend it safely
+## Agent navigation (compressed)
 
-1. add or reuse a focused tool folder
-2. use `shared/lib/` when the logic is cross-tool
-3. keep site-specific values in profiles
-4. keep runtime residue out of the source tree
-5. update canonical docs in the same work cycle
+1. **`START_HERE.md`** — zero research
+2. **`site-readiness run`** — JSON report with `nextSteps` / `recommendedFixes`
+3. **`portable-web-toolkit` skill** — deploy, discovery, CF audits
+4. **`OPERATIONS.md`** — full numbered reference (32 steps)
 
+Do **not** load `docs/templates/AGENT.template.md` for toolkit work — that file is for other projects.
 
+## Shared logic
 
-## Input / Output Boundaries
+- `shared/lib/` — env parsing, profile loading, project-root resolution, runtime paths
+- Prefer shared helpers over copy-pasted path/env logic in new tools
+
+## Key tools
+
+| Module | Role |
+|--------|------|
+| `site_readiness/` | Sandbox-aware run-all; primary agent orchestrator |
+| `project_init/` | Non-destructive client bootstrap |
+| `cloudflare-agent-toolkit/` | CF audit, deploy, DNS, hardening |
+| `discovery_doctor/` | robots/sitemap/llms/JSON-LD verification |
+| `headers_deploy/` | `public/_headers` scaffold and deploy merge |
+| `toolkit_verify/` | Self-validation before publish |
+| `privacy_check/` | Secrets scan before export |
+
+## Input / output boundaries
 
 ### Inputs
-- Site profiles are declarative JSON and should not contain secrets.
-- Target project `.env` files are the preferred live secret/config source.
-- CLI flags override profile/default values for one-off agent runs.
+
+- Site profiles: declarative JSON, no secrets
+- Client `.env`: live secrets and API keys
+- CLI flags override profile defaults
 
 ### Outputs
-- Project-specific diagnostics belong in `<projectRoot>/output/`.
-- Toolkit self-reports, exports, auth-session metadata, and non-project operational reports belong in `Web_Toolkit/.runtime/`.
-- Tool-folder `output/` and `dist/` directories are treated as generated residue and are purged/export-excluded.
-- Published source should include only public example profiles; private profiles live outside the repository and are passed by path.
 
-## MCP Packaging Decision
+- Client diagnostics: `<projectRoot>/output/`
+- Toolkit self-reports: `Web_Toolkit/.runtime/`
+- Published source: public example profiles only; private profiles passed by path
 
-The CLI remains the canonical execution layer. A local MCP should wrap these commands first because it can safely reach local project files, local env, and local browser tooling. A Cloudflare-hosted MCP is best as a second layer for read-only summaries, Cloudflare audits, and report retrieval, with explicit authentication and apply gates for any mutation.
+## Extending the toolkit
+
+1. Add a focused folder under `Web_Toolkit/<module>/`
+2. Reuse `shared/lib/` for cross-tool logic
+3. Register bin in `Web_Toolkit/package.json` if publishable
+4. Add row to `skills/portable-web-toolkit/SKILL.md` CLI table
+5. Update `OPERATIONS.md` / `README.md` in the same work cycle
+6. Run `toolkit_verify` + `privacy_check`
+
+## Extending agent skills
+
+See [`../../skills/CONTRIBUTING.md`](../../skills/CONTRIBUTING.md). New skills = new folder + `install-agent-skills.mjs`.
+
+## MCP direction
+
+CLI + JSON reports remain canonical. A **local MCP** should wrap existing commands first. Cloudflare-hosted MCP later for read-only audits only, with explicit apply gates for mutations.

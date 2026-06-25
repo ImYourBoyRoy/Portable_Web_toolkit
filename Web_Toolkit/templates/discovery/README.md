@@ -14,4 +14,4 @@ Copy these reference files into a client site's `src/` tree when bootstrapping t
 - Extend static page discovery with your project's content collections, CMS data, or database queries.
 - Keep preview/staging deployments on `Disallow: /` or equivalent noindex posture.
 
-See `AGENT.md` §11 and `discovery_doctor/README.md` for verification expectations.
+See `AGENTS.md` § discovery rules and `discovery_doctor/README.md` for verification expectations.

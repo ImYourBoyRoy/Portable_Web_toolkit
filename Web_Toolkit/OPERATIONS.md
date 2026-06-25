@@ -1,5 +1,7 @@
 # Portable Toolkit Operations
 
+> **Agents:** run `site-readiness run` first and follow `output/site-readiness-*.json`. Use this file as the full reference checklist — not as the primary navigation path.
+
 ## Canonical sequence
 
 1. `Setup_Agent_Environment` (new machine only)

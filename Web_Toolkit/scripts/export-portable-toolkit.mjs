@@ -68,7 +68,7 @@ function shouldSkip(relativePath, flags) {
   const allowedProfiles = includedProfiles(flags);
 
   if (!normalized) return false;
-  if (normalized === '.runtime' || normalized === '.git' || normalized === 'dist' || normalized === 'output' || normalized === 'MEMORY.md') return true;
+  if (normalized === '.runtime' || normalized === '.git' || normalized === 'dist' || normalized === 'output' || normalized === 'MEMORY.md' || normalized === 'RED_TEAM_REPORT.md') return true;
   if (normalized === '.env') return true;
   if (basename === '.DS_Store' || basename === 'Thumbs.db' || basename === 'doctor.txt') return true;
   if (normalized.startsWith('.runtime/')) return true;

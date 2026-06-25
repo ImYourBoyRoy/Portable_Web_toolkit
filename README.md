@@ -1,6 +1,6 @@
 # Portable Web Toolkit
 
-**Version:** `0.2.1` · [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
+**Version:** `0.2.2` · [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
 
 A toolkit for building and shipping **Astro + Cloudflare** websites with help from AI coding agents (Cursor, Claude, Copilot, and others).
 
@@ -78,6 +78,7 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 | API keys and secrets | Client project `.env` (never commit) |
 | Domains, worker names, deploy commands | `*.site-profile.json` in the client project |
 | Brand colors, voice, logos | Client `BRAND_GUIDE.md` |
+| Operator session notes (toolkit repo) | Local `Web_Toolkit/MEMORY.md` (gitignored; copy from `MEMORY.example.md`) |
 
 ---
 

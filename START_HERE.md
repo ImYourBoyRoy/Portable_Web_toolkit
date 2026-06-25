@@ -97,11 +97,11 @@ Host tools missing? → user runs Setup_Agent_Environment.*
 
 ---
 
-## 6. Instruction precedence
+## Instruction precedence
 
 1. User request  
 2. Installed **skills**  
 3. Client `BRAND_GUIDE.md` + site profile + `.env`  
-4. This file → `AGENTS.md` → `OPERATIONS.md`
+4. This file → `AGENTS.md` → `OPERATIONS.md` (reference)
 
-**Ignore:** `Web_Toolkit/AGENT.md` (deprecated).
+**Do not load** `docs/templates/AGENT.template.md` for toolkit work.

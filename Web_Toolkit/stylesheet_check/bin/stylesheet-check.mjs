@@ -38,7 +38,7 @@ function printHelp() {
       'stylesheet-check scan --root ./src --json-out ./output/stylesheet-check.json'
     ],
     notes: [
-      'Aligns with AGENT.md stylesheet architecture: external CSS, tokens in tokens.css, ≤500 lines per file.',
+      'Aligns with AGENTS.md stylesheet rules: external CSS, tokens in tokens.css, ≤500 lines per file.',
       'Exit code 2 when errors or warnings are found; 0 when clean.'
     ],
     exitCodes: [

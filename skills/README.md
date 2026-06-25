@@ -15,6 +15,8 @@ Platform wrappers (optional):
 
 Cross-platform conventions: [`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md)
 
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) to add or update skills.
+
 ## Skills (invoke by name)
 
 | Skill | Trigger |

@@ -3,6 +3,23 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.2.2] - 2026-06-25
+
+### Added
+
+- **`MEMORY.example.md`** and **`RED_TEAM_REPORT.example.md`** — committed templates; local copies gitignored
+- **`docs/templates/AGENT.template.md`** — universal operator template moved out of agent entry path
+- **`docs/templates/README.md`**, **`skills/CONTRIBUTING.md`**
+
+### Changed
+
+- **Gitignore** — `MEMORY.md` and `RED_TEAM_REPORT.md` (operator-local, not published)
+- **Removed** deprecated `Web_Toolkit/AGENT.md`; agents use `START_HERE.md` + `AGENTS.md` only
+- **`ARCHITECTURE.md`** — v0.2.x agentic layout, site-readiness orchestrator, skill extension guide
+- **`OPERATIONS.md`** — points agents to site-readiness JSON first
+- **`portable-web-toolkit` skill** — deduplicated session-start blocks
+- Stylesheet-check and discovery template refs → `AGENTS.md` (not universal template)
+
 ## [0.2.1] - 2026-06-25
 
 ### Added

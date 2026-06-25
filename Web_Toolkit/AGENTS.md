@@ -1,16 +1,15 @@
 # Portable Web Toolkit — Agent Instructions (Web_Toolkit)
 
-> **Canonical copy:** see `../AGENTS.md` at the Portable_Web_toolkit repo root.  
-> **Do not use** `AGENT.md` in this folder — it is a deprecated generic template.
+> **Canonical copy:** see [`../AGENTS.md`](../AGENTS.md) at the repo root.
 
 ## Do first
 
-1. `README.md`
-2. `OPERATIONS.md`
-3. `ARCHITECTURE.md`
-4. `RUNBOOKS.md`
-5. `CHECKLIST.md`
-6. `MEMORY.md` (recent validated facts only)
+1. [`../START_HERE.md`](../START_HERE.md)
+2. `README.md`
+3. `OPERATIONS.md` (reference — primary path is `site-readiness` JSON)
+4. `ARCHITECTURE.md`
+
+Local operator notes: copy `MEMORY.example.md` → `MEMORY.md` (gitignored).
 
 ## What matters most
 
@@ -19,19 +18,18 @@
 - Generated artifacts in `.runtime/` only
 - Dry-run before `--apply` on Cloudflare, DNS, cache, registrar
 - Custom discovery generators — **not** `@astrojs/sitemap` / `@astrojs/robots`
-- `project-init` for fresh/partial client roots; `toolkit-report` when phase is unclear
+- `site-readiness run` at the start of every client session
 
 ## Site deploy gate
 
-1. `npm run check` → `npm run build`
-2. Discovery generators refreshed; `stylesheet-check` if CSS changed
+1. `site-readiness run` → read JSON report
+2. `npm run check` → `npm run build`
 3. `discovery-doctor` on `./dist`
-4. Deploy staging → smoke → production
-5. Live `discovery-doctor` on production URL
-6. Sync client `MEMORY.md` + Brand Guide if identity changed
+4. Staging → smoke → production → live discovery
+5. Sync **client** `MEMORY.md` + Brand Guide if identity changed
 
 Infrastructure: **audit → dry-run → `--apply`**. Full sequence: `OPERATIONS.md`.
 
-## Cursor skill
+## Skills
 
-Install from repo root: `../scripts/install-cursor-skills.ps1` — skill name **portable-web-toolkit**.
+Install from repo root: `node ../scripts/install-agent-skills.mjs` — master skill **portable-web-toolkit**.
