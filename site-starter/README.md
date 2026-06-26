@@ -2,108 +2,79 @@
 
 Copy these files into a **new client site folder** (not into this toolkit repo root).
 
-This repo (`Portable_Web_toolkit`) is the **toolkit distribution**. Your website lives in its own directory (for example `my-client-site/`) with a link to `Web_Toolkit/`.
+Requires **`Web_Toolkit/`** linked at the project root (`node …/link-web-toolkit.mjs`).
 
-Cross-platform details: [`skills/CROSS_PLATFORM.md`](../skills/CROSS_PLATFORM.md)
+Cross-platform: [`skills/CROSS_PLATFORM.md`](../skills/CROSS_PLATFORM.md)
 
 ## Pick a deploy target
 
-| Target | Use when | Copy these → project root |
-|--------|----------|---------------------------|
-| **Workers** | SSR, API routes, KV/cron, `@astrojs/cloudflare` `output: 'server'` | `workers.package.json` → `package.json`, `workers.wrangler.toml` → `wrangler.toml` |
-| **Pages** | Static/prerender marketing sites, `output: 'static'` | `pages.package.json` → `package.json`, `pages.wrangler.toml` → `wrangler.toml` |
+| Target | Copy → project root |
+|--------|---------------------|
+| **Workers** (SSR, API) | `workers.package.json` → `package.json`, `workers.wrangler.toml` → `wrangler.toml`, `astro.config.workers.example.mjs` → `astro.config.mjs` |
+| **Pages** (static) | `pages.package.json` → `package.json`, `pages.wrangler.toml` → `wrangler.toml`, `astro.config.pages.example.mjs` → `astro.config.mjs` |
 
-Set `deployTarget` in your `*.site-profile.json` to `workers` or `pages` to match.
+Set `deployTarget` in `*.site-profile.json` to `workers` or `pages`.
 
-## Quick start (all platforms)
-
-Set `TOOLKIT` to your Portable_Web_toolkit repo root and `SITE` to the new client folder.
+## Quick start
 
 ```bash
-# 1. Create the client project folder
 mkdir -p "$SITE" && cd "$SITE"
 
-# 2. Copy starter files (Workers example)
 cp "$TOOLKIT/site-starter/workers.package.json" ./package.json
 cp "$TOOLKIT/site-starter/workers.wrangler.toml" ./wrangler.toml
+cp "$TOOLKIT/site-starter/astro.config.workers.example.mjs" ./astro.config.mjs
 cp "$TOOLKIT/site-starter/.env.example" ./.env.example
-cp -R "$TOOLKIT/site-starter/scripts" ./scripts
+cp -R "$TOOLKIT/site-starter/src/styles" ./src/styles
 
-# 3. Link the toolkit (junction on Windows, symlink on macOS/Linux)
 node "$TOOLKIT/scripts/link-web-toolkit.mjs" \
   --toolkit-path "$TOOLKIT/Web_Toolkit" \
   --project-root "$SITE"
 
-# 4. Replace placeholders in package.json and wrangler.toml
-#    [PROJECT_NAME], [WORKER_NAME] or [PAGES_PROJECT_NAME], [SITE_PROFILE]
+# Copy discovery layer — see Web_Toolkit/templates/discovery/README.md
+# Edit src/lib/site-config.ts, astro.config site URL, package.json placeholders
 
-# 5. Bootstrap Astro + site profile
 npm install
-node ./Web_Toolkit/project_init/bin/project-init.mjs apply-safe --project-root .
 node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs
-```
-
-**Windows (PowerShell 7+)** — use `Copy-Item` instead of `cp` if you prefer; the link step is the same `node .../link-web-toolkit.mjs` command.
-
-## Placeholders to replace
-
-| Token | Where | Example |
-|-------|--------|---------|
-| `[PROJECT_NAME]` | `package.json` `name` | `my-client-site` |
-| `[WORKER_NAME]` | `wrangler.toml` (Workers) | `my-client-site` |
-| `[PAGES_PROJECT_NAME]` | `wrangler.toml` + `cf:deploy` (Pages) | `my-client-pages` |
-| `[SITE_PROFILE]` | npm scripts | `my-client-site.site-profile` |
-
-## Astro config expectations
-
-**Workers** (`workers.package.json`):
-
-```js
-import cloudflare from '@astrojs/cloudflare';
-
-export default defineConfig({
-  output: 'server',
-  adapter: cloudflare({ imageService: 'compile' }),
-});
-```
-
-**Pages** (`pages.package.json`):
-
-```js
-export default defineConfig({
-  output: 'static',
-});
-```
-
-## Included helper scripts
-
-Copy `site-starter/scripts/` to your project `scripts/`:
-
-| Script | Purpose |
-|--------|---------|
-| `build-headers.mjs` | Deploy-time `_headers` via toolkit `headers-deploy` |
-| `check-wrangler-versions.mjs` | Compare Wrangler vs npm latest |
-| `clean-local-cache.mjs` | Clear `.astro`, `dist`, Vite cache |
-| `readiness.mjs` | **Run-all** readiness report (`npm run readiness`) |
-
-## Run-all readiness
-
-After linking `Web_Toolkit`:
-
-```bash
+node ./Web_Toolkit/project_init/bin/project-init.mjs apply-safe --project-root .
 npm run readiness
-npm run readiness:fix   # apply-safe starter files first
 ```
 
-Writes `output/site-readiness-*.json` and `.md` with PASS/WARN/FAIL/SKIP per phase.
+## npm scripts → Web_Toolkit
 
-## Toolkit path in npm scripts
+After linking `Web_Toolkit/`, starter `package.json` scripts call toolkit CLIs directly:
 
-Scripts reference `./Web_Toolkit/`. If your link is named `web_toolkit` (lowercase), either rename the link or update script paths to match.
+| Script | Toolkit entry |
+|--------|----------------|
+| `build:headers:*` | `Web_Toolkit/headers_deploy/bin/headers-deploy.mjs` |
+| `clean:cache` | `Web_Toolkit/scripts/clean-local-cache.mjs` |
+| `check:wrangler` | `Web_Toolkit/scripts/check-wrangler-versions.mjs` |
+| `readiness` | `Web_Toolkit/site_readiness/bin/site-readiness.mjs` |
+| `discovery:doctor` | `Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs` |
+| `quality:smoke` | `Web_Toolkit/site_quality_smoke/...` |
+| `styles:check` | `Web_Toolkit/stylesheet_check/...` |
+
+No duplicate `scripts/` folder in the client project for these — the toolkit is the source of truth.
+
+## Placeholders
+
+| Token | Where |
+|-------|--------|
+| `[PROJECT_NAME]` | `package.json` |
+| `[WORKER_NAME]` / `[PAGES_PROJECT_NAME]` | `wrangler.toml`, deploy scripts |
+| `[SITE_PROFILE]` | `quality:smoke` site profile path |
+| `your-production-domain.example` | `astro.config.mjs` `site` |
+
+## Structural CSS only
+
+`src/styles/tokens.css` and `global.css` are **system tokens** (fonts, spacing) — not a visual theme. Each client gets its own Brand Guide and component styles.
+
+## Discovery layer
+
+Full copy list: [`Web_Toolkit/templates/discovery/README.md`](../Web_Toolkit/templates/discovery/README.md)
 
 ## Next steps
 
-1. Create `BRAND_GUIDE.md` and `*.site-profile.json`
-2. Copy secrets into `.env` (never commit)
-3. `npm run build` → `discovery:doctor` on `./dist` or `./dist/client`
-4. See `Web_Toolkit/OPERATIONS.md` for deploy and smoke sequence
+1. `BRAND_GUIDE.md` + `*.site-profile.json`
+2. Secrets in `.env` (never commit)
+3. `npm run build` → `npm run discovery:doctor`
+4. [`Web_Toolkit/OPERATIONS.md`](../Web_Toolkit/OPERATIONS.md)

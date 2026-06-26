@@ -1,55 +1,63 @@
 /// <reference types="vite/client" />
 // ./src/pages/llms-full.txt.ts
-/**
- * Expanded AI-readable site brief built from public routes and page metadata.
- */
+/** Expanded AI-readable brief from site-config and page metadata. */
 
 import type { APIRoute } from 'astro';
+import { getPublicPageRoutes } from '../lib/discovery/routes';
+import { resolveBaseUrl } from '../lib/discovery/site';
+import { siteConfig } from '../lib/site-config';
 import { extractMetadataFromContent } from '../lib/metadata-extractor';
 
-export const GET: APIRoute = async ({ site }) => {
-  const pages = import.meta.glob('./**/*.{astro,md,mdx}', {
-    query: '?raw',
-    import: 'default',
-    eager: true
-  }) as Record<string, string>;
+export const prerender = true;
 
-  const sections = Object.entries(pages)
-    .filter(([key]) => {
-      const isPublic = !key.includes('/admin/') && !key.includes('/api/');
-      const isInternal = ['robots.txt.ts', 'sitemap.xml.ts', 'llms.txt.ts', 'llms-full.txt.ts']
-        .some((name) => key.endsWith(name));
-      return isPublic && !isInternal;
-    })
+const pageModules = import.meta.glob('./**/*.{astro,md,mdx}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+export const GET: APIRoute = ({ site }) => {
+  const buildDate = new Date().toISOString().split('T')[0];
+  const routes = getPublicPageRoutes(buildDate);
+  const baseUrl = resolveBaseUrl(site);
+
+  const sections = Object.entries(pageModules)
+    .filter(([key]) => !key.includes('/admin/') && !key.includes('/api/'))
+    .filter(([key]) => !['robots.txt.ts', 'sitemap.xml.ts', 'llms.txt.ts', 'llms-full.txt.ts', 'humans.txt.ts']
+      .some((name) => key.endsWith(name)))
     .map(([key, content]) => {
-      const metadata = extractMetadataFromContent(content, key);
+      const metadata = extractMetadataFromContent(content, key, buildDate);
       return [
         `### ${metadata.title}`,
         `- Description: ${metadata.description}`,
         `- Headings: ${metadata.headings.join(', ') || 'None detected'}`,
-        `- Links: ${metadata.links.slice(0, 12).join(', ') || 'None detected'}`
       ].join('\n');
     })
     .join('\n\n');
 
-  const baseUrl = site?.toString().replace(/\/$/, '') || 'https://example.com';
   const body = [
-    `# ${site?.hostname || 'example.com'} — Full Context`,
+    `# ${siteConfig.name} — Full Context`,
+    siteConfig.description,
     '',
     '## Pages',
-    sections,
+    sections || routes.map((r) => `- ${r.title}: ${r.description}`).join('\n'),
     '',
-    '## Discovery Endpoints',
-    `- Base URL: ${baseUrl}`,
-    `- Sitemap: ${new URL('/sitemap.xml', `${baseUrl}/`).href}`,
-    `- Robots: ${new URL('/robots.txt', `${baseUrl}/`).href}`
+    ...(baseUrl
+      ? [
+          '## Discovery Endpoints',
+          `- Base URL: ${baseUrl}`,
+          `- Sitemap: ${new URL('/sitemap.xml', `${baseUrl}/`).href}`,
+          `- Content API: ${new URL('/api/content.json', `${baseUrl}/`).href}`,
+          `- Search API: ${new URL('/api/search.json?q=', `${baseUrl}/`).href}`,
+        ]
+      : []),
   ].join('\n');
 
   return new Response(body, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'public, max-age=0, must-revalidate'
-    }
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+    },
   });
 };

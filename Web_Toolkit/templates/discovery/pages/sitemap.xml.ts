@@ -7,6 +7,8 @@
 import type { APIRoute } from 'astro';
 import { extractMetadataFromContent } from '../lib/metadata-extractor';
 
+export const prerender = true;
+
 export const GET: APIRoute = async ({ site }) => {
   const pages = import.meta.glob('./**/*.{astro,md,mdx}', {
     query: '?raw',
@@ -15,7 +17,10 @@ export const GET: APIRoute = async ({ site }) => {
   }) as Record<string, string>;
 
   const buildDate = new Date().toISOString().split('T')[0];
-  const base = site ?? new URL('https://example.com');
+  if (!site) {
+    return new Response('Site URL not configured in astro.config.mjs', { status: 500 });
+  }
+  const base = site;
 
   const entries = Object.entries(pages).map(([fileKey, content]) => {
     const segment = fileKey
@@ -39,7 +44,7 @@ export const GET: APIRoute = async ({ site }) => {
 
   const filteredEntries = entries.filter((entry) => {
     const pathname = new URL(entry.loc).pathname;
-    const excluded = ['/404', '/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt'];
+    const excluded = ['/404', '/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt', '/humans.txt'];
     return !excluded.includes(pathname) && !pathname.startsWith('/admin') && !pathname.startsWith('/api/');
   }).sort((a, b) => b.priority.localeCompare(a.priority));
 

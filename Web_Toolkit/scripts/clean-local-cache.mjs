@@ -1,15 +1,14 @@
-// ./scripts/clean-local-cache.mjs
+#!/usr/bin/env node
+// ./Web_Toolkit/scripts/clean-local-cache.mjs
 /**
- * Clear Astro and Vite build caches without removing node_modules.
+ * Clear Astro/Vite build caches in the target project (not node_modules).
+ * Run from client project root: node ./Web_Toolkit/scripts/clean-local-cache.mjs
  */
 
 import { rimraf } from 'rimraf';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, '..');
-
+const projectRoot = path.resolve(process.env.PROJECT_ROOT || process.cwd());
 const pathsToClean = [
   path.join(projectRoot, '.astro'),
   path.join(projectRoot, 'dist'),
@@ -25,6 +24,6 @@ try {
   }
   console.log('[clean-local-cache] Done.');
 } catch (error) {
-  console.error(`[clean-local-cache] Failed: ${error.message}`);
+  console.error(`[clean-local-cache] Failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }

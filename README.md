@@ -1,6 +1,6 @@
 # Portable Web Toolkit
 
-**Version:** `0.2.3` · [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
+**Version:** `0.2.5` · [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
 
 A toolkit for building and shipping **Astro + Cloudflare** websites with help from AI coding agents (Cursor, Claude, Copilot, and others).
 

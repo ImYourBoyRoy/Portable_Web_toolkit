@@ -1,23 +1,22 @@
-// ./scripts/check-wrangler-versions.mjs
+#!/usr/bin/env node
+// ./Web_Toolkit/scripts/check-wrangler-versions.mjs
 /**
- * Compare installed Wrangler toolchain versions against the npm registry.
+ * Compare installed Wrangler toolchain against npm registry latest.
+ * Run from client project root: node ./Web_Toolkit/scripts/check-wrangler-versions.mjs
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(process.env.PROJECT_ROOT || process.cwd());
 const lockPath = path.join(projectRoot, 'package-lock.json');
-
 const PACKAGES = ['wrangler', '@cloudflare/workers-types'];
 
 function readInstalledVersion(packageName) {
+  if (!existsSync(lockPath)) return null;
   const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
   const lockEntry = lock.packages?.[`node_modules/${packageName}`]?.version;
   if (lockEntry) return lockEntry;
-
   const root = lock.packages?.['']?.devDependencies?.[packageName]
     ?? lock.packages?.['']?.dependencies?.[packageName];
   return root?.replace(/^[^\d]*/, '') ?? null;
@@ -45,27 +44,19 @@ for (const packageName of PACKAGES) {
     Promise.resolve(readInstalledVersion(packageName)),
     readLatestVersion(packageName),
   ]);
-  const status = compareVersions(installed, latest);
-  rows.push({ packageName, installed: installed ?? '—', latest, status });
+  rows.push({ packageName, installed: installed ?? '—', latest, status: compareVersions(installed, latest) });
 }
 
-const label = 'Package'.padEnd(28);
-console.log(`${label} Installed       Latest          Status`);
+console.log(`${'Package'.padEnd(28)} Installed       Latest          Status`);
 console.log('-'.repeat(72));
 
 let hasOutdated = false;
-
 for (const row of rows) {
-  console.log(
-    `${row.packageName.padEnd(28)} ${row.installed.padEnd(15)} ${row.latest.padEnd(15)} ${row.status}`,
-  );
-  if (row.status === 'outdated' || row.status === 'missing') {
-    hasOutdated = true;
-  }
+  console.log(`${row.packageName.padEnd(28)} ${row.installed.padEnd(15)} ${row.latest.padEnd(15)} ${row.status}`);
+  if (row.status === 'outdated' || row.status === 'missing') hasOutdated = true;
 }
 
 console.log('');
-
 if (hasOutdated) {
   console.log('Wrangler toolchain is behind npm latest. Run: npm run upgrade:wrangler');
   process.exitCode = 1;

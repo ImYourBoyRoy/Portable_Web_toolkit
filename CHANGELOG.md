@@ -3,6 +3,25 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.2.5] - 2026-06-25
+
+### Added
+
+- **Full Zenith discovery templates** — humans.txt, security.txt, content/search APIs, `lib/discovery/*`, Schema.astro, middleware (generic `site-config.ts`, no client data)
+- **`Web_Toolkit/scripts/clean-local-cache.mjs`**, **`check-wrangler-versions.mjs`** — run from linked client projects
+- **site-starter** — `astro.config.*.example.mjs`, structural `src/styles/tokens.css` + `global.css`
+
+### Changed
+
+- **site-starter `package.json`** — npm scripts call `./Web_Toolkit/` CLIs directly (headers, readiness, cache, wrangler check)
+- **site-readiness** — checks `Web_Toolkit` link instead of local `scripts/` folder
+- **`.gitignore`** — `**/Private_Site_Profiles/`
+
+### Removed
+
+- Legacy root **`templates/`** folder (superseded by `site-starter/`)
+- **`site-starter/scripts/`** duplicate wrappers (logic lives in `Web_Toolkit/`)
+
 ## [0.2.3] - 2026-06-25
 
 ### Removed

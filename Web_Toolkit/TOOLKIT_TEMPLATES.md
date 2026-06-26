@@ -1,37 +1,25 @@
 # Web Toolkit: Reusable Template Guide
 
-Battle-tested templates for Astro + Cloudflare client sites live in the **repository root**, not inside `Web_Toolkit/`.
+Starter files for Astro + Cloudflare client sites live at the **repository root** in `site-starter/`. Discovery generators live in **`templates/discovery/`** inside this folder.
 
-## New client sites — start here
+## New client sites
 
-| Template | Path | Use |
-|----------|------|-----|
-| Workers (SSR) | [`../../site-starter/workers.package.json`](../../site-starter/workers.package.json) | `output: 'server'` + `@astrojs/cloudflare` |
-| Pages (static) | [`../../site-starter/pages.package.json`](../../site-starter/pages.package.json) | `output: 'static'` |
-| Wrangler (Workers) | [`../../site-starter/workers.wrangler.toml`](../../site-starter/workers.wrangler.toml) | Worker deploy |
-| Wrangler (Pages) | [`../../site-starter/pages.wrangler.toml`](../../site-starter/pages.wrangler.toml) | Pages deploy |
-| Env scaffold | [`../../site-starter/.env.example`](../../site-starter/.env.example) | Client secrets template |
-| Helper scripts | [`../../site-starter/scripts/`](../../site-starter/scripts/) | readiness, headers, cache clean |
+| Template | Path |
+|----------|------|
+| Workers package | [`../../site-starter/workers.package.json`](../../site-starter/workers.package.json) |
+| Pages package | [`../../site-starter/pages.package.json`](../../site-starter/pages.package.json) |
+| Wrangler (Workers) | [`../../site-starter/workers.wrangler.toml`](../../site-starter/workers.wrangler.toml) |
+| Wrangler (Pages) | [`../../site-starter/pages.wrangler.toml`](../../site-starter/pages.wrangler.toml) |
+| Astro config examples | [`../../site-starter/astro.config.workers.example.mjs`](../../site-starter/astro.config.workers.example.mjs), [`astro.config.pages.example.mjs`](../../site-starter/astro.config.pages.example.mjs) |
+| Structural CSS | [`../../site-starter/src/styles/`](../../site-starter/src/styles/) |
+| Env scaffold | [`../../site-starter/.env.example`](../../site-starter/.env.example) |
 
-Full walkthrough: [`../../site-starter/README.md`](../../site-starter/README.md)
+Walkthrough: [`../../site-starter/README.md`](../../site-starter/README.md)
 
-## Discovery generators
+## Discovery (Zenith layer)
 
-Generic, copy-ready starters (no client domains baked in):
-
-- [`./templates/discovery/`](./templates/discovery/) — `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`
-
-Extend inside each site repo with your route manifest or content collections.
-
-## Astro package templates (reference)
-
-- [`../../templates/package.astro-workers.json`](../../templates/package.astro-workers.json)
-- [`../../templates/package.astro-static.json`](../../templates/package.astro-static.json)
+[`./templates/discovery/`](./templates/discovery/) — robots, sitemap, llms, llms-full, humans, security.txt, content/search APIs, JSON-LD, middleware. Customize `site-config.ts` per client; no baked-in client domains.
 
 ## Branding
 
-Use **[Brand Doctor](./brand_doctor/README.md)** with each client's `BRAND_GUIDE.md` and site profile — do not copy OG/layout files from another project.
-
----
-
-*Reference these paths when bootstrapping new projects for consistency and performance.*
+Use **[Brand Doctor](./brand_doctor/README.md)** with each client's `BRAND_GUIDE.md` and site profile.

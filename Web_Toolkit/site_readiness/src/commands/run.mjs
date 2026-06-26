@@ -56,6 +56,9 @@ function stepResult(id, status, issues = [], extra = {}) {
 
 function checkProjectFiles(projectRoot) {
   const issues = [];
+  const toolkitLinked = fs.existsSync(
+    path.join(projectRoot, 'Web_Toolkit', 'headers_deploy', 'bin', 'headers-deploy.mjs'),
+  );
   const checks = {
     readme: fs.existsSync(path.join(projectRoot, 'README.md')),
     memory: fs.existsSync(path.join(projectRoot, 'MEMORY.md')),
@@ -64,7 +67,7 @@ function checkProjectFiles(projectRoot) {
     packageJson: fs.existsSync(path.join(projectRoot, 'package.json')),
     astroConfig: Boolean(findAstroConfig(projectRoot)),
     wrangler: fs.existsSync(path.join(projectRoot, 'wrangler.toml')),
-    scriptsDir: fs.existsSync(path.join(projectRoot, 'scripts')),
+    webToolkitLinked: toolkitLinked,
   };
 
   if (!checks.readme) issues.push('Add README.md with project synopsis and run instructions.');
@@ -74,7 +77,9 @@ function checkProjectFiles(projectRoot) {
   if (!checks.packageJson) issues.push('Copy site-starter/workers.package.json or pages.package.json → package.json.');
   if (!checks.astroConfig) issues.push('Add astro.config.* before build/deploy workflows.');
   if (!checks.wrangler) issues.push('Copy site-starter workers.wrangler.toml or pages.wrangler.toml → wrangler.toml.');
-  if (!checks.scriptsDir) issues.push('Copy site-starter/scripts/ into the project for headers and cache helpers.');
+  if (!checks.webToolkitLinked) {
+    issues.push('Link Web_Toolkit at project root (link-web-toolkit.mjs). npm scripts call toolkit CLIs directly.');
+  }
 
   const status = issues.length === 0 ? 'pass' : issues.length <= 2 ? 'warn' : 'fail';
   return stepResult('project-files', status, issues, { checks });
