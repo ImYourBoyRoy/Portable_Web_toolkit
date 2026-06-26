@@ -66,6 +66,8 @@ Administrator (Windows) or `sudo` (macOS/Linux) may be required. See [`Web_Toolk
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
 | Update toolkit + skills | `toolkit-update` skill or `node scripts/update-toolkit.mjs` |
 | Verify discovery layer | `discovery-doctor` on `dist/` or live URL |
+| Set GitHub topics/description | `node scripts/set-github-topics.mjs` (token in gitignored `.env`) |
+| Safe push + topics | `node scripts/publish-github.mjs` |
 
 Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portable-web-toolkit` skill.
 
@@ -75,10 +77,12 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 
 | What | Where |
 |------|-------|
-| API keys and secrets | Client project `.env` (never commit) |
+| API keys and secrets | Client project `.env` or **gitignored** repo root `.env` (never commit) |
+| GitHub token (`GH_TOKEN`) | **Gitignored** root `.env` only — used by `publish-github.mjs` / `gh` |
 | Domains, worker names, deploy commands | `*.site-profile.json` in the client project |
 | Brand colors, voice, logos | Client `BRAND_GUIDE.md` |
 | Operator session notes (toolkit repo) | Local `Web_Toolkit/MEMORY.md` (gitignored; copy from `MEMORY.example.md`) |
+| GitHub topics (public metadata) | `docs/github-repository.json` — no secrets |
 
 ---
 

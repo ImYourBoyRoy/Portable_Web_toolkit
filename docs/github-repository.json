@@ -1,0 +1,27 @@
+{
+  "repository": "imyourboyroy/Portable_Web_toolkit",
+  "description": "AI-agent-first toolkit for Astro + Cloudflare sites: agent skills, CLI tools (readiness, deploy, discovery), and client starter templates.",
+  "homepage": "https://github.com/imyourboyroy/Portable_Web_toolkit",
+  "topics": [
+    "astro",
+    "cloudflare",
+    "cloudflare-workers",
+    "cloudflare-pages",
+    "wrangler",
+    "vite",
+    "ai-agents",
+    "agent-skills",
+    "cursor",
+    "cli-tools",
+    "devops",
+    "deployment",
+    "static-site",
+    "web-development",
+    "nodejs",
+    "seo",
+    "llms-txt",
+    "open-source",
+    "site-generator",
+    "automation"
+  ]
+}

@@ -10,6 +10,8 @@
   },
   "scripts": {
     "verify:toolkit": "node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs",
-    "privacy:scan": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json"
+    "verify:secrets": "node ./scripts/verify-secrets-not-tracked.mjs",
+    "privacy:scan": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json",
+    "publish:github": "node ./scripts/publish-github.mjs"
   }
 }

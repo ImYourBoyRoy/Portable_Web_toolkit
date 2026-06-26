@@ -5,6 +5,7 @@
 
 export const FINDING_PATTERNS = [
   { category: 'secret', label: 'Cloudflare token', pattern: /CLOUDFLARE_API_TOKEN\s*=\s*cf[a-z0-9_\-]{20,}/ig },
+  { category: 'secret', label: 'GitHub token', pattern: /(?:GH_TOKEN|GITHUB_TOKEN)\s*=\s*(?:ghp_[^\r\n\s]{20,}|github_pat_[^\r\n\s]{20,})/ig },
   { category: 'secret', label: 'OpenAI key', pattern: /OPENAI_API_KEY\s*=\s*(?:sk|sess)-[^\r\n\s]{12,}/ig },
   { category: 'secret', label: 'Resend key', pattern: /RESEND_API_KEY\s*=\s*re_[^\r\n\s]{10,}/ig },
   { category: 'secret', label: 'PostHog key', pattern: /PUBLIC_POSTHOG_API_KEY\s*=\s*phc_[^\r\n\s]{10,}/ig },

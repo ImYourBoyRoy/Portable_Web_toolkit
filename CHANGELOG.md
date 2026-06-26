@@ -10,10 +10,13 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 - **`MEMORY.example.md`** and **`RED_TEAM_REPORT.example.md`** — committed templates; local copies gitignored
 - **`docs/templates/AGENT.template.md`** — universal operator template moved out of agent entry path
 - **`docs/templates/README.md`**, **`skills/CONTRIBUTING.md`**
+- **`docs/github-repository.json`** — public GitHub description + topics (no secrets)
+- **`scripts/set-github-topics.mjs`**, **`scripts/publish-github.mjs`**, **`scripts/verify-secrets-not-tracked.mjs`** — safe publish flow; tokens read from gitignored `.env` only
+- GitHub token detection in **`privacy_check`** patterns
 
 ### Changed
 
-- **Gitignore** — `MEMORY.md` and `RED_TEAM_REPORT.md` (operator-local, not published)
+- **Gitignore** — hardened for `.env`, `.env.local`, `secrets/`, `github-repository.local.json`; operator `MEMORY.md` / `RED_TEAM_REPORT.md` stay local
 - **Removed** deprecated `Web_Toolkit/AGENT.md`; agents use `START_HERE.md` + `AGENTS.md` only
 - **`ARCHITECTURE.md`** — v0.2.x agentic layout, site-readiness orchestrator, skill extension guide
 - **`OPERATIONS.md`** — points agents to site-readiness JSON first

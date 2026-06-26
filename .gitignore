@@ -19,12 +19,22 @@ pnpm-debug.log*
 tmp/*
 !tmp/.gitkeep
 
-# environment variables / secrets
+# environment variables / secrets (NEVER commit — tokens stay local only)
 .env
 .env.*
 !.env.example
+!.env.*.example
+.env.local
+.env.*.local
+.envrc
 .dev.vars
 *.local
+secrets/
+**/secrets/
+
+# operator-local GitHub metadata overrides (public copy: docs/github-repository.json)
+github-repository.local.json
+**/github-repository.local.json
 
 # operator session memory (local only — copy from MEMORY.example.md)
 MEMORY.md

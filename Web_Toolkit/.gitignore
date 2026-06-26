@@ -4,12 +4,16 @@ dist/
 .astro/
 coverage/
 
-# Environment / secrets
+# Environment / secrets (NEVER commit)
 .env
 .env.*
 !.env.example
+!.env.*.example
+.env.local
+.env.*.local
 .dev.vars
 *.local
+secrets/
 
 # Runtime reports / generated artifacts
 .runtime/
