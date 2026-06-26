@@ -27,7 +27,8 @@ Client sites are **separate folders** with a junction/symlink to `Web_Toolkit/`.
 ## Canonical docs (committed)
 
 - `README.md`, `OPERATIONS.md`, `ARCHITECTURE.md`, `RUNBOOKS.md`, `CHECKLIST.md`
-- `MEMORY.example.md`, `RED_TEAM_REPORT.example.md` — copy to gitignored local files
+
+Operator session notes (`MEMORY.md`, `RED_TEAM_REPORT.md`) are **local-only** and not part of the published toolkit. Client sites maintain their own `MEMORY.md`.
 
 ## Agent navigation (compressed)
 

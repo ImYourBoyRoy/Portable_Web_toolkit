@@ -25,10 +25,8 @@ doctor.txt
 EXPORT-METADATA.json
 *.zip
 
-# Operator session notes (local only — copy from MEMORY.example.md)
+# Operator session notes (local only — not published)
 MEMORY.md
-
-# Operator red-team notes (local only — copy from RED_TEAM_REPORT.example.md)
 RED_TEAM_REPORT.md
 
 # Site profiles: keep only public examples under version control

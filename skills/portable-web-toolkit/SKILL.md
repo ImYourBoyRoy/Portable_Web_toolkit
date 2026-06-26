@@ -43,7 +43,7 @@ ClientSite/                    ← separate folder per client
 | Secrets | Client `.env` only |
 | Deploy spec | `*.site-profile.json` |
 | Toolkit code | `Web_Toolkit/` link (junction or symlink) |
-| Never commit | `.env`, `Private_Site_Profiles/`, `smoke-manifest.json`, toolkit `MEMORY.md` |
+| Never commit | `.env`, `Private_Site_Profiles/`, `smoke-manifest.json` |
 
 ## Skill routing
 

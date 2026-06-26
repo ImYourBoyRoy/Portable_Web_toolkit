@@ -9,7 +9,7 @@
 3. `OPERATIONS.md` (reference — primary path is `site-readiness` JSON)
 4. `ARCHITECTURE.md`
 
-Local operator notes: copy `MEMORY.example.md` → `MEMORY.md` (gitignored).
+Session memory belongs in each **client project** `MEMORY.md`, not in this toolkit repo.
 
 ## What matters most
 

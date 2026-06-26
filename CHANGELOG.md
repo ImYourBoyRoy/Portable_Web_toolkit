@@ -3,6 +3,19 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.2.3] - 2026-06-25
+
+### Removed
+
+- GitHub publish tooling (`publish-github.mjs`, `set-github-topics.mjs`, `verify-secrets-not-tracked.mjs`, `docs/github-repository.*`) — not part of the web toolkit product
+- `MEMORY.example.md`, `RED_TEAM_REPORT.example.md` — operator notes belong in client projects, not the distribution repo
+- `GH_TOKEN` / `GITHUB_TOKEN` placeholders from `.env.example` files
+
+### Changed
+
+- **README** / **AGENTS.md** — secrets and session memory documented for **client projects** only
+- **Gitignore** — all `MEMORY.md` / `RED_TEAM_REPORT.md` paths local-only (no committed examples)
+
 ## [0.2.2] - 2026-06-25
 
 ### Added
