@@ -29,6 +29,7 @@
     "discovery:doctor": "node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist",
     "readiness": "node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .",
     "readiness:fix": "node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --apply-safe-fixes",
+    "package_updater": "node ./Web_Toolkit/package_updater/bin/package-updater.mjs run --project-root . --apply",
     "styles:check": "node ./Web_Toolkit/stylesheet_check/bin/stylesheet-check.mjs scan --root ."
   },
   "dependencies": {
