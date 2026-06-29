@@ -33,9 +33,10 @@
     "styles:check": "node ./Web_Toolkit/stylesheet_check/bin/stylesheet-check.mjs scan --root ."
   },
   "dependencies": {
+    "@astrojs/upgrade": "^0.7.3",
     "@astrojs/check": "^0.9.9",
-	"@astrojs/cloudflare": "^14.0.0",
-    "astro": "^7.0.2",
+	"@astrojs/cloudflare": "^14.0.1",
+    "astro": "^7.0.3",
 	"playwright": "^1.61.1",
     "typescript": "^6.0.3",
     "vite": "^8.1.0"
@@ -47,6 +48,7 @@
   },
   "allowScripts": {
     "esbuild": true,
-    "sharp": true
+    "sharp": true,
+	"workerd": true
   }
 }

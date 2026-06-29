@@ -32,6 +32,7 @@
     "styles:check": "node ./Web_Toolkit/stylesheet_check/bin/stylesheet-check.mjs scan --root ."
   },
   "dependencies": {
+    "@astrojs/upgrade": "^0.7.3",
     "@astrojs/check": "^0.9.9",
     "@astrojs/cloudflare": "^14.0.0",
     "astro": "^7.0.2",
