@@ -68,7 +68,7 @@ async function collectChoices(menu, flags) {
   console.log('');
   console.log(`  ${menu.adminNote}`);
   console.log('');
-  console.log('  About pyenv-native');
+  console.log('  About Python (pyenv-native + pyenv-gui)');
   console.log(`  ${menu.pyenvNativeBlurb}`);
   console.log('');
 
