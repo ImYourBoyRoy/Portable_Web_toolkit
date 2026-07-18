@@ -32,7 +32,7 @@ Each client site is a **separate folder** with its own `package.json`, `.env`, a
 
 ## Optional: prepare your computer
 
-On a **new machine**, you may need Git, Node.js, Python, or browser automation tools. Run the **interactive setup wizard** — it lists everything, lets you opt in or out, then installs only what you chose.
+On a **new machine**, you may need Git, Node.js, Python, or browser automation tools. Run the **interactive setup wizard** — it lists everything, lets you opt in or out, then installs only what you chose. **You do not need Node installed first**; the `.command` / `.sh` / `.bat` launchers use a native wizard and bootstrap installs Node when missing.
 
 | Platform | Run |
 |----------|-----|
