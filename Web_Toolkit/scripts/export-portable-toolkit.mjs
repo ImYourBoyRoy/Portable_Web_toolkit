@@ -105,6 +105,8 @@ function copyRecursive(source, destination, flags) {
 
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(source, destination);
+  // Preserve executable bits so .sh / .command launchers stay double-clickable after export.
+  fs.chmodSync(destination, stat.mode);
 }
 
 function includedExampleProfiles(targetRoot) {
