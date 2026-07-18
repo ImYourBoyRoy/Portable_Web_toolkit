@@ -1,17 +1,28 @@
 // ./Web_Toolkit/package_updater/src/commands/update.mjs
 /**
  * Logic to fetch package versions from npm registry and update package.json.
+ *
+ * Preserves existing range operators (^, ~, >=, >, <=, <) when rewriting pins.
+ * Defaults to ^ when the current value has no operator.
+ *
+ * Known peer constraints (do not force incompatible majors):
+ * - typescript stays on the latest 6.x while @astrojs/check peers only allow ^5 || ^6
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import https from 'node:https';
 
+/** Packages whose latest major is not yet safe for the Astro site-starter stack. */
+const MAJOR_CAPS = {
+  // @astrojs/check@0.9.9 peers: typescript ^5.0.0 || ^6.0.0 (not ^7 yet)
+  typescript: 6
+};
+
 function fetchLatestVersion(pkgName) {
   return new Promise((resolve, reject) => {
-    // Some scoped packages or specific packages might fail; standard HTTPS get is sufficient
-    https.get(`https://registry.npmjs.org/${pkgName}/latest`, {
-      headers: { 'User-Agent': 'Antigravity-Package-Updater' }
+    https.get(`https://registry.npmjs.org/${encodeURIComponent(pkgName)}/latest`, {
+      headers: { 'User-Agent': 'Portable-Web-Toolkit-Package-Updater' }
     }, (res) => {
       if (res.statusCode !== 200) {
         reject(new Error(`HTTP status ${res.statusCode}`));
@@ -35,6 +46,76 @@ function fetchLatestVersion(pkgName) {
       reject(err);
     });
   });
+}
+
+function fetchLatestMatchingMajor(pkgName, major) {
+  return new Promise((resolve, reject) => {
+    https.get(`https://registry.npmjs.org/${encodeURIComponent(pkgName)}`, {
+      headers: { 'User-Agent': 'Portable-Web-Toolkit-Package-Updater' }
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP status ${res.statusCode}`));
+        return;
+      }
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          const versions = Object.keys(parsed.versions || {})
+            .filter((v) => !v.includes('-') && v.startsWith(`${major}.`))
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+          if (!versions.length) {
+            reject(new Error(`No stable ${major}.x versions found`));
+            return;
+          }
+          resolve(versions[versions.length - 1]);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+function detectRangeOperator(currentVal = '') {
+  const value = String(currentVal || '').trim();
+  if (value.startsWith('^')) return '^';
+  if (value.startsWith('~')) return '~';
+  if (value.startsWith('>=')) return '>=';
+  if (value.startsWith('<=')) return '<=';
+  if (value.startsWith('>')) return '>';
+  if (value.startsWith('<')) return '<';
+  if (value.startsWith('=')) return '=';
+  return '^';
+}
+
+function formatTargetVersion(currentVal, latest) {
+  const op = detectRangeOperator(currentVal);
+  if (op === '>=' || op === '<=' || op === '>' || op === '<' || op === '=') {
+    return `${op}${latest}`;
+  }
+  return `${op}${latest}`;
+}
+
+async function resolveTargetVersion(name, currentVal) {
+  const cappedMajor = MAJOR_CAPS[name];
+  if (cappedMajor != null) {
+    const latest = await fetchLatestVersion(name);
+    const latestMajor = Number(String(latest).split('.')[0]);
+    if (latestMajor > cappedMajor) {
+      const capped = await fetchLatestMatchingMajor(name, cappedMajor);
+      return {
+        version: capped,
+        note: `capped at ${cappedMajor}.x (latest ${latest} exceeds @astrojs/check peer range)`
+      };
+    }
+    return { version: latest, note: null };
+  }
+  const latest = await fetchLatestVersion(name);
+  return { version: latest, note: null };
 }
 
 export async function runPackageUpdate(flags = {}) {
@@ -76,18 +157,21 @@ export async function runPackageUpdate(flags = {}) {
     updatesToApply[group] = {};
 
     const packages = Object.keys(pkg[group]);
-    // Process in batches or parallel
     const promises = packages.map(async (name) => {
       const currentVal = pkg[group][name];
+      if (typeof currentVal !== 'string' || currentVal.startsWith('file:') || currentVal.startsWith('workspace:')) {
+        console.log(`    • ${name}: ${currentVal} (skipped)`);
+        return;
+      }
       try {
-        const latest = await fetchLatestVersion(name);
-        const targetVal = `^${latest}`;
+        const { version: latest, note } = await resolveTargetVersion(name, currentVal);
+        const targetVal = formatTargetVersion(currentVal, latest);
         if (currentVal !== targetVal) {
-          console.log(`    • ${name}: ${currentVal} -> ${targetVal}`);
+          console.log(`    • ${name}: ${currentVal} -> ${targetVal}${note ? ` [${note}]` : ''}`);
           updatesToApply[group][name] = targetVal;
           totalUpdatesFound++;
         } else {
-          console.log(`    • ${name}: ${currentVal} (current)`);
+          console.log(`    • ${name}: ${currentVal} (current)${note ? ` [${note}]` : ''}`);
         }
       } catch (e) {
         console.error(`    × ${name}: failed to fetch version (${e.message})`);
@@ -99,7 +183,6 @@ export async function runPackageUpdate(flags = {}) {
 
   if (totalUpdatesFound > 0) {
     if (apply) {
-      // Apply updates to original object
       for (const group of depGroups) {
         if (!updatesToApply[group]) continue;
         for (const [name, targetVal] of Object.entries(updatesToApply[group])) {

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // ./Web_Toolkit/package_updater/bin/package-updater.mjs
 /**
- * CLI entrypoint for package.json updater to latest versions using >=[version].
+ * CLI entrypoint for package.json updater to latest versions.
+ * Preserves existing range operators (^, ~, >=, …); defaults to ^.
  */
 
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
@@ -31,7 +32,7 @@ function parseCliArgs(argv = []) {
 function printHelp() {
   return printStandardHelp({
     name: 'package-updater',
-    summary: 'Check package.json dependencies and update them to >=[latest-version]',
+    summary: 'Check package.json dependencies and update them to the latest registry versions (preserves ^ / ~ / >= operators).',
     usage: [
       'package-updater run --project-root <path> [--apply]',
     ],
@@ -43,7 +44,7 @@ function printHelp() {
     ],
     flags: [
       { name: '--project-root <path>', description: 'Target project root directory.' },
-      { name: '--apply', description: 'Write updated >=[version] definitions back to package.json.' },
+      { name: '--apply', description: 'Write updated version ranges back to package.json.' },
     ],
     examples: [
       'package-updater run --project-root .',
@@ -51,7 +52,9 @@ function printHelp() {
     ],
     notes: [
       'Queries the official npm registry to find the latest stable version of each package.',
-      'Only updates dependencies and devDependencies to >=[latest_version].',
+      'Preserves the existing range operator on each pin (^, ~, >=, >, <=, <, =); defaults to ^ when none is present.',
+      'TypeScript is capped at the latest 6.x while @astrojs/check peers only allow ^5 || ^6.',
+      'Use engines.node with >= for runtime floors (e.g. ">=26"); use ^ for npm dependencies.',
     ],
     exitCodes: [
       { name: '0', description: 'Check completed successfully (with or without updates).' },

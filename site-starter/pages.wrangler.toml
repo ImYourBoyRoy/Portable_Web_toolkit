@@ -3,6 +3,6 @@
 # This file is optional for local preview; set name to your Pages project slug.
 
 name = "[PAGES_PROJECT_NAME]"
-compatibility_date = "2026-06-15"
+compatibility_date = "2026-07-18"
 
 # Static Astro output lands in dist/ — wrangler pages deploy dist uses that folder.

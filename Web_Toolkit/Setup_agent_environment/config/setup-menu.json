@@ -6,7 +6,7 @@
     {
       "id": "core",
       "name": "Core host tools",
-      "description": "Git, Node.js 26+ (current line), pyenv-native, Python 3.13+ workspace venv, and pip",
+      "description": "Git, Node.js 26+ (current line), pyenv-native, Python 3.14+ workspace venv (3.13+ minimum), and pip",
       "default": true,
       "locked": true
     }

@@ -93,8 +93,8 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 
 ## Requirements
 
-- **Node.js 26+** (see `.node-version` in this repo)
-- Client sites: Astro 7 + Cloudflare (Workers or Pages) — templates in [`site-starter/`](./site-starter/README.md)
+- **Node.js 26+** (see `.node-version` in this repo — currently `26.5.0`)
+- Client sites: Astro 7.1+ + Cloudflare (Workers or Pages) — templates in [`site-starter/`](./site-starter/README.md)
 
 ---
 
