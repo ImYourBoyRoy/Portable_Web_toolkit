@@ -9,6 +9,7 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 - **pyenv-gui (required)** — host bootstrap installs/detects the pyenv-native GUI companion; launch with `pyenv gui`. Manifest keys under `tool.pyenv_gui.*`; doctor fails when missing.
 - **Executable launchers** — all tracked `.sh` / `.command` files are `100755` so clones/downloads are double-clickable; portable exports preserve mode bits.
+- **Node-free setup launchers** — `setup-interactive.sh` / `setup-interactive.ps1` so `.command` / `.sh` / `.bat` work on machines without Node; bootstrap installs Node when missing.
 
 ### Changed
 
