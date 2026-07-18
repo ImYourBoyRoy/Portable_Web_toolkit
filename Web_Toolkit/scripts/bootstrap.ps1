@@ -257,6 +257,33 @@ function Add-PyenvToPath {
 function Get-PyenvVersion { $pyenv = Resolve-PyenvCommand; if (-not $pyenv) { return '' }; Add-PyenvToPath; try { (& $pyenv --version 2>$null | Select-Object -First 1).Trim() } catch { '' } }
 function Invoke-Pyenv([string[]]$Args, [string]$WorkingDirectory = '') { $pyenv = Resolve-PyenvCommand; if (-not $pyenv) { throw 'pyenv-native is not available in PATH.' }; Add-PyenvToPath; if ($WorkingDirectory) { Push-Location $WorkingDirectory; try { & $pyenv @Args } finally { Pop-Location } } else { & $pyenv @Args } }
 
+function Get-PyenvGuiPath {
+    $binName = 'pyenv-gui.exe'
+    $root = Join-Path $env:USERPROFILE '.pyenv'
+    foreach ($path in @(
+        (Join-Path $root "bin\$binName"),
+        (Join-Path $root $binName),
+        (Resolve-CommandPath 'pyenv-gui')
+    )) {
+        if ($path -and (Test-Path $path)) { return $path }
+    }
+    if (Test-Path $root) {
+        $found = Get-ChildItem -Path $root -Recurse -Filter $binName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($found) { return $found.FullName }
+    }
+    return $null
+}
+
+function Test-PyenvGuiAvailable {
+    if (Get-PyenvGuiPath) { return $true }
+    $pyenv = Resolve-PyenvCommand
+    if (-not $pyenv) { return $false }
+    try {
+        $help = & $pyenv 'gui' '--help' 2>$null
+        return $LASTEXITCODE -eq 0 -or ($help -and "$help" -match 'gui')
+    } catch { return $false }
+}
+
 function Ensure-Git([hashtable]$Report) {
     $before = Get-CommandVersion 'git'
     if ($before) { Add-ReportEntry $Report current 'Git' '' $before $before 'PATH' 'already-current' 'Git already available'; return }
@@ -302,15 +329,41 @@ function Ensure-PyenvNative($Manifest, [hashtable]$Report) {
     Add-PyenvToPath
     $before = Get-PyenvVersion
     try {
-        if ($before -and (Compare-Version $before $required) -ge 0) { Add-ReportEntry $Report current 'pyenv-native' $required $before $before 'PATH' 'already-current' 'pyenv-native satisfies policy'; return }
+        if ($before -and (Compare-Version $before $required) -ge 0) { Add-ReportEntry $Report current 'pyenv-native (pyenv)' $required $before $before 'PATH' 'already-current' 'pyenv-native CLI satisfies policy'; return }
         if ($before) { Invoke-Pyenv -Args @('self-update') | Out-Null } else { Install-PyenvNative $Manifest }
         $after = Get-PyenvVersion
-        if ($after -and (Compare-Version $after $required) -ge 0) { Add-ReportEntry $Report installed 'pyenv-native' $required $before $after 'github-release-installer/self-update' 'installed-or-updated' 'pyenv-native ready'; return }
+        if ($after -and (Compare-Version $after $required) -ge 0) { Add-ReportEntry $Report installed 'pyenv-native (pyenv)' $required $before $after 'github-release-installer/self-update' 'installed-or-updated' 'pyenv-native CLI ready — use `pyenv` / `pyenv gui`' ; return }
     } catch {
-        Add-ReportEntry $Report failed 'pyenv-native' $required $before '' 'github-release-installer/self-update' 'failed' $_.Exception.Message 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
+        Add-ReportEntry $Report failed 'pyenv-native (pyenv)' $required $before '' 'github-release-installer/self-update' 'failed' $_.Exception.Message 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
         return
     }
-    Add-ReportEntry $Report failed 'pyenv-native' $required $before (Get-PyenvVersion) 'github-release-installer/self-update' 'failed' 'pyenv-native did not satisfy policy after install/update' 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
+    Add-ReportEntry $Report failed 'pyenv-native (pyenv)' $required $before (Get-PyenvVersion) 'github-release-installer/self-update' 'failed' 'pyenv-native did not satisfy policy after install/update' 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
+}
+
+function Ensure-PyenvGui($Manifest, [hashtable]$Report) {
+    Add-PyenvToPath
+    $targetDir = Join-Path $env:USERPROFILE '.pyenv\bin'
+    $targetPath = Join-Path $targetDir (Get-ManifestValue $Manifest 'tool.pyenv_gui.binary_name.windows' 'pyenv-gui.exe')
+    $url = Get-ManifestValue $Manifest 'tool.pyenv_gui.windows.x64.download_url'
+    $before = if (Test-PyenvGuiAvailable) { 'present' } else { '' }
+    try {
+        if ($before) {
+            Add-ReportEntry $Report current 'pyenv-gui' '' $before $before 'pyenv-native' 'already-current' 'pyenv-gui available — launch with `pyenv gui` or pyenv-gui.exe'
+            return
+        }
+        if (-not $url) { throw 'tool.pyenv_gui.windows.x64.download_url missing from manifest' }
+        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        Invoke-WebRequest -Uri $url -OutFile $targetPath
+        Unblock-File -LiteralPath $targetPath -ErrorAction SilentlyContinue
+        Add-PyenvToPath
+        if (Test-PyenvGuiAvailable -or (Test-Path $targetPath)) {
+            Add-ReportEntry $Report installed 'pyenv-gui' '' $before 'present' 'github-release' 'installed' 'pyenv-gui installed — launch with `pyenv gui`'
+            return
+        }
+        throw 'pyenv-gui binary missing after download'
+    } catch {
+        Add-ReportEntry $Report failed 'pyenv-gui' '' $before '' 'github-release' 'failed' $_.Exception.Message 'Download pyenv-gui from the pyenv-native release assets and place it in %USERPROFILE%\.pyenv\bin, then run `pyenv gui`.'
+    }
 }
 
 function Resolve-DesiredPythonVersion($Manifest) {
@@ -401,9 +454,10 @@ function Invoke-DoctorOnly($Manifest, [hashtable]$Report, [hashtable]$Flags) {
     foreach ($pair in @(
         @{ name = 'Git'; version = (Get-CommandVersion 'git'); required = '' ; details = 'Git available' },
         @{ name = 'Node.js'; version = $nodeVersion; required = $nodeRequired; details = 'Node missing or below the required current line' },
-        @{ name = 'pyenv-native'; version = (Get-PyenvVersion); required = (Get-ManifestValue $Manifest 'tool.pyenv_native.minimum_version'); details = 'pyenv-native not found' },
-        @{ name = 'Python runtime'; version = (Get-CommandVersion 'python'); required = (Get-ManifestValue $Manifest 'tool.python.minimum_version'); details = 'Python executable not found' },
-        @{ name = 'pip'; version = (Get-CommandVersion 'pip'); required = ''; details = 'pip not found' }
+        @{ name = 'pyenv-native (pyenv)'; version = (Get-PyenvVersion); required = (Get-ManifestValue $Manifest 'tool.pyenv_native.minimum_version'); details = 'pyenv-native CLI not found — install pyenv-native; do not use system Python' },
+        @{ name = 'pyenv-gui'; version = $(if (Test-PyenvGuiAvailable) { 'present' } else { '' }); required = ''; details = 'pyenv-gui missing — required companion; launch via `pyenv gui`' },
+        @{ name = 'Python runtime'; version = (Get-CommandVersion 'python'); required = (Get-ManifestValue $Manifest 'tool.python.minimum_version'); details = 'Python executable not found under pyenv-native' },
+        @{ name = 'pip'; version = (Get-CommandVersion 'pip'); required = ''; details = 'pip not found under pyenv-native venv' }
     )) {
         $ok = -not [string]::IsNullOrWhiteSpace($pair.version)
         if ($ok -and $pair.required) { $ok = (Compare-Version $pair.version $pair.required) -ge 0 }
@@ -424,13 +478,13 @@ try {
         'verify' { Invoke-DoctorOnly $manifest $report $parsed.flags }
         'fix' {
             if (-not $parsed.flags['allow-installs']) { Add-ReportEntry $report skipped 'Install phase' '' '' '' 'flags' 'skipped' 'Automatic installs disabled by flag' }
-            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
+            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PyenvGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
             Add-WorkspaceReadinessEntries $report $parsed.flags
             Invoke-NodeDoctorIfAvailable $report $parsed.flags
         }
         'prepare-host' {
             if (-not $parsed.flags['allow-installs']) { Add-ReportEntry $report skipped 'Install phase' '' '' '' 'flags' 'skipped' 'Automatic installs disabled by flag' }
-            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
+            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PyenvGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
             Add-WorkspaceReadinessEntries $report $parsed.flags
             Invoke-NodeDoctorIfAvailable $report $parsed.flags
         }

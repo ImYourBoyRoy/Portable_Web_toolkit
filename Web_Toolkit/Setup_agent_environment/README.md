@@ -24,8 +24,9 @@ Engine: `scripts/setup-interactive.mjs` → `bootstrap.ps1` / `bootstrap.sh`
 
 - Git
 - Node.js (current line from manifest)
-- **pyenv-native** — Rust rewrite of pyenv; recommended on all platforms (major upgrade on Windows)
-- Python 3.13+ via pyenv-native
+- **pyenv-native** (`pyenv` CLI) — exclusive Python version manager on Windows, macOS, and Linux
+- **pyenv-gui** — desktop companion; launch with `pyenv gui` ([GUI docs](https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md))
+- Python 3.14+ preferred (3.13+ minimum) **only** via pyenv-native — never system/winget/Homebrew Python
 - pip in a workspace-named virtual environment
 
 ### Optional (you choose each)
@@ -67,8 +68,9 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 - Node.js **26.0.0 or newer** (pinned `.node-version` = `26.5.0`)
 - npm
 - npx
-- `pyenv-native` **0.2.30 or newer**
-- Python 3.14+ preferred (3.13+ minimum) provisioned through `pyenv-native`
+- `pyenv-native` **0.2.30 or newer** (`pyenv` CLI)
+- **pyenv-gui** present (launch: `pyenv gui`)
+- Python 3.14+ preferred (3.13+ minimum) provisioned through `pyenv-native` only
 - pip inside the `pyenv-native`-managed workspace venv
 
 ### Recommended extras
@@ -103,7 +105,8 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 - The source of truth is now `Setup_agent_environment/config/host-bootstrap.manifest.json`.
 - Node policy is **latest/current only** — minimum **26.x**; Linux bootstrap tarball targets **26.5.0** (verify against https://nodejs.org/dist/ before bumps).
 - Python policy prefers the **3.14** line (`desired_prefix` / `fallback_version` in the manifest) while accepting **3.13+** as minimum.
-- `pyenv-native` is the only supported Python installation path.
+- **`tool.python.install_policy` = `pyenv-native-only`** — system/winget/Homebrew Python installs are out of policy.
+- Bootstrap must install **pyenv-native + pyenv-gui**; operators launch the GUI with `pyenv gui`.
 - The workspace venv name is derived from the normalized workspace folder name.
 - Older Node lines are treated as out-of-policy and are never silently accepted or downgraded into compatibility.
 
@@ -111,18 +114,19 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 
 ### Windows
 
-Automatic repair uses `winget`, targets **current/latest Node**, and never installs Python directly.
+Automatic repair uses `winget`, targets **current/latest Node**, and never installs Python via winget.
 
 Typical package targets:
 
 - `winget install --id Git.Git`
 - `winget install --id OpenJS.NodeJS`
-- `pyenv-native` install script from the latest GitHub release
+- `pyenv-native` install script from the latest GitHub release (`pyenv` CLI)
+- `pyenv-gui` binary from the same release assets → `%USERPROFILE%\.pyenv\bin\pyenv-gui.exe` (launch: `pyenv gui`)
 - optional: `pnpm.pnpm`, `Oven-sh.Bun`, `astral-sh.uv`, `GitHub.cli`, `Microsoft.DotNet.SDK.10`
 
 ### macOS
 
-Automatic repair uses Homebrew for Node and optional extras, and `pyenv-native` for Python.
+Automatic repair uses Homebrew for Node and optional extras, and **pyenv-native + pyenv-gui** for Python (not `brew install python`).
 
 Typical package targets:
 
@@ -132,6 +136,7 @@ Typical package targets:
 - optional: `brew install pnpm bun uv gh`
 - optional: `brew install --cask dotnet-sdk`
 - `curl -fsSL https://github.com/imyourboyroy/pyenv-native/releases/latest/download/install.sh | sh`
+- download `pyenv-gui-macos-*` into `~/.pyenv/bin/pyenv-gui` (launch: `pyenv gui`)
 
 ### Linux
 
@@ -144,7 +149,7 @@ Automatic repair now treats **Node separately** from the distro package manager:
   - `yum`
   - `pacman`
   - `zypper`
-- Python still installs only through `pyenv-native`
+- Python still installs only through `pyenv-native` + `pyenv-gui` (never distro `python3` packages for toolkit Python)
 
 ### Architecture caveat
 

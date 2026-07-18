@@ -16,13 +16,13 @@ import { prettyJson, printCheck, printSection, toBool } from '../lib/format.mjs'
 import { loadPortableEnv } from '../lib/env.mjs';
 
 const DEFAULT_NODE_RANGE = '>=26';
-const REQUIRED_TOOL_KEYS = ['git', 'node', 'npm', 'npx', 'python', 'pip'];
+const REQUIRED_TOOL_KEYS = ['git', 'node', 'npm', 'npx', 'pyenv', 'pyenvGui', 'python', 'pip'];
 const OPTIONAL_INSTALL_TOOL_KEYS = ['pnpm', 'bun', 'uv', 'gh', 'dotnet'];
+const PYENV_GUI_DOCS = 'https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md';
 
 const WINDOWS_PACKAGES = {
   git: { id: 'Git.Git', label: 'Git' },
   node: { id: 'OpenJS.NodeJS.LTS', currentId: 'OpenJS.NodeJS', label: 'Node.js' },
-  python: { id: 'Python.Python.3.14', label: 'Python 3.14' },
   gh: { id: 'GitHub.cli', label: 'GitHub CLI' },
   dotnet: { id: 'Microsoft.DotNet.SDK.10', label: '.NET SDK 10' },
   bun: { id: 'Oven-sh.Bun', label: 'Bun' },
@@ -33,7 +33,6 @@ const WINDOWS_PACKAGES = {
 const MACOS_PACKAGES = {
   git: { args: ['install', 'git'], label: 'Git' },
   node: { args: ['install', 'node'], label: 'Node.js' },
-  python: { args: ['install', 'python@3.14'], fallbackArgs: ['install', 'python'], label: 'Python 3.14+' },
   gh: { args: ['install', 'gh'], label: 'GitHub CLI' },
   dotnet: { args: ['install', '--cask', 'dotnet-sdk'], label: '.NET SDK' },
   bun: { args: ['install', 'bun'], label: 'Bun' },
@@ -49,9 +48,10 @@ const TOOL_RULES = {
   corepack: { label: 'corepack', required: false, minimum: '>=0.25.0' },
   pnpm: { label: 'pnpm', required: false, minimum: '>=9.0.0' },
   bun: { label: 'Bun', required: false, minimum: '>=1.1.0' },
-  python: { label: 'Python', required: true, minimum: '>=3.13.0' },
-  pip: { label: 'pip', required: true, minimum: '>=23.0.0' },
-  pyenv: { label: 'pyenv', required: false, minimum: '' },
+  python: { label: 'Python (via pyenv-native)', required: true, minimum: '>=3.13.0' },
+  pip: { label: 'pip (via pyenv-native)', required: true, minimum: '>=23.0.0' },
+  pyenv: { label: 'pyenv-native (pyenv CLI)', required: true, minimum: '>=0.2.30' },
+  pyenvGui: { label: 'pyenv-gui', required: true, minimum: '' },
   pythonPlaywright: { label: 'Python Playwright', required: false, minimum: '>=1.61.0' },
   uv: { label: 'uv', required: false, minimum: '>=0.4.0' },
   dotnet: { label: '.NET SDK', required: false, minimum: '>=8.0.0' },
@@ -206,6 +206,33 @@ function pyenvGlobal() {
   }
 }
 
+function resolvePyenvGuiPath() {
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const binName = process.platform === 'win32' ? 'pyenv-gui.exe' : 'pyenv-gui';
+  const candidates = [
+    path.join(home, '.pyenv', 'bin', binName),
+    path.join(home, '.pyenv', binName)
+  ];
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) return candidate;
+  }
+  if (commandAvailable('pyenv-gui')) {
+    const which = safeCommand(process.platform === 'win32' ? 'where' : 'which', ['pyenv-gui']);
+    if (which.ok) {
+      const first = String(which.stdout || '').split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+      if (first) return first;
+    }
+  }
+  return '';
+}
+
+function pyenvGuiAvailable() {
+  if (resolvePyenvGuiPath()) return true;
+  if (!commandAvailable('pyenv')) return false;
+  const help = safeCommand('pyenv', ['gui', '--help']);
+  return help.ok || /gui/i.test(String(help.stdout || help.stderr || ''));
+}
+
 function workspaceChecks(root) {
   const packageJsonPath = path.join(root, 'package.json');
   const packageJson = fs.existsSync(packageJsonPath)
@@ -285,6 +312,12 @@ function collectChecks(flags = {}) {
     python: { ok: python.ok, version: python.version, command: python.label, executable: python.executable },
     pip: { ok: Boolean(python.pipVersion), version: python.pipVersion, command: python.label },
     pyenv: { ok: commandAvailable('pyenv'), version: safeVersion('pyenv'), global: pyenvGlobal() },
+    pyenvGui: {
+      ok: pyenvGuiAvailable(),
+      version: pyenvGuiAvailable() ? 'present' : '',
+      path: resolvePyenvGuiPath(),
+      launch: 'pyenv gui'
+    },
     pythonPlaywright: { ok: Boolean(python.playwrightVersion), version: python.playwrightVersion, command: python.label },
     uv: { ok: commandAvailable('uv'), version: safeVersion('uv') },
     dotnet: { ok: commandAvailable('dotnet'), version: safeVersion('dotnet') },
@@ -296,6 +329,11 @@ function collectChecks(flags = {}) {
     const requirement = key === 'node' ? nodeRequirement : rule.minimum;
     tools[key].required = rule.required;
     tools[key].requiredRange = requirement;
+    if (key === 'pyenvGui') {
+      tools[key].versionOk = tools[key].ok;
+      tools[key].healthy = tools[key].ok;
+      continue;
+    }
     tools[key].versionOk = tools[key].ok && requirementSatisfied(tools[key].version, requirement);
     tools[key].healthy = tools[key].ok && (tools[key].versionOk || !tools[key].version);
   }
@@ -318,7 +356,8 @@ function collectChecks(flags = {}) {
     tools,
     notes: {
       codexPlaywrightPlugin: 'Manual check: enable the Codex/OpenAI Playwright integration in the Codex environment if you want model-driven browser automation.',
-      bootstrap: 'Native wrappers request elevation first and handle Node bootstrap before this command runs.',
+      bootstrap: 'Native wrappers request elevation first and handle Node + pyenv-native/pyenv-gui bootstrap before this command runs.',
+      pythonPolicy: `Python must come from pyenv-native only (CLI: pyenv; GUI: pyenv-gui via \`pyenv gui\`). Never install system/winget/Homebrew Python for toolkit work. ${PYENV_GUI_DOCS}`,
       linuxPackageManager: linuxManager ? `Automatic Linux installs will use ${linuxManager.command}.` : 'No supported Linux package manager detected for automatic installs.'
     }
   };
@@ -342,7 +381,7 @@ function printDoctorReport(report) {
     printCheck('Linux package manager', report.linuxPackageManager ? 'pass' : 'warn', report.linuxPackageManager || 'unsupported for auto-install');
   }
 
-  for (const key of ['git', 'node', 'npm', 'npx', 'python', 'pip', 'pyenv', 'pythonPlaywright', 'corepack', 'pnpm', 'bun', 'uv', 'gh', 'dotnet']) {
+  for (const key of ['git', 'node', 'npm', 'npx', 'pyenv', 'pyenvGui', 'python', 'pip', 'pythonPlaywright', 'corepack', 'pnpm', 'bun', 'uv', 'gh', 'dotnet']) {
     const tool = report.tools[key];
     const { state, detail } = toolStatus(report, key);
     let label = TOOL_RULES[key]?.label || key;
@@ -350,6 +389,10 @@ function printDoctorReport(report) {
     if (key === 'pip' && tool.command) label = `${label}${tool.command ? ` (${tool.command})` : ''}`;
     if (key === 'pyenv' && tool.global) {
       printCheck(label, state, `${detail}${detail && tool.global ? ' | ' : ''}${tool.global ? `global=${tool.global}` : ''}`);
+      continue;
+    }
+    if (key === 'pyenvGui') {
+      printCheck(label, state, tool.ok ? `launch with \`pyenv gui\`${tool.path ? ` | ${tool.path}` : ''}` : `missing — install via Setup_Agent_Environment (see ${PYENV_GUI_DOCS})`);
       continue;
     }
     if (key === 'python' && tool.executable) {
@@ -377,11 +420,12 @@ function printDoctorReport(report) {
 
   printSection('Fix guidance');
   const windowsNodeId = WINDOWS_PACKAGES.node.currentId;
-  printCheck('Windows baseline', 'warn', `winget install --id Git.Git; ${windowsNodeId}; Python.Python.3.14`);
-  printCheck('macOS baseline', 'warn', 'brew install git node python@3.14 (plus Xcode Command Line Tools)' );
-  printCheck('Linux baseline', 'warn', 'apt/dnf/yum/pacman/zypper installs Git + Node + Python when supported');
+  printCheck('Windows baseline', 'warn', `winget install --id Git.Git; ${windowsNodeId}; then Setup_Agent_Environment.bat (installs pyenv-native + pyenv-gui — never winget Python)`);
+  printCheck('macOS baseline', 'warn', 'brew install git node (plus Xcode Command Line Tools); Python only via pyenv-native/pyenv-gui from Setup_Agent_Environment');
+  printCheck('Linux baseline', 'warn', 'Install Git via distro packages; Node from manifest tarball; Python only via pyenv-native + pyenv-gui');
+  printCheck('Python policy', 'warn', `Exclusive: pyenv-native CLI (\`pyenv\`) + pyenv-gui (\`pyenv gui\`). ${PYENV_GUI_DOCS}`);
   printCheck('Optional tools', 'warn', 'pnpm, bun, uv, GitHub CLI, .NET SDK, and Python Playwright are installed only when missing and requested');
-  printCheck('Python Playwright', 'warn', report.tools.python.ok ? `${report.tools.python.command || 'python'} -m pip install playwright && ${report.tools.python.command || 'python'} -m playwright install chromium` : 'install Python first');
+  printCheck('Python Playwright', 'warn', report.tools.python.ok ? `pyenv exec python -m pip install playwright && pyenv exec python -m playwright install chromium` : 'install Python via pyenv-native first (not system Python)');
 }
 
 function hardFailures(report) {

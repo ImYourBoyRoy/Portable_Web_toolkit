@@ -71,7 +71,7 @@ Read `output/site-readiness-*.json` — follow **nextSteps** and **recommendedFi
 
 ## 4. Machine setup (user task — admin/sudo)
 
-If host tools are missing (Git, Node, Python), direct the **user** to run the interactive wizard — do not impersonate admin installs:
+If host tools are missing (Git, Node, **pyenv-native / pyenv-gui**, Python), direct the **user** to run the interactive wizard — do not impersonate admin installs. Python must come from **pyenv-native** (`pyenv`) + **pyenv-gui** (`pyenv gui`) only:
 
 | OS | Launcher |
 |----|----------|

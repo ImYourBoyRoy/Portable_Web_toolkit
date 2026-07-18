@@ -5,8 +5,14 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [0.2.6] - 2026-07-18
 
+### Added
+
+- **pyenv-gui (required)** — host bootstrap installs/detects the pyenv-native GUI companion; launch with `pyenv gui`. Manifest keys under `tool.pyenv_gui.*`; doctor fails when missing.
+- **Executable launchers** — all tracked `.sh` / `.command` files are `100755` so clones/downloads are double-clickable; portable exports preserve mode bits.
+
 ### Changed
 
+- **Python policy made explicit** — `tool.python.install_policy = pyenv-native-only`. Docs, wizard, and doctor no longer suggest system/winget/Homebrew Python; setup doctor lists `pyenv` + `pyenv-gui` as required.
 - **site-starter** (Workers + Pages) — dependency floors bumped to current npm latest with `^` ranges:
   - `astro` `^7.1.1`, `@astrojs/cloudflare` `^14.1.3`, `vite` `^8.1.5`
   - `wrangler` `^4.112.0`, `@cloudflare/workers-types` `^5.20260718.1` (v5; required by current Wrangler peers)
