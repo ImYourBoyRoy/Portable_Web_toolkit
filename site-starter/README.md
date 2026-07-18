@@ -4,6 +4,8 @@ Copy these files into a **new client site folder** (not into this toolkit repo r
 
 Requires **`Web_Toolkit/`** linked at the project root (`node …/link-web-toolkit.mjs`).
 
+**Baseline (verified 2026-07-18):** Node `>=26` (pin `26.5.0`), Astro `^7.1.1`, `@astrojs/cloudflare` `^14.1.3`, Vite `^8.1.5`, Wrangler `^4.112.0`, `@cloudflare/workers-types` `^5.x`, TypeScript `^6.0.3` (held on 6.x for `@astrojs/check` peers).
+
 Cross-platform: [`skills/CROSS_PLATFORM.md`](../skills/CROSS_PLATFORM.md)
 
 ## Pick a deploy target

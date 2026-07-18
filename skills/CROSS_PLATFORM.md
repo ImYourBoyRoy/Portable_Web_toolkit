@@ -4,7 +4,7 @@ Portable Web Toolkit runs on **Windows, macOS, and Linux**.
 
 ## Universal (any OS)
 
-All toolkit CLIs are **Node.js** — requires **Node 26+** (see repo `.node-version`, currently `26.4.0`):
+All toolkit CLIs are **Node.js** — requires **Node 26+** (see repo `.node-version`, currently `26.5.0`):
 
 ```bash
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .

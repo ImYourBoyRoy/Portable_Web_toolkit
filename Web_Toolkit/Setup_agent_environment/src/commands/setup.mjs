@@ -22,7 +22,7 @@ const OPTIONAL_INSTALL_TOOL_KEYS = ['pnpm', 'bun', 'uv', 'gh', 'dotnet'];
 const WINDOWS_PACKAGES = {
   git: { id: 'Git.Git', label: 'Git' },
   node: { id: 'OpenJS.NodeJS.LTS', currentId: 'OpenJS.NodeJS', label: 'Node.js' },
-  python: { id: 'Python.Python.3.12', label: 'Python 3.12' },
+  python: { id: 'Python.Python.3.14', label: 'Python 3.14' },
   gh: { id: 'GitHub.cli', label: 'GitHub CLI' },
   dotnet: { id: 'Microsoft.DotNet.SDK.10', label: '.NET SDK 10' },
   bun: { id: 'Oven-sh.Bun', label: 'Bun' },
@@ -33,7 +33,7 @@ const WINDOWS_PACKAGES = {
 const MACOS_PACKAGES = {
   git: { args: ['install', 'git'], label: 'Git' },
   node: { args: ['install', 'node'], label: 'Node.js' },
-  python: { args: ['install', 'python@3.12'], fallbackArgs: ['install', 'python'], label: 'Python 3.12+' },
+  python: { args: ['install', 'python@3.14'], fallbackArgs: ['install', 'python'], label: 'Python 3.14+' },
   gh: { args: ['install', 'gh'], label: 'GitHub CLI' },
   dotnet: { args: ['install', '--cask', 'dotnet-sdk'], label: '.NET SDK' },
   bun: { args: ['install', 'bun'], label: 'Bun' },
@@ -49,10 +49,10 @@ const TOOL_RULES = {
   corepack: { label: 'corepack', required: false, minimum: '>=0.25.0' },
   pnpm: { label: 'pnpm', required: false, minimum: '>=9.0.0' },
   bun: { label: 'Bun', required: false, minimum: '>=1.1.0' },
-  python: { label: 'Python', required: true, minimum: '>=3.11.0' },
+  python: { label: 'Python', required: true, minimum: '>=3.13.0' },
   pip: { label: 'pip', required: true, minimum: '>=23.0.0' },
   pyenv: { label: 'pyenv', required: false, minimum: '' },
-  pythonPlaywright: { label: 'Python Playwright', required: false, minimum: '>=1.45.0' },
+  pythonPlaywright: { label: 'Python Playwright', required: false, minimum: '>=1.61.0' },
   uv: { label: 'uv', required: false, minimum: '>=0.4.0' },
   dotnet: { label: '.NET SDK', required: false, minimum: '>=8.0.0' },
   gh: { label: 'GitHub CLI', required: false, minimum: '>=2.45.0' }
@@ -377,8 +377,8 @@ function printDoctorReport(report) {
 
   printSection('Fix guidance');
   const windowsNodeId = WINDOWS_PACKAGES.node.currentId;
-  printCheck('Windows baseline', 'warn', `winget install --id Git.Git; ${windowsNodeId}; Python.Python.3.12`);
-  printCheck('macOS baseline', 'warn', 'brew install git node python@3.12 (plus Xcode Command Line Tools)' );
+  printCheck('Windows baseline', 'warn', `winget install --id Git.Git; ${windowsNodeId}; Python.Python.3.14`);
+  printCheck('macOS baseline', 'warn', 'brew install git node python@3.14 (plus Xcode Command Line Tools)' );
   printCheck('Linux baseline', 'warn', 'apt/dnf/yum/pacman/zypper installs Git + Node + Python when supported');
   printCheck('Optional tools', 'warn', 'pnpm, bun, uv, GitHub CLI, .NET SDK, and Python Playwright are installed only when missing and requested');
   printCheck('Python Playwright', 'warn', report.tools.python.ok ? `${report.tools.python.command || 'python'} -m pip install playwright && ${report.tools.python.command || 'python'} -m playwright install chromium` : 'install Python first');

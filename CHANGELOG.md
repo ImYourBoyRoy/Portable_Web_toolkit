@@ -3,6 +3,20 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.2.6] - 2026-07-18
+
+### Changed
+
+- **site-starter** (Workers + Pages) — dependency floors bumped to current npm latest with `^` ranges:
+  - `astro` `^7.1.1`, `@astrojs/cloudflare` `^14.1.3`, `vite` `^8.1.5`
+  - `wrangler` `^4.112.0`, `@cloudflare/workers-types` `^5.20260718.1` (v5; required by current Wrangler peers)
+  - `@types/node` `^26.1.1`, `yaml-language-server` `^1.24.0`
+  - TypeScript stays on `^6.0.3` (latest 6.x) — `@astrojs/check` peers do not allow TypeScript 7 yet
+- **site-starter** — `compatibility_date` → `2026-07-18`; Pages template now includes `@cloudflare/workers-types` + `cross-env`; `upgrade:wrangler` points at `Web_Toolkit/scripts/check-wrangler-versions.mjs`
+- **Node pin** — `.node-version` + Linux bootstrap tarballs → `26.5.0` (`engines.node` remains `>=26`)
+- **Python / pyenv-native policy** — desired Python `3.14` (fallback `3.14.6`, minimum still `3.13.0`); `pyenv-native` minimum `0.2.30`; setup doctor winget/brew targets updated off Python 3.12
+- **package-updater** — preserves `^` / `~` / `>=` operators; caps `typescript` at latest 6.x until `@astrojs/check` supports 7
+
 ## [0.2.5] - 2026-06-25
 
 ### Added
