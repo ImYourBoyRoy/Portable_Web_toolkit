@@ -69,17 +69,26 @@ Read `output/site-readiness-*.json` — follow **nextSteps** and **recommendedFi
 
 ---
 
-## 4. Machine setup (user task — admin/sudo)
+## 4. Machine setup (agent-runnable — sudo/UAC may prompt)
 
-If host tools are missing (Git, Node, **pyenv-native / pyenv-gui**, Python), direct the **user** to run the interactive wizard — do not impersonate admin installs. The wizard itself does **not** require Node beforehand (`.command` / `.sh` / `.bat` use native Bash/PowerShell menus). Python must come from **pyenv-native** (`pyenv`) + **pyenv-gui** (`pyenv gui`) only:
+If host tools are missing (Git, Node, **pyenv-native / pyenv-gui**, Python), **you (the agent) should run setup** — do not ask the user to manually double-click scripts. The wizard does **not** require Node beforehand. It scans gaps, shows one list, and continues with `--yes`. When elevation is needed, the terminal/UAC prompts the user for their password.
 
-| OS | Launcher |
-|----|----------|
+```bash
+# Preferred — agent runs this; user only approves sudo/UAC if asked
+bash ./Setup_Agent_Environment.sh --yes --workspace .
+```
+
+```powershell
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Web_Toolkit\scripts\setup-interactive.ps1 -Workspace . -Yes
+```
+
+Python must come from **pyenv-native** (`pyenv`) + **pyenv-gui** (`pyenv gui`) only.
+
+| OS | Manual launcher (optional) |
+|----|----------------------------|
 | Windows | `Setup_Agent_Environment.bat` |
-| macOS | `Setup_Agent_Environment.command` |
-| Linux | `Setup_Agent_Environment.sh` |
-
-Wizard: `Web_Toolkit/scripts/setup-interactive.mjs` — shows components, opt-in/out, then bootstrap.
+| macOS | `Setup_Agent_Environment.command` / `./Setup_Agent_Environment.sh` |
+| Linux | `bash ./Setup_Agent_Environment.sh` |
 
 ---
 
@@ -92,7 +101,7 @@ Instagram gallery? → instagram-clone
 Deploy / CF?       → portable-web-toolkit
 Live site broken?  → site-doctor
 Update toolkit?    → toolkit-update
-Host tools missing? → user runs Setup_Agent_Environment.*
+Host tools missing? → agent runs Setup_Agent_Environment.sh --yes (sudo/UAC may prompt user)
 ```
 
 ---
