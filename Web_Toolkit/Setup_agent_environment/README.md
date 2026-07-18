@@ -4,20 +4,27 @@ Prepare a workstation for **AI-assisted Astro / Cloudflare** development.
 
 ## Interactive wizard (recommended)
 
-Shows every component, lets you **opt in or out**, then installs only what you chose.
+Scans for missing/outdated tools, shows **one list**, then a single confirmation:
 
-| Platform | Run |
-|----------|-----|
+> The following software is not installed or is outdated. Press Y to continue setting up the local agent environment.
+
+**Coding agents should run setup** (not ask the user to double-click). Use `--yes` / `-Yes` to skip the Y prompt; `sudo`/UAC still prompts the user for a password when elevation is needed.
+
+```bash
+bash ./Setup_Agent_Environment.sh --yes --workspace .
+```
+
+| Platform | Manual run |
+|----------|------------|
 | **Windows** (repo root) | `Setup_Agent_Environment.bat` |
 | **macOS** (repo root) | `Setup_Agent_Environment.command` |
 | **Linux** (repo root) | `bash Setup_Agent_Environment.sh` |
 | From `Web_Toolkit/` | `Setup_Agent_Environment.bat` / `.sh` |
 
-**Node.js is not required to launch the wizard.** Launchers use native Bash/PowerShell menus; `bootstrap.sh` / `bootstrap.ps1` install Node when missing. Administrator (Windows) or **sudo** (macOS/Linux) may be requested for installs.
+**Node.js is not required to launch the wizard.** Native Bash/PowerShell menus call `bootstrap.sh` / `bootstrap.ps1`, which install Node when missing.
 
 Menu config: `config/setup-menu.json`  
-Engine: `scripts/setup-interactive.sh` (macOS/Linux) or `scripts/setup-interactive.ps1` (Windows) → `bootstrap.sh` / `bootstrap.ps1`  
-Optional (agents with Node already): `scripts/setup-interactive.mjs`
+Engine: `scripts/setup-interactive.sh` / `scripts/setup-interactive.ps1` → `bootstrap.*`
 
 ## What the wizard can install
 
@@ -30,12 +37,11 @@ Optional (agents with Node already): `scripts/setup-interactive.mjs`
 - Python 3.14+ preferred (3.13+ minimum) **only** via pyenv-native — never system/winget/Homebrew Python
 - pip in a workspace-named virtual environment
 
-### Optional (you choose each)
+### Included for agents (no per-tool prompts)
 
-- pnpm, Bun, uv
-- GitHub CLI
-- .NET SDK
-- Python Playwright + Chromium (in the managed venv)
+- Python Playwright + Chromium inside the managed venv (for agent browser tools)
+
+Optional package managers (pnpm, Bun, uv, gh, .NET) are not prompted individually; install them later if needed.
 
 ### macOS prerequisite
 
@@ -45,8 +51,9 @@ Optional (agents with Node already): `scripts/setup-interactive.mjs`
 
 The launcher wrappers now own the host setup flow directly:
 
-- **Windows**: `Setup_Agent_Environment.bat` runs `setup-interactive.ps1` (no Node), then `bootstrap.ps1` with **UAC elevation** when installs are needed.
-- **macOS / Linux**: `Setup_Agent_Environment.sh` / `.command` runs `setup-interactive.sh` (no Node), then `bootstrap.sh` with **sudo** when installs are needed.
+- **Windows**: `Setup_Agent_Environment.bat` / `-Yes` runs `setup-interactive.ps1` (no Node), then `bootstrap.ps1` with **UAC elevation** when installs are needed.
+- **macOS / Linux**: `Setup_Agent_Environment.sh --yes` / `.command` runs `setup-interactive.sh` (no Node), then `bootstrap.sh` with **sudo** when installs are needed.
+- Agents pass `--yes` so the user only interacts with the password/UAC prompt.
 - A single manifest now drives the install policy: `Setup_agent_environment/config/host-bootstrap.manifest.json`.
 - If the machine is **already configured**, the bootstrap reports those tools under **Already current** instead of reinstalling them.
 

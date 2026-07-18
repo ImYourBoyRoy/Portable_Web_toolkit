@@ -211,7 +211,15 @@ Direct the user to the interactive wizard when host tools are missing:
 
 | OS | `Setup_Agent_Environment.bat` / `.command` / `.sh` |
 
-Core includes **pyenv-native** (`pyenv` CLI) + **pyenv-gui** (`pyenv gui`) — the only supported Python path on Windows, macOS, and Linux. Never install system/winget/Homebrew Python for toolkit work. User opts in/out of optional tools in the wizard.
+Core includes **pyenv-native** (`pyenv` CLI) + **pyenv-gui** (`pyenv gui`) — the only supported Python path on Windows, macOS, and Linux. Never install system/winget/Homebrew Python for toolkit work.
+
+**Host setup (agent-runnable):** if Git/Node/pyenv/Python are missing, run setup yourself — do not ask the user to manually launch scripts:
+
+```bash
+bash ./Setup_Agent_Environment.sh --yes --workspace .
+```
+
+The wizard lists missing/outdated tools once, then continues. `sudo`/UAC will prompt the user for a password when elevation is required.
 
 See **toolkit-update** skill for pull + reinstall flow.
 

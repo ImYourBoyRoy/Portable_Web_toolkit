@@ -2,6 +2,7 @@
 # ./Setup_Agent_Environment.sh
 # Interactive machine setup for macOS and Linux (repo root launcher).
 # Pure Bash entry — does NOT require Node.js (bootstrap installs Node when missing).
+# Pass --yes or --agent for coding-agent runs (single confirmation skipped; sudo still prompts).
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
