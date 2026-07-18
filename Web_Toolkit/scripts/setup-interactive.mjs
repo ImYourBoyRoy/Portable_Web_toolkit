@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // ./Web_Toolkit/scripts/setup-interactive.mjs
 /**
- * Interactive host setup menu — shows components, collects opt-in/out, runs native bootstrap.
+ * Optional Node-based interactive host setup menu (for agents/CI that already have Node).
+ *
+ * End-user launchers (.command / .sh / .bat) must NOT depend on this file — they use
+ * setup-interactive.sh / setup-interactive.ps1 so a machine without Node can still
+ * bootstrap (bootstrap installs Node when missing).
  *
  * Usage:
  *   node ./Web_Toolkit/scripts/setup-interactive.mjs [--workspace <path>] [--non-interactive]

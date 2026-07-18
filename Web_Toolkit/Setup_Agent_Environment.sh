@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
 # ./Web_Toolkit/Setup_Agent_Environment.sh
 # Interactive machine setup — uses repository root as workspace.
+# Pure Bash entry — does NOT require Node.js (bootstrap installs Node when missing).
 
 set -euo pipefail
 TOOLKIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$TOOLKIT/.." && pwd)"
 
-echo
-echo "  Portable Web Toolkit — Machine Setup"
-echo "  ===================================="
-echo "  This wizard shows what will be installed and lets you opt in or out."
-echo "  sudo may be requested for missing tools."
-echo
-
-if ! command -v node >/dev/null 2>&1; then
-  echo "[ERROR] Node.js is required. Install from https://nodejs.org/ and rerun."
+WIZARD="$TOOLKIT/scripts/setup-interactive.sh"
+if [[ ! -f "$WIZARD" ]]; then
+  echo "[ERROR] Missing setup wizard: $WIZARD" >&2
   exit 1
 fi
+chmod +x "$WIZARD" 2>/dev/null || true
 
-node "$TOOLKIT/scripts/setup-interactive.mjs" --workspace "$REPO_ROOT" "$@"
-exit_code=$?
-echo
-[[ "$exit_code" -eq 0 ]] && echo "[SUCCESS] Setup completed." || echo "[NOTICE] See output above."
-exit "$exit_code"
+exec bash "$WIZARD" --workspace "$REPO_ROOT" "$@"

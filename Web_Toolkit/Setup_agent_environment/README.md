@@ -13,10 +13,11 @@ Shows every component, lets you **opt in or out**, then installs only what you c
 | **Linux** (repo root) | `bash Setup_Agent_Environment.sh` |
 | From `Web_Toolkit/` | `Setup_Agent_Environment.bat` / `.sh` |
 
-Requires **Node.js** to launch the menu. Administrator (Windows) or **sudo** (macOS/Linux) may be requested for installs.
+**Node.js is not required to launch the wizard.** Launchers use native Bash/PowerShell menus; `bootstrap.sh` / `bootstrap.ps1` install Node when missing. Administrator (Windows) or **sudo** (macOS/Linux) may be requested for installs.
 
 Menu config: `config/setup-menu.json`  
-Engine: `scripts/setup-interactive.mjs` → `bootstrap.ps1` / `bootstrap.sh`
+Engine: `scripts/setup-interactive.sh` (macOS/Linux) or `scripts/setup-interactive.ps1` (Windows) → `bootstrap.sh` / `bootstrap.ps1`  
+Optional (agents with Node already): `scripts/setup-interactive.mjs`
 
 ## What the wizard can install
 
@@ -44,8 +45,8 @@ Engine: `scripts/setup-interactive.mjs` → `bootstrap.ps1` / `bootstrap.sh`
 
 The launcher wrappers now own the host setup flow directly:
 
-- **Windows**: `Setup_Agent_Environment.bat` runs the interactive wizard, then `bootstrap.ps1` with **UAC elevation** when installs are needed.
-- **macOS / Linux**: `Setup_Agent_Environment.sh` / `.command` runs the wizard, then `bootstrap.sh` with **sudo** when installs are needed.
+- **Windows**: `Setup_Agent_Environment.bat` runs `setup-interactive.ps1` (no Node), then `bootstrap.ps1` with **UAC elevation** when installs are needed.
+- **macOS / Linux**: `Setup_Agent_Environment.sh` / `.command` runs `setup-interactive.sh` (no Node), then `bootstrap.sh` with **sudo** when installs are needed.
 - A single manifest now drives the install policy: `Setup_agent_environment/config/host-bootstrap.manifest.json`.
 - If the machine is **already configured**, the bootstrap reports those tools under **Already current** instead of reinstalling them.
 
