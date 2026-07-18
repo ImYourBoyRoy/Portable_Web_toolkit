@@ -42,7 +42,7 @@ On a **new machine**, you may need Git, Node.js, Python, or browser automation t
 
 Administrator (Windows) or `sudo` (macOS/Linux) may be required. See [`Web_Toolkit/Setup_agent_environment/README.md`](./Web_Toolkit/Setup_agent_environment/README.md) for details.
 
-**pyenv-native** — included in core setup — is a modern Rust-based Python version manager. It replaces classic pyenv on macOS/Linux and adds first-class Python management on Windows (where traditional pyenv is not officially supported).
+**Python is exclusively managed by [pyenv-native](https://github.com/imyourboyroy/pyenv-native)** — the `pyenv` CLI plus **pyenv-gui** (launch with `pyenv gui`). Core setup installs both. Do **not** install system, winget, or Homebrew Python for toolkit work.
 
 ---
 

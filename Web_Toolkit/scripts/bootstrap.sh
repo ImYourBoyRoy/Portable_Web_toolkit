@@ -109,6 +109,42 @@ invoke_pyenv() {
   fi
 }
 
+resolve_pyenv_gui() {
+  local bin_name
+  bin_name="$(manifest_get "tool.pyenv_gui.binary_name.posix" "pyenv-gui")"
+  if command -v "$bin_name" >/dev/null 2>&1; then command -v "$bin_name"; return; fi
+  if [[ -x "$HOME/.pyenv/bin/$bin_name" ]]; then printf '%s' "$HOME/.pyenv/bin/$bin_name"; return; fi
+  if [[ -x "$HOME/.pyenv/$bin_name" ]]; then printf '%s' "$HOME/.pyenv/$bin_name"; return; fi
+  return 1
+}
+
+pyenv_gui_available() {
+  resolve_pyenv_gui >/dev/null 2>&1 && return 0
+  invoke_pyenv gui --help >/dev/null 2>&1 && return 0
+  return 1
+}
+
+pyenv_gui_download_url() {
+  local os arch
+  os="$(uname -s)"
+  arch="$(uname -m)"
+  case "$os" in
+    Darwin)
+      case "$arch" in
+        arm64|aarch64) manifest_get "tool.pyenv_gui.macos.arm64.download_url" ;;
+        *) manifest_get "tool.pyenv_gui.macos.x64.download_url" ;;
+      esac
+      ;;
+    Linux)
+      case "$arch" in
+        x86_64|amd64) manifest_get "tool.pyenv_gui.linux.x64.download_url" ;;
+        *) echo "" ;;
+      esac
+      ;;
+    *) echo "" ;;
+  esac
+}
+
 parse_args() {
   local args=("$@") i token
   if [[ ${#args[@]} -gt 0 && "${args[0]}" != --* ]]; then COMMAND="${args[0]}"; fi
@@ -267,17 +303,46 @@ ensure_pyenv_native_posix() {
   before="$(invoke_pyenv --version 2>/dev/null | head -n1 || true)"
   before="${before##* }"
   if [[ -n "$before" ]] && version_ge "$before" "$required"; then
-    report_add current "pyenv-native" "$required" "$before" "$before" "PATH" "already-current" "pyenv-native satisfies policy"
+    report_add current "pyenv-native (pyenv)" "$required" "$before" "$before" "PATH" "already-current" "pyenv-native CLI satisfies policy"
     return
   fi
   if [[ -n "$before" ]]; then invoke_pyenv self-update; else download_pipe_sh "$(manifest_get "tool.pyenv_native.posix.install_url")"; fi
   add_pyenv_path
   local after; after="$(invoke_pyenv --version 2>/dev/null | head -n1 || true)"; after="${after##* }"
   if [[ -n "$after" ]] && version_ge "$after" "$required"; then
-    report_add installed "pyenv-native" "$required" "$before" "$after" "github-release-installer/self-update" "installed-or-updated" "pyenv-native ready"
+    report_add installed "pyenv-native (pyenv)" "$required" "$before" "$after" "github-release-installer/self-update" "installed-or-updated" "pyenv-native CLI ready — use \`pyenv\` / \`pyenv gui\`"
   else
-    report_add failed "pyenv-native" "$required" "$before" "$after" "github-release-installer/self-update" "failed" "pyenv-native did not satisfy policy after install/update" "Install pyenv-native manually from the latest GitHub release and rerun bootstrap."
+    report_add failed "pyenv-native (pyenv)" "$required" "$before" "$after" "github-release-installer/self-update" "failed" "pyenv-native did not satisfy policy after install/update" "Install pyenv-native manually from the latest GitHub release and rerun bootstrap."
   fi
+}
+
+ensure_pyenv_gui_posix() {
+  local url target_dir target_path before bin_name
+  add_pyenv_path
+  bin_name="$(manifest_get "tool.pyenv_gui.binary_name.posix" "pyenv-gui")"
+  target_dir="$HOME/.pyenv/bin"
+  target_path="$target_dir/$bin_name"
+  before=""
+  pyenv_gui_available && before="present"
+  if [[ -n "$before" ]]; then
+    report_add current "pyenv-gui" "" "$before" "$before" "pyenv-native" "already-current" "pyenv-gui available — launch with \`pyenv gui\`"
+    return
+  fi
+  url="$(pyenv_gui_download_url)"
+  if [[ -z "$url" ]]; then
+    report_add failed "pyenv-gui" "" "" "" "github-release" "failed" "No pyenv-gui download URL for this OS/arch" "See $(manifest_get "tool.pyenv_gui.docs_url") or build with cargo build --release -p pyenv-gui"
+    return 1
+  fi
+  mkdir -p "$target_dir"
+  if curl -fsSL "$url" -o "$target_path" && chmod +x "$target_path"; then
+    add_pyenv_path
+    if pyenv_gui_available || [[ -x "$target_path" ]]; then
+      report_add installed "pyenv-gui" "" "" "present" "github-release" "installed" "pyenv-gui installed — launch with \`pyenv gui\`"
+      return
+    fi
+  fi
+  report_add failed "pyenv-gui" "" "" "" "github-release" "failed" "Could not install pyenv-gui binary" "Download from pyenv-native release assets into ~/.pyenv/bin and run \`pyenv gui\`."
+  return 1
 }
 
 ensure_python_runtime_posix() {
@@ -385,8 +450,13 @@ doctor_only() {
   else
     report_add failed "Node.js" "$node_required" "$node_version" "" "PATH" "out-of-policy" "Node missing or below the required current line"
   fi
-  [[ -n "$pyenv_version" ]] && report_add current "pyenv-native" "$(manifest_get "tool.pyenv_native.minimum_version")" "$pyenv_version" "$pyenv_version" "PATH" "available" "pyenv-native available" || report_add failed "pyenv-native" "$(manifest_get "tool.pyenv_native.minimum_version")" "" "" "PATH" "missing" "pyenv-native not found"
-  [[ -n "$python_version" ]] && report_add current "Python runtime" "$(manifest_get "tool.python.minimum_version")" "$python_version" "$python_version" "PATH/pyenv" "available" "Python executable available" || report_add failed "Python runtime" "$(manifest_get "tool.python.minimum_version")" "" "" "PATH/pyenv" "missing" "Python executable not found"
+  [[ -n "$pyenv_version" ]] && report_add current "pyenv-native (pyenv)" "$(manifest_get "tool.pyenv_native.minimum_version")" "$pyenv_version" "$pyenv_version" "PATH" "available" "pyenv-native CLI available" || report_add failed "pyenv-native (pyenv)" "$(manifest_get "tool.pyenv_native.minimum_version")" "" "" "PATH" "missing" "pyenv-native CLI not found — do not use system Python"
+  if pyenv_gui_available; then
+    report_add current "pyenv-gui" "" "present" "present" "pyenv-native" "available" "pyenv-gui available — launch with \`pyenv gui\`"
+  else
+    report_add failed "pyenv-gui" "" "" "" "pyenv-native" "missing" "pyenv-gui missing — required companion; install via bootstrap or release assets"
+  fi
+  [[ -n "$python_version" ]] && report_add current "Python runtime" "$(manifest_get "tool.python.minimum_version")" "$python_version" "$python_version" "PATH/pyenv" "available" "Python executable available under pyenv-native" || report_add failed "Python runtime" "$(manifest_get "tool.python.minimum_version")" "" "" "PATH/pyenv" "missing" "Python executable not found under pyenv-native"
   [[ -n "$pip_version" ]] && report_add current "pip" "" "$pip_version" "$pip_version" "PATH/pyenv" "available" "pip available" || report_add failed "pip" "" "" "" "PATH/pyenv" "missing" "pip not found"
   workspace_checks
 }
@@ -422,6 +492,7 @@ main() {
       ensure_git_posix || true
       ensure_node_posix || true
       ensure_pyenv_native_posix || true
+      ensure_pyenv_gui_posix || true
       ensure_python_runtime_posix || true
       ensure_optional_posix || true
       ensure_python_playwright_posix || true

@@ -211,7 +211,7 @@ Direct the user to the interactive wizard when host tools are missing:
 
 | OS | `Setup_Agent_Environment.bat` / `.command` / `.sh` |
 
-Core includes **pyenv-native** (Rust Python manager — Windows, macOS, Linux). User opts in/out of optional tools in the wizard.
+Core includes **pyenv-native** (`pyenv` CLI) + **pyenv-gui** (`pyenv gui`) — the only supported Python path on Windows, macOS, and Linux. Never install system/winget/Homebrew Python for toolkit work. User opts in/out of optional tools in the wizard.
 
 See **toolkit-update** skill for pull + reinstall flow.
 
