@@ -1,53 +1,23 @@
 {
-  "title": "Portable Web Toolkit — machine setup",
-  "subtitle": "Prepares your computer for Astro + Cloudflare development with AI coding agents.",
-  "adminNote": "Installing missing tools may require administrator (Windows) or sudo (macOS/Linux). You choose what to install before anything runs.",
+  "title": "Portable Web Toolkit — Local Agent Environment",
+  "subtitle": "Scans for missing/outdated tools, then installs the agent baseline in one step.",
+  "adminNote": "Coding agents should run setup with --yes. sudo (macOS/Linux) or UAC (Windows) will prompt the user for a password when elevation is required — the user should not need to manually launch scripts.",
   "required": [
     {
       "id": "core",
       "name": "Core host tools",
-      "description": "Git, Node.js 26+ (current line), pyenv-native (`pyenv` CLI) + pyenv-gui, Python 3.14+ workspace venv (3.13+ minimum), and pip — Python only via pyenv-native, never system Python",
+      "description": "Git, Node.js 26+, pyenv-native (pyenv) + pyenv-gui, Python workspace venv, pip — Node is installed by bootstrap when missing",
       "default": true,
       "locked": true
     }
   ],
-  "optional": [
-    {
-      "id": "pnpm",
-      "name": "pnpm",
-      "description": "Fast Node package manager (optional; npm is included with Node)"
-    },
-    {
-      "id": "bun",
-      "name": "Bun",
-      "description": "Alternative JavaScript runtime and package manager"
-    },
-    {
-      "id": "uv",
-      "name": "uv",
-      "description": "Fast Python package installer (complements pyenv-native / pyenv-gui venvs)"
-    },
-    {
-      "id": "gh",
-      "name": "GitHub CLI",
-      "description": "GitHub from the terminal (repos, PRs, auth)"
-    },
-    {
-      "id": "dotnet",
-      "name": ".NET SDK",
-      "description": "Only if you work on .NET projects alongside web sites"
-    },
-    {
-      "id": "python-playwright",
-      "name": "Python Playwright + Chromium",
-      "description": "Browser automation inside your pyenv-native project venv (for AI agent browser tools)"
-    }
-  ],
+  "optional": [],
   "workspace": {
     "id": "workspace-checks",
     "name": "Project folder checks",
     "description": "Verify README, package.json, Astro config, and related files in the target workspace",
     "default": true
   },
-  "pyenvNativeBlurb": "Python is managed exclusively by pyenv-native: the `pyenv` CLI plus the pyenv-gui desktop companion (launch with `pyenv gui`). Do not install system/winget/Homebrew Python for toolkit work — bootstrap installs runtimes and workspace venvs through pyenv-native only. Docs: https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md"
+  "confirmPrompt": "The following software is not installed or is outdated. Press Y to continue setting up the local agent environment",
+  "pyenvNativeBlurb": "Python is managed exclusively by pyenv-native: the `pyenv` CLI plus the pyenv-gui desktop companion (launch with `pyenv gui`). Do not install system/winget/Homebrew Python for toolkit work."
 }
