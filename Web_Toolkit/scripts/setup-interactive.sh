@@ -214,7 +214,13 @@ if [[ ${#OK_LINES[@]} -gt 0 ]]; then
   echo
 fi
 echo "  Setup will install/update the agent baseline (Git, Node, pyenv-native,"
-echo "  pyenv-gui, Python workspace venv, pip). sudo may ask for your password."
+echo "  pyenv-gui, Python workspace venv, pip)."
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  echo "  On macOS: a GUI administrator dialog appears next (then possibly sudo)."
+  echo "  Node installs from the official nodejs.org tarball (Homebrew not required)."
+else
+  echo "  sudo may ask for your password."
+fi
 echo
 
 if [[ "$AUTO_YES" != true ]]; then
@@ -230,7 +236,11 @@ fi
 [[ -x "$BOOTSTRAP_SH" ]] || chmod +x "$BOOTSTRAP_SH" || true
 
 echo
-echo "[setup] Starting bootstrap (password/admin prompts may appear next)..."
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  echo "[setup] Starting bootstrap — approve the macOS admin password dialog when it appears..."
+else
+  echo "[setup] Starting bootstrap (sudo password prompt may appear next)..."
+fi
 echo
 
 # Core agent environment only — no per-tool optional menu.

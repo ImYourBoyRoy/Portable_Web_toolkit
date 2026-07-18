@@ -163,16 +163,54 @@ parse_args() {
   COMMAND="${COMMAND,,}"
 }
 
+macos_has_gui_session() {
+  # Double-clicked .command / local Terminal → GUI admin dialog.
+  # SSH/CI → terminal sudo only (no Aqua dialog).
+  [[ "$(uname -s)" == "Darwin" ]] || return 1
+  [[ -z "${SSH_CONNECTION:-}" && -z "${CI:-}" ]] || return 1
+  command -v osascript >/dev/null 2>&1 || return 1
+  return 0
+}
+
+request_macos_admin_dialog() {
+  # Shows the standard macOS GUI administrator password dialog (what users expect
+  # from a double-clicked .command). Does not by itself grant a sudo ticket —
+  # callers must still run `sudo -v` for shell installs.
+  macos_has_gui_session || return 1
+  osascript <<'APPLESCRIPT' >/dev/null
+display dialog "Portable Web Toolkit needs administrator access to install Node.js and local agent tools.
+
+Click Continue, then enter your Mac password when prompted." buttons {"Cancel", "Continue"} default button "Continue" with icon caution with title "Portable Web Toolkit Setup"
+do shell script "/usr/bin/true" with administrator privileges
+APPLESCRIPT
+}
+
 ensure_sudo() {
   [[ "$COMMAND" =~ ^(fix|prepare-host)$ ]] || return 0
   [[ "$ALLOW_INSTALLS" == true ]] || return 0
   [[ "$(id -u)" -eq 0 ]] && return 0
   command -v sudo >/dev/null 2>&1 || { report_add failed "sudo" "" "" "" "system" "failed" "sudo is required for automatic installs." "Install sudo or run as root."; return 1; }
+
   echo
-  echo "[Web Toolkit] Requesting sudo once before installs..."
-  sudo -v
+  if macos_has_gui_session; then
+    echo "[Web Toolkit] Requesting macOS administrator privileges (GUI password dialog)..."
+    if ! request_macos_admin_dialog; then
+      report_add failed "Administrator privileges" "" "" "" "osascript" "failed" "User cancelled or denied macOS admin dialog." "Rerun Setup_Agent_Environment.command and approve administrator access when prompted."
+      return 1
+    fi
+  elif [[ "$(uname -s)" == "Darwin" ]]; then
+    echo "[Web Toolkit] No local GUI session (SSH/CI) — using terminal sudo for elevation."
+  fi
+
+  echo "[Web Toolkit] Caching sudo credentials for installs..."
+  if ! sudo -v; then
+    report_add failed "sudo" "" "" "" "system" "failed" "sudo authentication failed — installs cannot proceed without elevation." "Rerun setup and enter your password when prompted."
+    return 1
+  fi
+  # Keep sudo ticket alive during long CLT / download waits.
   while true; do sudo -n true >/dev/null 2>&1 || exit; sleep 30; done &
   SUDO_KEEPALIVE_PID="$!"
+  report_add current "Administrator privileges" "" "granted" "granted" "sudo/osascript" "ready" "Elevation ready for installs"
 }
 
 workspace_checks() {
@@ -202,9 +240,56 @@ workspace_checks() {
 
 ensure_clt() {
   [[ "$(uname -s)" == "Darwin" ]] || return 0
-  if xcode-select -p >/dev/null 2>&1; then report_add current "Xcode Command Line Tools" "" "installed" "installed" "xcode-select" "already-current" "Xcode Command Line Tools available"; return; fi
+  if xcode-select -p >/dev/null 2>&1; then
+    report_add current "Xcode Command Line Tools" "" "installed" "installed" "xcode-select" "already-current" "Xcode Command Line Tools available"
+    return 0
+  fi
+  echo "[Web Toolkit] Xcode Command Line Tools missing — triggering Apple installer dialog..."
   xcode-select --install >/dev/null 2>&1 || true
-  report_add installed "Xcode Command Line Tools" "" "missing" "pending" "xcode-select --install" "triggered" "Triggered Command Line Tools install" "Apple may continue the install through a system dialog or softwareupdate flow."
+  # Wait up to ~10 minutes for the async Apple installer to finish (user must click Install).
+  local waited=0
+  while (( waited < 600 )); do
+    if xcode-select -p >/dev/null 2>&1; then
+      report_add installed "Xcode Command Line Tools" "" "missing" "installed" "xcode-select --install" "installed" "Xcode Command Line Tools became available"
+      return 0
+    fi
+    sleep 5
+    waited=$((waited + 5))
+    if (( waited % 30 == 0 )); then
+      echo "[Web Toolkit] Still waiting for Xcode Command Line Tools ($waited s). Complete the Apple dialog if it is open..."
+    fi
+  done
+  report_add failed "Xcode Command Line Tools" "" "missing" "missing" "xcode-select --install" "failed" "CLT still missing after wait." "Open the Apple dialog, finish installing Command Line Tools, then rerun setup."
+  return 1
+}
+
+install_node_from_tarball() {
+  local url="$1" install_root="$2" archive_name="$3"
+  local archive extract_dir version_tag
+  [[ -n "$url" && -n "$install_root" ]] || return 1
+  archive="$TMP_DIR/$archive_name"
+  echo "[Web Toolkit] Downloading Node from official tarball..."
+  download_file "$url" "$archive" || return 1
+  version_tag="$(basename "$url")"
+  version_tag="${version_tag%.tar.gz}"
+  version_tag="${version_tag%.tar.xz}"
+  extract_dir="$install_root/$version_tag"
+  sudo mkdir -p "$install_root" /usr/local/bin
+  sudo rm -rf "$extract_dir"
+  case "$archive" in
+    *.tar.xz) sudo tar -xJf "$archive" -C "$install_root" ;;
+    *.tar.gz|*.tgz) sudo tar -xzf "$archive" -C "$install_root" ;;
+    *) echo "Unsupported archive: $archive" >&2; return 1 ;;
+  esac
+  [[ -x "$extract_dir/bin/node" ]] || { echo "Node binary missing in extracted tree: $extract_dir/bin/node" >&2; return 1; }
+  sudo ln -sf "$extract_dir/bin/node" /usr/local/bin/node
+  sudo ln -sf "$extract_dir/bin/npm" /usr/local/bin/npm
+  sudo ln -sf "$extract_dir/bin/npx" /usr/local/bin/npx
+  [[ -x "$extract_dir/bin/corepack" ]] && sudo ln -sf "$extract_dir/bin/corepack" /usr/local/bin/corepack || true
+  # Ensure /usr/local/bin is on PATH for the rest of this session (common on fresh macOS).
+  case ":$PATH:" in *":/usr/local/bin:"*) ;; *) PATH="/usr/local/bin:$PATH"; export PATH ;; esac
+  hash -r
+  return 0
 }
 
 linux_pkg_manager() {
@@ -227,13 +312,27 @@ linux_pkg_name() {
 }
 
 ensure_git_posix() {
-  local before
+  local before after
   before="$(command_version git --version || true)"
   [[ -n "$before" ]] && { report_add current "Git" "" "$before" "$before" "PATH" "already-current" "Git already available"; return; }
   local pm pkg
   pm="$(linux_pkg_manager)"
   case "$(uname -s)" in
-    Darwin) report_add skipped "Git" "" "" "" "system" "skipped" "Git installation is expected from Xcode Command Line Tools or manual setup" "" ;;
+    Darwin)
+      # Git ships with Xcode CLT; the Apple installer is async — wait for it.
+      if ! ensure_clt; then
+        report_add failed "Git" "" "" "" "xcode-select" "failed" "Git unavailable because Xcode Command Line Tools are missing." "Finish the Apple CLT installer, then rerun setup."
+        return 1
+      fi
+      hash -r
+      after="$(command_version git --version || true)"
+      if [[ -n "$after" ]]; then
+        report_add installed "Git" "" "$before" "$after" "xcode-select" "installed" "Git available via Xcode Command Line Tools"
+      else
+        report_add failed "Git" "" "$before" "" "xcode-select" "failed" "CLT reported installed but git is still missing from PATH." "Open a new Terminal window or install Git manually, then rerun setup."
+        return 1
+      fi
+      ;;
     Linux)
       pkg="$(linux_pkg_name git "$pm")"
       [[ -n "$pm" && -n "$pkg" ]] || { report_add failed "Git" "" "$before" "" "system" "failed" "No supported package manager entry for Git." "Install Git manually and rerun bootstrap."; return; }
@@ -244,14 +343,14 @@ ensure_git_posix() {
         pacman) sudo pacman -Sy --noconfirm "$pkg" ;;
         zypper) sudo zypper refresh && sudo zypper install -y "$pkg" ;;
       esac
-      local after; after="$(command_version git --version || true)"
+      after="$(command_version git --version || true)"
       [[ -n "$after" ]] && report_add installed "Git" "" "$before" "$after" "$pm:$pkg" "installed" "Installed Git" || report_add failed "Git" "" "$before" "$after" "$pm:$pkg" "failed" "Git still missing after install attempt" "Install Git manually and rerun bootstrap."
       ;;
   esac
 }
 
 ensure_node_posix() {
-  local required before
+  local required before after source_label url install_root arch os prefer_tarball installed=false
   required="$(manifest_get "tool.node.required_version")"
   before="$(command_version node --version | sed 's/^v//' || true)"
   if [[ -n "$before" ]] && version_ge "$before" "$required"; then
@@ -260,39 +359,65 @@ ensure_node_posix() {
     report_add current "npx" "" "$(command_version npx --version || true)" "$(command_version npx --version || true)" "Node bundle" "already-current" "npx available with Node"
     return
   fi
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    ensure_clt
-    command -v brew >/dev/null 2>&1 || { report_add failed "Node.js" "$required" "$before" "" "homebrew" "failed" "Homebrew is required for automatic Node setup on macOS." "Install Homebrew and rerun bootstrap."; return; }
-    brew install "$(manifest_get "tool.node.macos.brew_formula")"
+
+  os="$(uname -s)"
+  arch="$(uname -m)"
+  prefer_tarball="$(manifest_get "tool.node.posix.prefer_official_tarball" "true")"
+  source_label="nodejs.org"
+
+  if [[ "$os" == "Darwin" ]]; then
+    # Official Node tarball is primary — Homebrew is optional fallback only.
+    # Fresh Macs often lack brew; requiring it was a setup failure mode.
+    case "$arch" in
+      arm64) url="$(manifest_get "tool.node.macos.arm64.tarball_url")" ;;
+      x86_64) url="$(manifest_get "tool.node.macos.x64.tarball_url")" ;;
+      *) report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Unsupported macOS architecture: $arch" "Install Node manually from nodejs.org, then rerun setup."; return 1 ;;
+    esac
+    install_root="$(manifest_get "tool.node.macos.install_root" "/usr/local/lib/nodejs")"
+    if [[ "$prefer_tarball" == "true" ]] || ! command -v brew >/dev/null 2>&1; then
+      if install_node_from_tarball "$url" "$install_root" "node-darwin.tar.gz"; then
+        installed=true
+        source_label="nodejs.org"
+      elif command -v brew >/dev/null 2>&1; then
+        echo "[Web Toolkit] Official Node tarball failed — falling back to Homebrew..."
+        brew install "$(manifest_get "tool.node.macos.brew_formula" "node")" && installed=true
+        source_label="homebrew:node"
+      fi
+    else
+      if brew install "$(manifest_get "tool.node.macos.brew_formula" "node")"; then
+        installed=true
+        source_label="homebrew:node"
+      elif install_node_from_tarball "$url" "$install_root" "node-darwin.tar.gz"; then
+        installed=true
+        source_label="nodejs.org"
+      fi
+    fi
+    if [[ "$installed" != true ]]; then
+      report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Could not install Node (official tarball failed; Homebrew unavailable or also failed)." "Approve admin/sudo when prompted, check network access to nodejs.org, then rerun setup."
+      return 1
+    fi
   else
-    local arch url install_root version_tag archive extract_dir
-    arch="$(uname -m)"
     case "$arch" in
       x86_64) url="$(manifest_get "tool.node.linux.x64.tarball_url")" ;;
       aarch64|arm64) url="$(manifest_get "tool.node.linux.arm64.tarball_url")" ;;
-      *) report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Unsupported Linux architecture: $arch" "Use a manually provisioned Node current release for this architecture."; return ;;
+      *) report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Unsupported Linux architecture: $arch" "Use a manually provisioned Node current release for this architecture."; return 1 ;;
     esac
-    install_root="$(manifest_get "tool.node.linux.install_root")"
-    archive="$TMP_DIR/node.tar.xz"
-    download_file "$url" "$archive"
-    version_tag="$(basename "$url" .tar.xz)"
-    extract_dir="$install_root/$version_tag"
-    sudo mkdir -p "$install_root"
-    sudo rm -rf "$extract_dir"
-    sudo tar -xJf "$archive" -C "$install_root"
-    sudo ln -sf "$extract_dir/bin/node" /usr/local/bin/node
-    sudo ln -sf "$extract_dir/bin/npm" /usr/local/bin/npm
-    sudo ln -sf "$extract_dir/bin/npx" /usr/local/bin/npx
-    [[ -x "$extract_dir/bin/corepack" ]] && sudo ln -sf "$extract_dir/bin/corepack" /usr/local/bin/corepack || true
-    hash -r
+    install_root="$(manifest_get "tool.node.linux.install_root" "/usr/local/lib/nodejs")"
+    if ! install_node_from_tarball "$url" "$install_root" "node-linux.tar.xz"; then
+      report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Official Node tarball install failed." "Install the latest Node current release manually, then rerun bootstrap."
+      return 1
+    fi
+    source_label="nodejs.org"
   fi
-  local after; after="$(command_version node --version | sed 's/^v//' || true)"
+
+  after="$(command_version node --version | sed 's/^v//' || true)"
   if [[ -n "$after" ]] && version_ge "$after" "$required"; then
-    report_add installed "Node.js" "$required" "$before" "$after" "$( [[ "$(uname -s)" == "Darwin" ]] && echo "homebrew:node" || echo "nodejs.org" )" "installed-or-updated" "Installed or updated Node.js current line"
+    report_add installed "Node.js" "$required" "$before" "$after" "$source_label" "installed-or-updated" "Installed or updated Node.js current line"
     report_add installed "npm" "" "" "$(command_version npm --version || true)" "Node bundle" "available" "npm available after Node install"
     report_add installed "npx" "" "" "$(command_version npx --version || true)" "Node bundle" "available" "npx available after Node install"
   else
-    report_add failed "Node.js" "$required" "$before" "$after" "$( [[ "$(uname -s)" == "Darwin" ]] && echo "homebrew:node" || echo "nodejs.org" )" "failed" "Node did not satisfy the required current line after install" "Install the latest Node current release manually, then rerun bootstrap."
+    report_add failed "Node.js" "$required" "$before" "$after" "$source_label" "failed" "Node did not satisfy the required current line after install" "Install the latest Node current release manually, then rerun bootstrap."
+    return 1
   fi
 }
 
@@ -483,12 +608,21 @@ EOF
 main() {
   parse_args "$@"
   [[ -f "$MANIFEST_PATH" ]] || { echo "Manifest not found: $MANIFEST_PATH" >&2; exit 1; }
-  ensure_sudo || true
+  if ! ensure_sudo; then
+    echo "[Web Toolkit] ERROR: Administrator / sudo privileges are required for installs." >&2
+    echo "[Web Toolkit] Approve the macOS password dialog (or enter sudo in the terminal), then rerun." >&2
+    write_report
+    exit 2
+  fi
   case "$COMMAND" in
     doctor|verify) doctor_only ;;
     fix|prepare-host)
       if [[ "$ALLOW_INSTALLS" != true ]]; then report_add skipped "Install phase" "" "" "" "flags" "skipped" "Automatic installs disabled by flag"; workspace_checks; invoke_node_doctor; write_report; [[ -s "$FAILED_FILE" ]] && exit 2 || exit 0; fi
-      [[ "$(uname -s)" == "Darwin" ]] && ensure_clt
+      # On macOS, CLT is required for Git (and useful for build tools). Fail visibly if missing.
+      if [[ "$(uname -s)" == "Darwin" ]] && ! ensure_clt; then
+        write_report
+        exit 2
+      fi
       ensure_git_posix || true
       ensure_node_posix || true
       ensure_pyenv_native_posix || true
