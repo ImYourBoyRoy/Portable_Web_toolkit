@@ -5,6 +5,13 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [0.2.6] - 2026-07-18
 
+### Fixed
+
+- **macOS setup elevation** — `.command` launchers never receive Admin from Finder by themselves; bootstrap now shows a GUI administrator dialog, then requires a working `sudo` ticket. Failed elevation **stops** installs (no more `ensure_sudo || true` soft-continue).
+- **macOS Node without Homebrew** — Node installs from the official `nodejs.org` darwin tarball into `/usr/local/lib/nodejs` (Homebrew is optional fallback only). Manifest keys: `tool.node.macos.{arm64,x64}.tarball_url`, `tool.node.posix.prefer_official_tarball`.
+- **macOS Git / Xcode CLT** — bootstrap waits for the async Command Line Tools installer and fails clearly if Git is still missing (no silent “skipped”).
+- **`.command` Terminal UX** — stay-open after double-click with clear admin messaging (pause skipped for `--yes`/`--agent`).
+
 ### Added
 
 - **pyenv-gui (required)** — host bootstrap installs/detects the pyenv-native GUI companion; launch with `pyenv gui`. Manifest keys under `tool.pyenv_gui.*`; doctor fails when missing.

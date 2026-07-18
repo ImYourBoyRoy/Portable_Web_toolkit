@@ -78,6 +78,8 @@ If host tools are missing (Git, Node, **pyenv-native / pyenv-gui**, Python), **y
 bash ./Setup_Agent_Environment.sh --yes --workspace .
 ```
 
+**macOS note:** double-clicking `Setup_Agent_Environment.command` does **not** grant Admin by itself (Finder never elevates `.command` files). After **Y**, bootstrap shows a GUI administrator dialog, then uses `sudo` for installs. Node comes from the official nodejs.org tarball — Homebrew is not required.
+
 ```powershell
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Web_Toolkit\scripts\setup-interactive.ps1 -Workspace . -Yes
 ```
