@@ -1,13 +1,12 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 cd /d "%~dp0"
 
 echo.
-echo  Portable Web Toolkit - Machine Setup
-echo  ====================================
-echo  This wizard does NOT require Node.js beforehand.
-echo  Node is installed by the setup bootstrap when missing.
-echo  Administrator approval may be required for missing tools.
+echo  Portable Web Toolkit - Local Agent Environment
+echo  ==============================================
+echo  Node is NOT required beforehand — bootstrap installs it when missing.
+echo  Pass -Yes for coding-agent runs (UAC may still prompt).
 echo.
 
 set exitcode=0
@@ -18,13 +17,24 @@ if not exist "%WIZARD%" (
     goto :done
 )
 
+set "EXTRA="
+:parse
+if "%~1"=="" goto :run
+if /I "%~1"=="--yes" set "EXTRA=%EXTRA% -Yes" & shift & goto :parse
+if /I "%~1"=="--agent" set "EXTRA=%EXTRA% -Yes" & shift & goto :parse
+if /I "%~1"=="-Yes" set "EXTRA=%EXTRA% -Yes" & shift & goto :parse
+if /I "%~1"=="-Agent" set "EXTRA=%EXTRA% -Yes" & shift & goto :parse
+shift
+goto :parse
+
+:run
 where pwsh >nul 2>&1
 if errorlevel 1 (
     powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0Web_Toolkit' -Recurse -Filter *.ps1 -File | Unblock-File -ErrorAction SilentlyContinue"
-    powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WIZARD%" -Workspace "%CD%" %*
+    powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WIZARD%" -Workspace "%CD%" %EXTRA%
 ) else (
     pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0Web_Toolkit' -Recurse -Filter *.ps1 -File | Unblock-File -ErrorAction SilentlyContinue"
-    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WIZARD%" -Workspace "%CD%" %*
+    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WIZARD%" -Workspace "%CD%" %EXTRA%
 )
 set exitcode=%errorlevel%
 
@@ -36,5 +46,5 @@ if %exitcode% neq 0 (
     echo [SUCCESS] Setup completed.
 )
 echo.
-pause
+if /I "%CI%"=="" if /I "%CURSOR_AGENT%"=="" pause
 exit /b %exitcode%

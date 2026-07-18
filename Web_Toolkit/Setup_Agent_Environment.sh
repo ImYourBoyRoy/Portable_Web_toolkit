@@ -2,6 +2,7 @@
 # ./Web_Toolkit/Setup_Agent_Environment.sh
 # Interactive machine setup — uses repository root as workspace.
 # Pure Bash entry — does NOT require Node.js (bootstrap installs Node when missing).
+# Pass --yes or --agent for coding-agent runs (single confirmation skipped; sudo still prompts).
 
 set -euo pipefail
 TOOLKIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
