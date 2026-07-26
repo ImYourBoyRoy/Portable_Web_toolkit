@@ -5,6 +5,13 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-26
+
+### Fixed
+
+- Corrected the documented skill-hash refresh command to use the tracked
+  `scripts/update-skill-hashes.mjs` helper.
+
 ## [0.3.0] - 2026-07-26
 
 ### Added

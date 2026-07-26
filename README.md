@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Version:** `0.3.0` · source: [`VERSION`](./VERSION) · packages: `0.3.0` / `0.3.0`
+**Version:** `0.3.1` · source: [`VERSION`](./VERSION) · packages: `0.3.1` / `0.3.1`
 
 | Pin | Value | Source |
 |-----|-------|--------|
-| Toolkit release | `0.3.0` | [`VERSION`](./VERSION) |
+| Toolkit release | `0.3.1` | [`VERSION`](./VERSION) |
 | Node engines | `>=26` | `package.json` |
 | Node pin | `26.5.0` | [`.node-version`](./.node-version) |
 | Astro (site-starter) | `^7.1.1` → 7.1.1 | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |

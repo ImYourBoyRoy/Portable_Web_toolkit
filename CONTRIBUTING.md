@@ -15,7 +15,7 @@ out of this repository.
 5. If a skill changes, update its metadata and regenerate the content hashes:
 
    ```bash
-   node ./scripts/refresh-skill-hashes.mjs
+   node ./scripts/update-skill-hashes.mjs
    ```
 
 6. Run the complete local gate:
