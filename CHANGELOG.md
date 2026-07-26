@@ -24,6 +24,7 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
   six functional skills.
 - Added competing-owner activation fixtures and safety preflights to all six
   skills. Current skill versions are recorded in `skill-pack.json`.
+- Aligned Vectorize Pipeline `0.1.1` with the repository's MIT license.
 
 ## [0.2.6] - 2026-07-18
 
