@@ -1,10 +1,10 @@
 {
     "name":  "privacy-check",
-    "version":  null,
+    "version":  "0.1.0",
     "private":  true,
     "type":  "module",
     "author":  "Roy Dawson IV",
-    "license":  "ISC",
+    "license":  "MIT",
     "bin":  {
                 "privacy-check":  "./bin/privacy-check.mjs"
             }

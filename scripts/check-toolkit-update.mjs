@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { compareSemver } from './version-lib.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -100,8 +101,16 @@ async function main() {
   }
 
   const installedVersion = stamp?.version || '';
+  const versionComparison = remoteVersion && localVersion
+    ? compareSemver(localVersion, remoteVersion)
+    : null;
+  const versionMismatch = Boolean(
+    remoteVersion && localVersion && remoteVersion !== localVersion,
+  );
+  const remoteVersionIsNewer = versionComparison === -1;
+  const localVersionIsNewer = versionComparison === 1;
   const updateAvailable = Boolean(
-    (remoteVersion && localVersion && remoteVersion !== localVersion)
+    remoteVersionIsNewer
     || (gitState.behindOriginMain && gitState.behindOriginMain > 0),
   );
 
@@ -114,6 +123,10 @@ async function main() {
     localDirty: gitState.dirty,
     aheadOfOriginMain: gitState.aheadOfOriginMain,
     behindOriginMain: gitState.behindOriginMain,
+    versionComparison,
+    versionMismatch,
+    remoteVersionIsNewer,
+    localVersionIsNewer,
     updateAvailable,
     networkError: networkError || null,
     updateCommand: process.platform === 'win32'
@@ -142,6 +155,10 @@ async function main() {
       console.log('');
       console.log('  UPDATE AVAILABLE — run:');
       console.log(`    ${report.updateCommand}`);
+    } else if (localVersionIsNewer) {
+      console.log('  Status: local version is newer than the selected public version source');
+    } else if (versionMismatch && versionComparison === null) {
+      console.log('  Status: versions differ and require manual comparison');
     } else if (
       remoteVersion
       && (gitState.dirty || (gitState.aheadOfOriginMain && gitState.aheadOfOriginMain > 0))

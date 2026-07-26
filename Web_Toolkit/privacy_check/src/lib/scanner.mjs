@@ -25,6 +25,18 @@ function redact(match) {
   return `${match.slice(0, 4)}...[redacted]...${match.slice(-4)}`;
 }
 
+function isReservedExampleEmail(value) {
+  const domain = String(value).split('@').at(-1)?.toLowerCase() || '';
+  return ['example.com', 'example.net', 'example.org'].includes(domain)
+    || ['.example', '.invalid', '.localhost', '.test'].some(
+      (suffix) => domain.endsWith(suffix),
+    );
+}
+
+function shouldIgnoreMatch(definition, value) {
+  return definition.label === 'Email address' && isReservedExampleEmail(value);
+}
+
 function dynamicFindings(relativePath) {
   const findings = [];
   const normalized = relativePath.replace(/\\/g, '/');
@@ -70,6 +82,7 @@ function scanFile(filePath, relativePath) {
     const matcher = new RegExp(definition.pattern.source, flags);
     let match;
     while ((match = matcher.exec(content)) !== null) {
+      if (shouldIgnoreMatch(definition, String(match[0]))) continue;
       const line = content.slice(0, match.index).split(/\r?\n/).length;
       findings.push({
         file: relativePath,
@@ -106,4 +119,3 @@ export function scanRoot(rootPath) {
   }
   return findings;
 }
-

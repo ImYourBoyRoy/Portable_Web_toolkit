@@ -5,6 +5,8 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-26
+
 ### Added
 
 - Versioned skill manifest, per-skill metadata, content hashes, and portable
@@ -13,6 +15,9 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
   transactional installation protocol.
 - Recovered and generalized the local-only Vectorize Pipeline as an optional,
   experimental skill and toolkit module.
+- Release metadata validation, governance tests, a repository privacy gate, and
+  pinned GitHub Actions validation.
+- Contribution and private vulnerability-reporting guidance.
 
 ### Changed
 
@@ -25,6 +30,14 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 - Added competing-owner activation fixtures and safety preflights to all six
   skills. Current skill versions are recorded in `skill-pack.json`.
 - Aligned Vectorize Pipeline `0.1.1` with the repository's MIT license.
+- Aligned all toolkit package metadata with the repository's MIT license.
+
+### Fixed
+
+- Update checks now distinguish a newer public version from a newer local
+  development version.
+- Privacy scans ignore reserved documentation domains while continuing to
+  report real email addresses and credentials.
 
 ## [0.2.6] - 2026-07-18
 

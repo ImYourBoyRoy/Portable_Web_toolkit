@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Version:** `0.2.6` · source: [`VERSION`](./VERSION) · packages: `0.2.6` / `0.2.6`
+**Version:** `0.3.0` · source: [`VERSION`](./VERSION) · packages: `0.3.0` / `0.3.0`
 
 | Pin | Value | Source |
 |-----|-------|--------|
-| Toolkit release | `0.2.6` | [`VERSION`](./VERSION) |
+| Toolkit release | `0.3.0` | [`VERSION`](./VERSION) |
 | Node engines | `>=26` | `package.json` |
 | Node pin | `26.5.0` | [`.node-version`](./.node-version) |
 | Astro (site-starter) | `^7.1.1` → 7.1.1 | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -13,9 +13,12 @@
 | Wrangler | `^4.112.0` | site-starter |
 <!-- VERSIONS:END -->
 
-[GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) · [MIT License](./LICENSE)
+[GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·
+[MIT License](./LICENSE) · [Contributing](./CONTRIBUTING.md) ·
+[Security](./SECURITY.md)
 
-A toolkit for building and shipping **Astro + Cloudflare** websites with help from AI coding agents (Cursor, Claude, Copilot, and others).
+A toolkit for building and shipping **Astro + Cloudflare** websites with help
+from AI coding agents, including Codex, Cursor, Claude, and Antigravity.
 
 You get ready-made **agent skills**, **command-line tools** for build/deploy/discovery, and **starter templates** for new sites. Your actual website lives in its own project folder — not in this repo.
 
@@ -126,6 +129,8 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 | [`docs/agent-skills/CROSS_PLATFORM.md`](./docs/agent-skills/CROSS_PLATFORM.md) | Windows / macOS / Linux notes |
 | [`Web_Toolkit/OPERATIONS.md`](./Web_Toolkit/OPERATIONS.md) | Build and deploy sequence |
 | [`docs/agent-skills/`](./docs/agent-skills/README.md) | Per-agent skill install notes |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Validation and release requirements |
+| [`SECURITY.md`](./SECURITY.md) | Private vulnerability reporting |
 
 ## Requirements
 
@@ -133,6 +138,12 @@ See the **version table at the top** (synced from `VERSION`, `.node-version`, an
 
 ```bash
 node ./scripts/sync-readme-versions.mjs
+```
+
+For repository changes, run the complete portable validation gate:
+
+```bash
+npm run validate
 ```
 
 ---

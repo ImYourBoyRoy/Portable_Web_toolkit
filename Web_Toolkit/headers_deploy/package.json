@@ -3,5 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "license": "MIT",
   "description": "Cloudflare Pages _headers scaffolding, deploy merge, and audits for the portable Web Toolkit."
 }
