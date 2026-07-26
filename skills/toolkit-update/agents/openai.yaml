@@ -1,0 +1,4 @@
+interface:
+  display_name: "Toolkit Update"
+  short_description: "Inspect and safely update the toolkit and skills"
+  default_prompt: "Use $toolkit-update to compare this toolkit and its installed skills with the selected upstream release before making changes."

@@ -54,6 +54,7 @@ Automate high-fidelity branding and asset generation.
 
 - **[Brand Doctor](./brand_doctor/README.md)**: The "Luxe 6.0" branding automation engine. Generates signature headlines, favicons, and OG images via spec-driven visual tokens.
 - **[Image Pipeline](./image_pipeline/README.md)**: Rationalizes media assets, converting eligible raster images to lossless WebP and enforcing format discipline.
+- **[Vectorize Pipeline](./vectorize_pipeline/README.md)**: Creates clean SVG wordmarks from licensed fonts or traces authorized raster artwork with VTracer.
 
 ---
 
@@ -131,5 +132,4 @@ This keeps the toolkit useful for many sites without turning a remote MCP into a
 ---
 *Created by: Roy Dawson IV*  
 *GitHub: [https://github.com/imyourboyroy](https://github.com/imyourboyroy)*
-
 

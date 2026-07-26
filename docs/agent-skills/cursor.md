@@ -1,6 +1,6 @@
 # Cursor
 
-## Install
+## Inspect
 
 ```powershell
 # Windows
@@ -12,10 +12,15 @@
 ./scripts/install-agent-skills.sh --agent cursor
 ```
 
-Skills copy to:
+These commands report status only. Follow `INSTALL_PROTOCOL.md` for an
+authorized installation. Cursor discovery roots are:
 
 - **User (default):** `~/.cursor/skills/<skill-name>/SKILL.md`
 - **Project:** `.cursor/skills/` in the current directory (`-Scope project`)
+- **Shared alternative:** `.agents/skills/` and `~/.agents/skills/`
+
+Inspect both Cursor-specific and shared roots before installing. The status
+helper reports both and flags duplicates.
 
 ## Agent prompt
 
@@ -35,5 +40,6 @@ Then say: **Follow the portable-web-toolkit skill** when deploying or auditing A
 
 ## Update
 
-Re-run the install script after `git pull`.
+Compare source and installed copies before changing either.
 
+Source: [Cursor Agent Skills documentation](https://cursor.com/docs/skills).

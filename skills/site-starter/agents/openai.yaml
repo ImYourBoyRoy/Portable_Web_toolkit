@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Starter"
+  short_description: "Start a toolkit-managed Astro and Cloudflare site"
+  default_prompt: "Use $site-starter to scaffold a new toolkit-managed Astro and Cloudflare project."

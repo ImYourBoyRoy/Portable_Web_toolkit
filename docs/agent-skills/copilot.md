@@ -1,16 +1,8 @@
 # GitHub Copilot
 
-## Project install
+## Project inspection
 
-From your **project root** (not the portable-web-toolkit repo):
-
-```bash
-git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git /tmp/portable-web-toolkit
-mkdir -p .github/skills
-cp -R /tmp/portable-web-toolkit/skills/* .github/skills/
-```
-
-Or from inside a portable-web-toolkit clone:
+From inside a Portable Web Toolkit clone:
 
 ```powershell
 ./scripts/install-agent-skills.ps1 -Agent copilot -Scope project
@@ -21,6 +13,8 @@ Or from inside a portable-web-toolkit clone:
 ```
 
 Copilot discovers skills under `.github/skills/`, `.claude/skills/`, or `.agents/skills/`.
+The commands report status only. Follow `INSTALL_PROTOCOL.md` for a selected,
+transactional project installation.
 
 ## Agent prompt
 
@@ -41,4 +35,3 @@ Full workflow: `skills/portable-web-toolkit/SKILL.md`
 ## References
 
 [Creating agent skills for GitHub Copilot](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-skills)
-

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Portable Web Toolkit"
+  short_description: "Route toolkit-managed Astro and Cloudflare work"
+  default_prompt: "Use $portable-web-toolkit to route this toolkit-managed site task through the authoritative project tools."

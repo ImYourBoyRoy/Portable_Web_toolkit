@@ -1,11 +1,17 @@
 ---
 name: site-readiness
-description: Runs sandbox-aware run-all readiness checks on an Astro client site and writes JSON/Markdown reports with next steps. Use at the start of every client site session, after scaffolding, or when unsure what is missing.
+description: Run sandbox-aware readiness checks for a Portable Web Toolkit-managed Astro client site and produce structured next actions. Use before material site work, after scaffolding or configuration changes, during release preparation, or when project state is uncertain. Do not treat readiness findings as authorization to install, update, deploy, or mutate infrastructure.
 ---
 
 # Site Readiness
 
-**Run first** on every client site session.
+Run before material work when current readiness evidence is absent or stale.
+
+## Preflight
+
+Resolve the active client repository, read its applicable instructions, and
+preserve unrelated work. Confirm the toolkit link and site profile belong to
+this client before running commands.
 
 ## Command
 
@@ -15,13 +21,17 @@ node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --
 
 Shortcuts: `npm run readiness` | `npm run readiness:fix`
 
+An ordinary readiness request may write its diagnostic reports but does not
+apply project fixes. Do not use `readiness:fix` or any mutation flag without
+separate authorization for the proposed fixes.
+
 ## Flags
 
 | Flag | Effect |
 |------|--------|
-| `--apply-safe-fixes` | `project-init apply-safe` (never overwrites) |
-| `--install-deps` | Allow npm install during apply-safe |
-| `--build` | Include `npm run build` |
+| `--apply-safe-fixes` | Authorized `project-init apply-safe` (never overwrites) |
+| `--install-deps` | Separately authorize dependency installation |
+| `--build` | Run the repository-authorized build and create its artifacts |
 | `--skip-network` | Offline/sandbox — skip integration |
 
 ## Modes (auto)
@@ -38,9 +48,13 @@ Shortcuts: `npm run readiness` | `npm run readiness:fix`
 
 1. Run readiness  
 2. Read `nextSteps` + `recommendedFixes` in JSON  
-3. Fix → re-run until pass  
+3. Propose fixes; apply only the authorized set, then re-run
 4. Then **portable-web-toolkit** for deploy  
 5. **site-doctor** only when site is live  
+
+Record the toolkit version as context. A newer toolkit version is a separate
+finding, not permission to pull source or reinstall skills. Use
+**toolkit-update** when comparison or migration is requested.
 
 ## Never auto-applied
 

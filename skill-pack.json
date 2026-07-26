@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "package": "portable-web-toolkit-skills",
+  "version": "1.0.0",
+  "toolkit_version": "0.2.6",
+  "source_base_commit": "86dddd9efb64c5b4219afe986699135a51e63f83",
+  "skills": [
+    {
+      "name": "instagram-clone",
+      "version": "1.1.0",
+      "tier": "optional",
+      "status": "stable",
+      "install_by_default": false,
+      "path": "skills/instagram-clone",
+      "content_sha256": "50272cb4b3599681001ef4c6cea4502791de895067618a8acca782b68fb5ac12"
+    },
+    {
+      "name": "portable-web-toolkit",
+      "version": "2.1.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": true,
+      "path": "skills/portable-web-toolkit",
+      "content_sha256": "bae2b1fb25f60fff2debcfb75c4d922973753710ee13a0262e1401f898d62072"
+    },
+    {
+      "name": "site-readiness",
+      "version": "1.2.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": true,
+      "path": "skills/site-readiness",
+      "content_sha256": "5620cf02b63dd9bd9653bc5e601e06fdddab1a4a1995ddfa753561fd0a1e5dd3"
+    },
+    {
+      "name": "site-starter",
+      "version": "1.1.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": true,
+      "path": "skills/site-starter",
+      "content_sha256": "2b7a2b0719fd97bb56a3c7ea0bd739cb9487d2440e1f758d2c8fc4188d1a23cb"
+    },
+    {
+      "name": "toolkit-update",
+      "version": "2.1.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": true,
+      "path": "skills/toolkit-update",
+      "content_sha256": "b405154f728aab9b03ae2ba8f9f946daf5a18b07c14cc64086d4893c51ea3d56"
+    },
+    {
+      "name": "vectorize-pipeline",
+      "version": "1.1.0",
+      "tier": "optional",
+      "status": "experimental",
+      "install_by_default": false,
+      "path": "skills/vectorize-pipeline",
+      "content_sha256": "978564be13b9641c9a5a2011e8270ac356f7a39c1d65bf1bfe1c2348e9c3227b"
+    }
+  ]
+}

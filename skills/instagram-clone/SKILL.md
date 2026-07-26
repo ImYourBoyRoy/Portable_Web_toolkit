@@ -7,6 +7,13 @@ description: Clones a public Instagram profile into feed.json and local media fo
 
 Public Instagram → local assets. **No Meta Graph API tokens.**
 
+## Preflight
+
+Read the client repository's applicable instructions and site profile, preserve
+unrelated work, and confirm the toolkit link belongs to this project. Confirm
+the operator has the right or permission to reproduce and store the selected
+profile media; public availability alone is not authorization.
+
 ## When to use
 
 - Portfolio gallery from a **public** IG account  
@@ -57,11 +64,12 @@ npm script (add to client `package.json`):
 | `public/assets/instagram/profile.jpg` | Profile photo |
 | `public/assets/instagram/{shortcode}*` | Carousel media |
 
-## Site architecture (required)
+## Site architecture
 
-1. **Page views:** KV cache → static `feed.json` → empty fallback — **never** live-fetch IG per request  
-2. **Background:** Worker cron or `/api/instagram/refresh` with 429 backoff  
-3. **Manual:** `ig:clone` before deploy or after new posts  
+Always keep a static `feed.json` fallback and never live-fetch Instagram on a
+page request. Add KV caching, Worker cron, or a refresh endpoint only when the
+repository architecture and site profile already select or authorize that
+dynamic path. A static site may use manual `ig:clone` refreshes only.
 
 ## Workflow with other skills
 

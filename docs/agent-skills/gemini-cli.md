@@ -1,6 +1,9 @@
 # Gemini CLI
 
-## Install (recommended)
+## Native installation
+
+Inspect `skill-pack.json` and existing Gemini skills first. Use the native
+command only after selecting the intended scope and skills:
 
 ```bash
 gemini skills install https://github.com/imyourboyroy/Portable_Web_toolkit.git --path skills
@@ -19,7 +22,7 @@ Workspace-only (project `.gemini/skills/`):
 gemini skills install /path/to/portable-web-toolkit/skills/ --scope workspace
 ```
 
-Or use the installer:
+Optional status helper:
 
 ```bash
 ./scripts/install-agent-skills.sh --agent gemini
@@ -44,4 +47,3 @@ For always-on rules, add `@skills/portable-web-toolkit/SKILL.md` to project `GEM
 ## MCP
 
 Configure `cf-agent` in `~/.gemini/config.json` when operating the portable web toolkit from Gemini.
-

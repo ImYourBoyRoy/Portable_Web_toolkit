@@ -15,35 +15,40 @@ Each toolkit repo ships a **`skills/`** folder with structured workflows agents 
 | **Windsurf** | `.windsurfrules` or Global Rules (paste skill content) |
 | **OpenCode** | Workspace `AGENTS.md` + `skills/` |
 
-Cross-platform installers (pick one):
+Read [INSTALL_PROTOCOL.md](./INSTALL_PROTOCOL.md) before changing a discovery
+directory. Optional helpers report status:
 
 | Method | Command |
 |--------|---------|
-| **Any OS (recommended)** | `node ./scripts/install-agent-skills.mjs` |
-| PowerShell 7+ | `./scripts/install-agent-skills.ps1 -Agent all` |
-| bash (macOS/Linux) | `./scripts/install-agent-skills.sh --agent all` |
+| Any OS | `node ./scripts/check-agent-skills.mjs --agent cursor` |
+| PowerShell 7+ | `./scripts/install-agent-skills.ps1 -Agent cursor` |
+| bash | `./scripts/install-agent-skills.sh --agent cursor` |
 
-See also [`skills/CROSS_PLATFORM.md`](../../skills/CROSS_PLATFORM.md).
+See also [`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md).
 
 ## Tell your agent (copy-paste)
 
 ```text
-Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work — run site-readiness first on client projects.
+Inspect the selected Portable Web Toolkit skills from GitHub, compare them with
+this client's installed copies, and report conflicts before installing. Use the
+repository manifest, preserve displaced content, and install only the approved
+client, scope, and skill set.
 ```
 
-The agent should install skills itself (`node ./scripts/install-agent-skills.mjs`). Users do not need manual one-shot install flows.
+The agent performs the documented protocol directly. The status helper is
+optional and never installs.
 
-## Optional: install skills yourself
+## Optional: inspect skills yourself
 
 ```bash
 git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git
 cd Portable_Web_toolkit
-node ./scripts/install-agent-skills.mjs
+node ./scripts/check-agent-skills.mjs --agent cursor
 ```
 
-## Project-scoped install
+## Project-scoped status
 
-Run from a **client project root** to install into that repo only:
+Run from a **client project root** to inspect that repo without changing it:
 
 ```powershell
 /path/to/toolkit/scripts/install-agent-skills.ps1 -Agent cursor -Scope project
@@ -62,20 +67,5 @@ Run from a **client project root** to install into that repo only:
 
 ## Update
 
-```bash
-node ./scripts/update-toolkit.mjs
-```
-
-Or platform wrappers:
-
-```bash
-pwsh ./scripts/update-toolkit.ps1    # Windows or anywhere with pwsh
-bash ./scripts/update-toolkit.sh     # macOS / Linux
-```
-
-Or manually:
-
-```bash
-git pull
-node ./scripts/install-agent-skills.mjs
-```
+Use `toolkit-update` for comparison and staged reconciliation. Source updates
+never imply skill reinstallation.

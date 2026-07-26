@@ -25,13 +25,17 @@ You get ready-made **agent skills**, **command-line tools** for build/deploy/dis
 
 ## Get started (use your AI agent)
 
-Paste this into your coding agent **once per machine**:
+Give your coding agent a selected client and scope:
 
 ```text
-Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work. If the local agent environment is missing tools, run Setup_Agent_Environment with --yes so sudo/UAC can prompt me, then on any client site run site-readiness first and follow its report.
+Inspect the Portable Web Toolkit skill manifest from its GitHub repository.
+Compare the selected skills with this client's installed copies and report
+conflicts. Install only the explicitly selected client, scope, and skills;
+preserve displaced content outside skill-discovery directories.
 ```
 
-The agent installs the skills and can run host setup for you. **You should not need to double-click installers manually** â€” when elevation is required, approve the sudo/UAC password prompt.
+The agent follows [`docs/agent-skills/INSTALL_PROTOCOL.md`](./docs/agent-skills/INSTALL_PROTOCOL.md)
+with ordinary Git and filesystem tools. Optional scripts report status only.
 
 ### Working on a site
 
@@ -47,11 +51,13 @@ Each client site is a **separate folder** with its own `package.json`, `.env`, a
 
 ## Local agent environment setup
 
-On a **new machine**, the setup scans for missing/outdated tools (Git, Node, pyenv-native, pyenv-gui, Python, pip), shows **one list**, then asks once:
+On a **new machine**, setup can scan for missing or outdated tools. Treat this
+as a separate privileged task, inspect the requested changes, and authorize it
+before applying:
 
 > The following software is not installed or is outdated. Press Y to continue setting up the local agent environment.
 
-**You do not need Node installed first.** Prefer letting your coding agent run it:
+The launchers can bootstrap without an existing Node installation:
 
 ```bash
 # macOS / Linux â€” agent-friendly (skips Y; sudo still prompts for your password)
@@ -79,7 +85,7 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed â
 
 | Path | Purpose |
 |------|---------|
-| [`skills/`](./skills/README.md) | Agent skills â€” install once, use in every session |
+| [`skills/`](./docs/agent-skills/SKILL_PACK.md) | Versioned core and optional Agent Skills |
 | [`Web_Toolkit/`](./Web_Toolkit/README.md) | CLI tools (readiness, deploy, discovery, Cloudflare, etc.) |
 | [`site-starter/`](./site-starter/README.md) | Templates to bootstrap a new client site |
 | [`START_HERE.md`](./START_HERE.md) | Short guide for AI agents (zero research) |
@@ -93,7 +99,8 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed â
 | Check a site before deploy | `site-readiness` on the client project |
 | New site from scratch | `site-starter` skill + copy templates |
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
-| Update toolkit + skills | `toolkit-update` skill or `node scripts/update-toolkit.mjs` |
+| Compare toolkit + skills | `toolkit-update` or `node scripts/update-toolkit.mjs` |
+| Prepare an SVG candidate | Optional `vectorize-pipeline` skill |
 | Verify discovery layer | `discovery-doctor` on `dist/` or live URL |
 
 Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portable-web-toolkit` skill.
@@ -116,7 +123,7 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 | Doc | For |
 |-----|-----|
 | [`START_HERE.md`](./START_HERE.md) | AI agents |
-| [`skills/CROSS_PLATFORM.md`](./skills/CROSS_PLATFORM.md) | Windows / macOS / Linux notes |
+| [`docs/agent-skills/CROSS_PLATFORM.md`](./docs/agent-skills/CROSS_PLATFORM.md) | Windows / macOS / Linux notes |
 | [`Web_Toolkit/OPERATIONS.md`](./Web_Toolkit/OPERATIONS.md) | Build and deploy sequence |
 | [`docs/agent-skills/`](./docs/agent-skills/README.md) | Per-agent skill install notes |
 

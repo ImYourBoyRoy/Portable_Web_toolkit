@@ -3,6 +3,28 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [Unreleased]
+
+### Added
+
+- Versioned skill manifest, per-skill metadata, content hashes, and portable
+  activation metadata.
+- Read-only multi-client skill status reporting and an agent-driven,
+  transactional installation protocol.
+- Recovered and generalized the local-only Vectorize Pipeline as an optional,
+  experimental skill and toolkit module.
+
+### Changed
+
+- Refactored the master skill into a compact router with conditional references.
+- Made client-repository policy authoritative for client work.
+- Retired automatic skill replacement from compatibility installer and updater
+  entrypoints; both now report status only.
+- Kept governance files outside `skills/` so Antigravity discovers exactly the
+  six functional skills.
+- Added competing-owner activation fixtures and safety preflights to all six
+  skills. Current skill versions are recorded in `skill-pack.json`.
+
 ## [0.2.6] - 2026-07-18
 
 ### Fixed

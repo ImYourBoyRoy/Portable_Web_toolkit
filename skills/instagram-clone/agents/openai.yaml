@@ -1,0 +1,4 @@
+interface:
+  display_name: "Instagram Clone"
+  short_description: "Prepare a static gallery from a public profile"
+  default_prompt: "Use $instagram-clone to prepare or audit this project's public-profile gallery fallback."

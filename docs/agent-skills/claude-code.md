@@ -2,7 +2,8 @@
 
 ## Marketplace install (recommended)
 
-In Claude Code:
+Inspect the marketplace and existing plugin or skill copies first. After
+explicit installation authorization, in Claude Code:
 
 ```text
 /plugin marketplace add https://github.com/imyourboyroy/Portable_Web_toolkit.git
@@ -29,9 +30,14 @@ Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolk
 Plugin metadata: `.claude-plugin/plugin.json`  
 Skills: `skills/portable-web-toolkit/SKILL.md`
 
+Direct personal and project roots are `~/.claude/skills/` and
+`.claude/skills/`. Use the plugin path or a copied-skill transaction, not both,
+unless duplicate discovery is intentional.
+
 Also read repo `AGENTS.md` when editing the Web_Toolkit modules.
 
 ## MCP
 
 Pass --site-profile from `node Web_Toolkit/cloudflare-agent-toolkit/bin/cf-agent.mjs --help` to Claude MCP config for structured Python environment tools.
 
+Source: [Claude Code skill documentation](https://code.claude.com/docs/en/skills).

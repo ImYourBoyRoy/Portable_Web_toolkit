@@ -9,6 +9,9 @@
     "node": ">=26"
   },
   "scripts": {
+    "validate:skills": "node ./scripts/validate-skills.mjs",
+    "status:skills": "node ./scripts/check-agent-skills.mjs",
+    "test:skills": "node --test ./tests/skill-governance.test.mjs",
     "sync:readme-versions": "node ./scripts/sync-readme-versions.mjs",
     "check:readme-versions": "node ./scripts/sync-readme-versions.mjs --check",
     "verify:toolkit": "node ./scripts/sync-readme-versions.mjs --check && node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs",

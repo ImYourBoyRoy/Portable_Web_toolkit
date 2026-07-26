@@ -9,7 +9,9 @@
 3. `OPERATIONS.md` (reference — primary path is `site-readiness` JSON)
 4. `ARCHITECTURE.md`
 
-Session memory belongs in each **client project** `MEMORY.md`, not in this toolkit repo.
+When this directory is linked into a client project, the client repository's
+applicable instructions govern site work. This file governs toolkit source and
+does not override client safety or release policy.
 
 ## What matters most
 
@@ -18,7 +20,7 @@ Session memory belongs in each **client project** `MEMORY.md`, not in this toolk
 - Generated artifacts in `.runtime/` only
 - Dry-run before `--apply` on Cloudflare, DNS, cache, registrar
 - Custom discovery generators — **not** `@astrojs/sitemap` / `@astrojs/robots`
-- `site-readiness run` at the start of every client session
+- `site-readiness run` before material work when current evidence is absent or stale
 
 ## Site deploy gate
 
@@ -32,4 +34,8 @@ Infrastructure: **audit → dry-run → `--apply`**. Full sequence: `OPERATIONS.
 
 ## Skills
 
-Install from repo root: `node ../scripts/install-agent-skills.mjs` — master skill **portable-web-toolkit**.
+The versioned source is `../skill-pack.json`. From the repository root,
+`node ./scripts/check-agent-skills.mjs --agent <client>` reports status without
+changing files. An authorized installation follows
+[`../docs/agent-skills/INSTALL_PROTOCOL.md`](../docs/agent-skills/INSTALL_PROTOCOL.md);
+the helper is not an installer. The master router is **portable-web-toolkit**.

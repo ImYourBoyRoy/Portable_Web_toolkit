@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "skills": {
+    "instagram-clone": {
+      "positive": [
+        "Clone the public posts from this Instagram profile into a local feed and media directory."
+      ],
+      "near_miss": [
+        "Add an Instagram link to the footer.",
+        "Keep the existing static gallery architecture and change only its CSS grid."
+      ]
+    },
+    "portable-web-toolkit": {
+      "positive": [
+        "Prepare this established toolkit-managed site for staging and production, coordinating readiness, build, Cloudflare dry-runs, smoke tests, and release gates."
+      ],
+      "near_miss": [
+        "Build a React dashboard hosted on a conventional virtual machine.",
+        "Run readiness for this managed site and summarize the JSON.",
+        "Create a new managed site from the Workers starter."
+      ]
+    },
+    "site-readiness": {
+      "positive": [
+        "Run the toolkit readiness checks for this managed site and summarize the JSON findings."
+      ],
+      "near_miss": [
+        "Tell me whether this unassociated repository looks ready for a demo.",
+        "Readiness says a newer toolkit exists; fix only the authorized client-site findings."
+      ]
+    },
+    "site-starter": {
+      "positive": [
+        "Create a new toolkit-managed Astro site using the Cloudflare Workers starter."
+      ],
+      "near_miss": [
+        "Add one Astro component to this existing site.",
+        "Copy a starter package file over this non-empty existing project."
+      ]
+    },
+    "toolkit-update": {
+      "positive": [
+        "Compare my Portable Web Toolkit checkout with the latest public source and plan a safe reconciliation."
+      ],
+      "near_miss": [
+        "Update the npm dependencies in this unrelated application.",
+        "Update npm dependencies in this toolkit-managed client without changing the toolkit.",
+        "Deploy this established toolkit-managed site to staging."
+      ]
+    },
+    "vectorize-pipeline": {
+      "positive": [
+        "Convert this licensed font wordmark to clean SVG outlines with the toolkit vector pipeline."
+      ],
+      "near_miss": [
+        "Generate a photorealistic hero image.",
+        "Compress this existing raster photo to WebP without tracing it."
+      ]
+    }
+  }
+}

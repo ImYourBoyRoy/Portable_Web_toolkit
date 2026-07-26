@@ -75,13 +75,15 @@ Do **not** load `docs/templates/AGENT.template.md` for toolkit work — that fil
 1. Add a focused folder under `Web_Toolkit/<module>/`
 2. Reuse `shared/lib/` for cross-tool logic
 3. Register bin in `Web_Toolkit/package.json` if publishable
-4. Add row to `skills/portable-web-toolkit/SKILL.md` CLI table
+4. Update the relevant router reference when ownership or routing changes
 5. Update `OPERATIONS.md` / `README.md` in the same work cycle
 6. Run `toolkit_verify` + `privacy_check`
 
 ## Extending agent skills
 
-See [`../../skills/CONTRIBUTING.md`](../../skills/CONTRIBUTING.md). New skills = new folder + `install-agent-skills.mjs`.
+See [`../docs/agent-skills/CONTRIBUTING.md`](../docs/agent-skills/CONTRIBUTING.md).
+New skills require
+manifest metadata, activation cases, validation, and an updated content hash.
 
 ## MCP direction
 

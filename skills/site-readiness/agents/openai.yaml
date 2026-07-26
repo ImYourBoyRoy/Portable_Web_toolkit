@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Readiness"
+  short_description: "Assess a toolkit-managed site before material work"
+  default_prompt: "Use $site-readiness to inspect this toolkit-managed site and report its next safe actions."

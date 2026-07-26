@@ -1,49 +1,37 @@
 #!/usr/bin/env node
-// ./scripts/install-agent-skills.mjs
 /**
- * Cross-platform entry: Windows/macOS/Linux via PowerShell 7+ or bash.
- *
- * Usage:
- *   node ./scripts/install-agent-skills.mjs
- *   node ./scripts/install-agent-skills.mjs -- --Agent cursor -Scope user
+ * Compatibility entrypoint retained for existing documentation and prompts.
+ * It is deliberately read-only. Agent-driven installation is documented in
+ * docs/agent-skills/INSTALL_PROTOCOL.md.
  */
-
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, '..');
-const extraArgs = process.argv.slice(2).filter((a) => a !== '--');
-const defaultPsArgs = ['-RepoRoot', repoRoot, '-Agent', 'all'];
-const defaultShArgs = ['--repo-root', repoRoot, '--agent', 'all'];
-
-function run(command, args) {
-  const result = spawnSync(command, args, { stdio: 'inherit', cwd: repoRoot, shell: false });
-  process.exit(result.status ?? 1);
-}
-
-const ps1 = path.join(__dirname, 'install-agent-skills.ps1');
-const sh = path.join(__dirname, 'install-agent-skills.sh');
-
-if (process.env.PWT_INSTALLER === 'bash' && fs.existsSync(sh)) {
-  run('bash', [sh, ...(extraArgs.length ? extraArgs : defaultShArgs)]);
-}
-
-if (fs.existsSync(ps1)) {
-  const pwsh = process.env.PWSH_PATH || 'pwsh';
-  const psArgs = ['-NoLogo', '-NoProfile', '-File', ps1, ...(extraArgs.length ? extraArgs : defaultPsArgs)];
-  const result = spawnSync(pwsh, psArgs, { stdio: 'inherit', cwd: repoRoot, shell: false });
-  if (result.error?.code === 'ENOENT' && fs.existsSync(sh)) {
-    run('bash', [sh, ...(extraArgs.length ? extraArgs : defaultShArgs)]);
+const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
+const raw = process.argv.slice(2).filter((value) => value !== '--');
+const args = [];
+for (let index = 0; index < raw.length; index += 1) {
+  const token = raw[index];
+  const normalized = token.toLowerCase();
+  if (['-agent', '--agent'].includes(normalized)) {
+    const agent = String(raw[index + 1] || '').toLowerCase();
+    index += 1;
+    if (agent && agent !== 'all') args.push('--agent', agent);
+  } else if (['-scope', '--scope'].includes(normalized)) {
+    args.push('--scope', String(raw[index + 1] || '').toLowerCase());
+    index += 1;
+  } else {
+    args.push(token);
   }
-  process.exit(result.status ?? 1);
 }
 
-if (fs.existsSync(sh)) {
-  run('bash', [sh, ...(extraArgs.length ? extraArgs : defaultShArgs)]);
-}
-
-console.error('[install-agent-skills] No installer script found.');
-process.exit(1);
+console.error(
+  '[install-agent-skills] Automated replacement is retired; reporting status only.',
+);
+const result = spawnSync(
+  process.execPath,
+  [path.join(scriptsDir, 'check-agent-skills.mjs'), ...args],
+  { stdio: 'inherit', shell: false },
+);
+process.exit(result.status ?? 1);

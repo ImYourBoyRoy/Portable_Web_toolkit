@@ -1,33 +1,40 @@
 # Agent skills — portable-web-toolkit
 
-Install structured agent workflows for **portable-web-toolkit** across mainstream coding agents (Cursor, Claude Code, Gemini CLI, Antigravity, GitHub Copilot, Windsurf, OpenCode, Kiro).
+Inspect and selectively install structured Portable Web Toolkit workflows across
+supported coding agents.
 
 **Start here:** [getting-started.md](./getting-started.md)
 
 ## Tell your agent (copy-paste)
 
 ```text
-Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work.
+Inspect the Portable Web Toolkit skill manifest from its GitHub repository.
+Compare the selected skills with this client's documented discovery root,
+report existing or modified copies, and install only the missing or explicitly
+approved updates. Preserve displaced content outside skill-discovery folders.
 ```
 
-## Optional: install yourself
+Follow [INSTALL_PROTOCOL.md](./INSTALL_PROTOCOL.md). An AI agent can perform the
+protocol with ordinary Git and filesystem tools.
+
+## Optional status helper
 
 ```bash
 git clone --depth 1 https://github.com/imyourboyroy/Portable_Web_toolkit.git
 cd Portable_Web_toolkit
-node ./scripts/install-agent-skills.mjs
+node ./scripts/check-agent-skills.mjs --agent cursor --scope user
 ```
 
-## Platform wrappers (optional)
+Compatibility wrappers are read-only and call the same status helper:
 
 | OS | Command |
 |----|---------|
-| Windows | `pwsh ./scripts/install-agent-skills.ps1 -Agent all` |
-| macOS / Linux | `bash ./scripts/install-agent-skills.sh --agent all` |
+| Windows | `pwsh ./scripts/install-agent-skills.ps1 -Agent cursor` |
+| macOS / Linux | `bash ./scripts/install-agent-skills.sh --agent cursor` |
 
 ### Project-scoped (single repo)
 
-Install skills into the **current project** (`.cursor/skills`, `.github/skills`, etc.):
+Inspect skills in the current project:
 
 ```powershell
 ./scripts/install-agent-skills.ps1 -Agent cursor -Scope project
@@ -41,13 +48,14 @@ Install skills into the **current project** (`.cursor/skills`, `.github/skills`,
 
 | Skill | Purpose |
 |-------|---------|
-| `portable-web-toolkit` | **Master** — deploy, discovery, cf-agent, full CLI reference |
-| `site-readiness` | **Start every client session** — run-all + next steps |
+| `portable-web-toolkit` | Router for toolkit-managed Astro and Cloudflare work |
+| `site-readiness` | Readiness evidence and next actions |
 | `site-starter` | New client site from `site-starter/` templates |
-| `toolkit-update` | `git pull` + reinstall skills + verify |
-| `instagram-clone` | Public Instagram gallery (env-driven handle) |
+| `toolkit-update` | Read-only comparison and authorized reconciliation |
+| `instagram-clone` | Optional public Instagram gallery fallback |
+| `vectorize-pipeline` | Optional raster or font-outline SVG preparation |
 
-**Zero-research:** repo root [`START_HERE.md`](../START_HERE.md)
+**Zero-research:** repo root [`START_HERE.md`](../../START_HERE.md)
 
 Read `AGENTS.md` and `Web_Toolkit/OPERATIONS.md`. Always pass `--site-profile` for client sites.
 
@@ -55,6 +63,7 @@ Read `AGENTS.md` and `Web_Toolkit/OPERATIONS.md`. Always pass `--site-profile` f
 
 | Agent | Guide |
 |-------|-------|
+| Codex | [codex.md](./codex.md) |
 | Cursor | [cursor.md](./cursor.md) |
 | Claude Code | [claude-code.md](./claude-code.md) |
 | Gemini CLI | [gemini-cli.md](./gemini-cli.md) |
@@ -66,16 +75,8 @@ Read `AGENTS.md` and `Web_Toolkit/OPERATIONS.md`. Always pass `--site-profile` f
 
 ## Update
 
-```bash
-node ./scripts/update-toolkit.mjs
-```
-
-Or:
-
-```bash
-git pull
-node ./scripts/install-agent-skills.mjs
-```
+Invoke `toolkit-update` to compare source, skills, and local-only capabilities.
+Updating toolkit source does not reinstall skills automatically.
 
 ## Repo layout
 
@@ -83,10 +84,11 @@ node ./scripts/install-agent-skills.mjs
 skills/portable-web-toolkit/SKILL.md   # Master skill — load if only one
 skills/site-readiness/SKILL.md         # Run-all first on client sites
 skills/site-starter/SKILL.md           # New client site scaffold
-skills/toolkit-update/SKILL.md         # Pull + reinstall skills
+skills/toolkit-update/SKILL.md         # Compare and reconcile versions
 skills/instagram-clone/SKILL.md        # Public Instagram gallery
-skills/README.md                       # Skill index
+skills/vectorize-pipeline/SKILL.md      # Optional SVG preparation
+skill-pack.json                         # Versions, tiers, and expected inventory
+docs/agent-skills/SKILL_PACK.md         # Skill index
 START_HERE.md                          # Zero-research entry (repo root)
 AGENTS.md                              # Repo agent rules
 ```
-

@@ -7,7 +7,15 @@ description: Bootstraps a brand-new Astro + Cloudflare client site from Portable
 
 Creates a **new client site** outside the toolkit repo. Never use `Portable_Web_toolkit` root as the website.
 
-Cross-platform conventions: `skills/CROSS_PLATFORM.md`
+## Preflight
+
+Resolve applicable instructions for the parent workspace and intended client
+repository. Select an exact target path, inspect it, and preserve unrelated
+work. Refuse a non-empty target unless the user separately approves every
+collision and its recovery plan.
+
+Use the repository's current Node version on Windows, macOS, or Linux. Prefer
+portable Node commands; adapt only path and shell quoting to the active host.
 
 ## Workers vs Pages
 
@@ -20,33 +28,28 @@ Cross-platform conventions: `skills/CROSS_PLATFORM.md`
 | Profile | `"deployTarget": "workers"` | `"deployTarget": "pages"` |
 | Discovery doctor | `./dist/client` | `./dist` |
 
-## Steps (all platforms)
+## Portable scaffold transaction
 
-Set paths (`TOOLKIT` = Portable_Web_toolkit repo root, `SITE` = new client folder).
+1. Resolve the toolkit root, exact empty site target, deploy target, and source
+   template files.
+2. Produce a file plan for `package.json`, `wrangler.toml`,
+   `astro.config.mjs`, `.env.example`, and `src/styles/`.
+3. Stage those files outside the target and verify their source names and
+   expected destination paths.
+4. Create the target only after the plan is accepted, then move the staged
+   scaffold into the empty target. Use the agent's ordinary filesystem tools
+   or native host commands; do not present Bash syntax as cross-platform.
+5. Link `Web_Toolkit` with:
 
-```bash
-mkdir -p "$SITE" && cd "$SITE"
-
-cp "$TOOLKIT/site-starter/workers.package.json" ./package.json
-cp "$TOOLKIT/site-starter/workers.wrangler.toml" ./wrangler.toml
-cp "$TOOLKIT/site-starter/astro.config.workers.example.mjs" ./astro.config.mjs
-cp "$TOOLKIT/site-starter/.env.example" ./.env.example
-mkdir -p ./src/styles && cp -R "$TOOLKIT/site-starter/src/styles/"* ./src/styles/
-
-node "$TOOLKIT/scripts/link-web-toolkit.mjs" \
-  --toolkit-path "$TOOLKIT/Web_Toolkit" \
-  --project-root "$SITE"
-
-# Copy discovery templates — Web_Toolkit/templates/discovery/README.md
-# Edit src/lib/site-config.ts and astro.config `site` URL
-
-npm install
-node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs
-node ./Web_Toolkit/project_init/bin/project-init.mjs apply-safe --project-root .
-npm run readiness
+```text
+node "<toolkit-root>/scripts/link-web-toolkit.mjs" --toolkit-path "<toolkit-root>/Web_Toolkit" --project-root "<site-root>"
 ```
 
-**Windows (PowerShell 7+):** use `Copy-Item` instead of `cp`; same `link-web-toolkit.mjs` step.
+6. Copy and customize discovery templates according to
+   `Web_Toolkit/templates/discovery/README.md`.
+7. Obtain separate authorization before dependency installation or
+   `project-init apply-safe`.
+8. Create the site profile, run read-only readiness, and review its report.
 
 ## npm scripts → Web_Toolkit
 
@@ -68,3 +71,4 @@ Copy from `Web_Toolkit/templates/discovery/` per README: robots, sitemap, llms, 
 - Secrets in client `.env` only
 - Link `Web_Toolkit` at project root before running npm scripts
 - Structural `tokens.css` only — visual identity comes from each client's Brand Guide
+- Never overwrite an existing project from a starter template

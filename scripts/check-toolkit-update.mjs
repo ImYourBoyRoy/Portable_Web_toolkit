@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // ./scripts/check-toolkit-update.mjs
 /**
- * Compare installed/local toolkit version against GitHub latest tag.
- * Run at session start so agents use current skills and CLIs.
+ * Compare installed/local toolkit version against the public release, tag, or
+ * default-branch VERSION. This command is read-only.
  *
  * Usage:
  *   node ./scripts/check-toolkit-update.mjs
@@ -38,9 +38,28 @@ function readStamp() {
   }
 }
 
-function localGitHead(root) {
-  const result = spawnSync('git', ['-C', root, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' });
+function gitOutput(root, args) {
+  const result = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
   return result.status === 0 ? result.stdout.trim() : '';
+}
+
+function localGitState(root) {
+  const head = gitOutput(root, ['rev-parse', '--short', 'HEAD']);
+  if (!head) {
+    return { head: '', dirty: false, aheadOfOriginMain: null, behindOriginMain: null };
+  }
+  const dirty = Boolean(gitOutput(root, ['status', '--porcelain']));
+  const relation = gitOutput(
+    root,
+    ['rev-list', '--left-right', '--count', 'refs/remotes/origin/main...HEAD'],
+  );
+  const counts = relation ? relation.split(/\s+/).map(Number) : [];
+  return {
+    head,
+    dirty,
+    behindOriginMain: Number.isFinite(counts[0]) ? counts[0] : null,
+    aheadOfOriginMain: Number.isFinite(counts[1]) ? counts[1] : null,
+  };
 }
 
 async function fetchLatestTag(repo = DEFAULT_REPO) {
@@ -53,7 +72,12 @@ async function fetchLatestTag(repo = DEFAULT_REPO) {
     });
     if (!tags.ok) throw new Error(`GitHub API HTTP ${tags.status}`);
     const list = await tags.json();
-    return list[0]?.name?.replace(/^v/, '') || '';
+    if (list[0]?.name) return list[0].name.replace(/^v/, '');
+    const raw = await fetch(`https://raw.githubusercontent.com/${repo}/main/VERSION`, {
+      headers: { 'User-Agent': 'portable-web-toolkit' },
+    });
+    if (!raw.ok) throw new Error(`GitHub raw VERSION HTTP ${raw.status}`);
+    return (await raw.text()).trim();
   }
   if (!response.ok) throw new Error(`GitHub API HTTP ${response.status}`);
   const payload = await response.json();
@@ -64,7 +88,7 @@ async function main() {
   const jsonOut = process.argv.includes('--json');
   const localVersion = readVersionFile(repoRoot);
   const stamp = readStamp();
-  const head = localGitHead(repoRoot);
+  const gitState = localGitState(repoRoot);
 
   let remoteVersion = '';
   let networkError = '';
@@ -77,7 +101,8 @@ async function main() {
 
   const installedVersion = stamp?.version || '';
   const updateAvailable = Boolean(
-    remoteVersion && localVersion && remoteVersion !== localVersion,
+    (remoteVersion && localVersion && remoteVersion !== localVersion)
+    || (gitState.behindOriginMain && gitState.behindOriginMain > 0),
   );
 
   const report = {
@@ -85,13 +110,16 @@ async function main() {
     remoteVersion: remoteVersion || null,
     installedVersion: installedVersion || null,
     installedAt: stamp?.installedAt || null,
-    localCommit: head || stamp?.commit || null,
+    localCommit: gitState.head || stamp?.commit || null,
+    localDirty: gitState.dirty,
+    aheadOfOriginMain: gitState.aheadOfOriginMain,
+    behindOriginMain: gitState.behindOriginMain,
     updateAvailable,
     networkError: networkError || null,
     updateCommand: process.platform === 'win32'
       ? './scripts/update-toolkit.ps1'
       : './scripts/update-toolkit.sh',
-    installSkills: './scripts/install-agent-skills.ps1 -Agent all',
+    skillStatus: './scripts/check-agent-skills.mjs --agent <client>',
   };
 
   if (jsonOut) {
@@ -100,15 +128,27 @@ async function main() {
     console.log('[toolkit-version] Portable Web Toolkit');
     console.log(`  Local VERSION: ${localVersion || '(missing)'}`);
     if (installedVersion) console.log(`  Last skill install: v${installedVersion} @ ${stamp?.installedAt || 'unknown'}`);
-    if (head) console.log(`  Local commit: ${head}`);
+    if (gitState.head) console.log(`  Local commit: ${gitState.head}`);
+    if (gitState.dirty) console.log('  Worktree: modified');
+    if (gitState.aheadOfOriginMain) {
+      console.log(`  Local branch: ${gitState.aheadOfOriginMain} commit(s) ahead of origin/main`);
+    }
+    if (gitState.behindOriginMain) {
+      console.log(`  Local branch: ${gitState.behindOriginMain} commit(s) behind origin/main`);
+    }
     if (remoteVersion) console.log(`  GitHub latest: v${remoteVersion}`);
     if (networkError) console.log(`  Network: ${networkError} (skipped remote check)`);
     if (updateAvailable) {
       console.log('');
       console.log('  UPDATE AVAILABLE — run:');
       console.log(`    ${report.updateCommand}`);
+    } else if (
+      remoteVersion
+      && (gitState.dirty || (gitState.aheadOfOriginMain && gitState.aheadOfOriginMain > 0))
+    ) {
+      console.log('  Status: public version baseline is current; local unreleased changes are present');
     } else if (remoteVersion) {
-      console.log('  Status: up to date with GitHub latest tag');
+      console.log('  Status: up to date with the selected public version source');
     }
   }
 

@@ -6,11 +6,12 @@ Repo-local rules for AI agents using the **Portable Astro + Cloudflare Web Toolk
 
 ## Read first (in order)
 
-1. **[`START_HERE.md`](./START_HERE.md)** — zero-research bootstrap (skills, layout, first commands)
-2. Installed **skills** in `skills/` (especially `portable-web-toolkit`, `site-readiness`)
-3. `Web_Toolkit/OPERATIONS.md` — full numbered deploy sequence (reference)
-4. `Web_Toolkit/README.md` — module phases
-5. Target client project's **`MEMORY.md`** when operating on a site repo
+1. The active client repository's applicable instructions when operating on a
+   client site
+2. **[`START_HERE.md`](./START_HERE.md)** for toolkit orientation
+3. The narrow installed skill in `skills/`
+4. `Web_Toolkit/OPERATIONS.md` only when detailed operations are relevant
+5. Current source, manifests, profiles, tests, and runtime evidence
 
 **Do not** load `docs/templates/AGENT.template.md` for toolkit work — that template is for other projects.
 
@@ -24,20 +25,38 @@ Web_Toolkit/
 
 Site-specific behavior comes from **`site-profiles/*.json`** (or a private profile path passed with `--site-profile`). Live secrets belong in the **target project root `.env`**, not in the toolkit tree.
 
-## Instruction precedence
+## Authority and precedence
 
-1. Explicit user request
-2. This `AGENTS.md`
-3. `Web_Toolkit/OPERATIONS.md` + active site profile
-4. `Web_Toolkit/README.md`, `RUNBOOKS.md`, `CHECKLIST.md`
-5. Target client project's `AGENTS.md` / `MEMORY.md` when operating on a site repo
+Follow the host's actual system, administrator, user, repository, and nested
+instruction precedence.
+
+When operating on a client site:
+
+1. client-repository instructions and approved runbooks govern that site
+2. current source, manifests, tests, and runtime evidence establish state
+3. Portable Web Toolkit skills supply subordinate domain procedures
+4. toolkit documentation supplies conditional reference material
+
+This file governs work on the toolkit repository itself. It does not outrank a
+client repository merely because `Web_Toolkit` is linked into that project.
+
+Configuration has scoped authority, not instruction precedence:
+
+- a site profile owns its declared deployment configuration
+- a Brand Guide owns approved visual identity and voice
+- `.env` supplies local values and bindings
+- manifests and lockfiles own package state
+
+None of these override safety policy or explicit repository constraints.
 
 ## Core rules
 
 - **Spec-driven:** read the site profile before deploy, DNS, or branding changes.
 - **Dry-run first:** infrastructure and Cloudflare mutations → audit → dry-run → `--apply`.
 - **Runtime artifacts:** keep generated output in `Web_Toolkit/.runtime/`, not in publishable source.
-- **Discovery layer:** custom generators only — **never** `@astrojs/sitemap` or `@astrojs/robots` on client sites. Use `templates/discovery/` and `discovery_doctor`.
+- **Discovery layer:** use the established toolkit generators and
+  `discovery-doctor` when the client repository adopts that contract. Do not
+  create a parallel generator.
 - **Styles:** external CSS in `src/styles/` with tokens; run `stylesheet-check scan --root <project>` when changing UI CSS.
 - **Assets:** no stock/placeholder favicons or heroes; WebP for raster; SVG masters for icons/logos.
 - **Workers-over-external:** prefer Cloudflare Workers/bindings (KV, D1, R2, Vectorize) before adding SaaS.
@@ -45,7 +64,7 @@ Site-specific behavior comes from **`site-profiles/*.json`** (or a private profi
 
 ## Canonical sequence (summary)
 
-**Always start client sites with:**
+For material work without current readiness evidence, start with:
 
 ```powershell
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root <site> --site-profile <profile>
@@ -83,14 +102,20 @@ Pass `--site-profile <path>` whenever the target site is not the default example
 - [ ] No secrets in committed files or toolkit export
 - [ ] Client project `MEMORY.md` updated when versions/deploy change (when applicable)
 
-## Cursor skill
+## Skill distribution
 
 See [docs/agent-skills/README.md](./docs/agent-skills/README.md)
 
 ```text
-Install the agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Run scripts/install-agent-skills.ps1 -Agent all or scripts/install-agent-skills.sh --agent all.
+Inspect and install the selected Portable Web Toolkit skills from the repository
+manifest. Check existing client skill directories first, preserve conflicts,
+and change only explicitly selected clients and skills.
 ```
 
-**Skills:** `portable-web-toolkit` (master), `site-readiness`, `site-starter`, `toolkit-update`, `instagram-clone`
+**Core:** `portable-web-toolkit`, `site-readiness`, `site-starter`,
+`toolkit-update`
 
-**Update:** `./scripts/update-toolkit.ps1` or `./scripts/update-toolkit.sh`
+**Optional:** `instagram-clone`, `vectorize-pipeline`
+
+Optional helper scripts default to status. Agent-driven installation remains
+the primary path.

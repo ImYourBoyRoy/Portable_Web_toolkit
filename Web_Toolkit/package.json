@@ -27,7 +27,8 @@
     "stylesheet-check": "./stylesheet_check/bin/stylesheet-check.mjs",
     "toolkit-purge": "./toolkit_purge/bin/toolkit-purge.mjs",
     "toolkit-report": "./toolkit_report/bin/toolkit-report.mjs",
-    "toolkit-verify": "./toolkit_verify/bin/toolkit-verify.mjs"
+    "toolkit-verify": "./toolkit_verify/bin/toolkit-verify.mjs",
+    "vectorize-pipeline": "./vectorize_pipeline/bin/vectorize-pipeline.mjs"
   },
   "scripts": {
     "check:syntax": "node ./scripts/check-syntax.mjs",

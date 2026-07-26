@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vectorize Pipeline"
+  short_description: "Prepare licensed wordmarks and raster art as SVG"
+  default_prompt: "Use $vectorize-pipeline to evaluate and prepare this authorized source artwork as an SVG candidate."

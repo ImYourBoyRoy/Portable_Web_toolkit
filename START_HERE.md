@@ -1,118 +1,93 @@
-# START HERE — AI agents (zero research)
+# START HERE — AI agents
 
-**Repo:** [Portable_Web_toolkit](https://github.com/imyourboyroy/Portable_Web_toolkit)  
-**Purpose:** Operate Astro + Cloudflare client sites with spec-driven CLIs and skills.
+**Purpose:** Operate toolkit-managed Astro and Cloudflare client sites through
+their established project contracts and deterministic tools.
 
-Read this file only. You do not need to explore the repo to begin.
+## 1. Confirm the active project
 
----
+Distinguish:
 
-## 1. Install skills (once per machine)
+| Location | Role |
+|---|---|
+| Portable Web Toolkit repository | CLIs, skills, templates, and maintenance |
+| Client repository | Site source, package state, instructions, profile, brand, and environment |
 
-If skills are not installed yet, run:
+Read the client repository's applicable instructions before toolkit guidance.
+Confirm toolkit management through repository instructions, package scripts, a
+compatible site profile, or explicit user direction. A `Web_Toolkit` folder
+alone may be stale and is not sufficient proof.
+
+## 2. Inspect skills before installation
+
+The agent should:
+
+1. read `skill-pack.json`
+2. locate the selected client's documented discovery root
+3. compare existing skill names, versions, and content
+4. report current, missing, different, and conflicting skills
+5. install or update only after explicit authorization
+6. preserve displaced content outside skill-discovery directories
+
+Optional helper:
 
 ```bash
-node ./scripts/install-agent-skills.mjs
+node ./scripts/check-agent-skills.mjs --agent <client> --scope <user-or-project>
 ```
 
-Or ask the user to paste this prompt (you can run the install yourself):
+Helper scripts are not required. They default to read-only status.
+
+Core skills:
+
+- `portable-web-toolkit`
+- `site-readiness`
+- `site-starter`
+- `toolkit-update`
+
+Optional skills:
+
+- `instagram-clone`
+- `vectorize-pipeline`
+
+## 3. Establish readiness
+
+For material client-site work without current evidence:
+
+```bash
+node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run \
+  --project-root . \
+  --site-profile ./<site>.site-profile.json
+```
+
+Use `--skip-network` when required. Read the structured report before choosing
+fixes. Readiness does not authorize dependency installation, toolkit updates,
+infrastructure mutation, or deployment.
+
+## 4. Route narrowly
 
 ```text
-Install the Portable Web Toolkit agent skills from https://github.com/imyourboyroy/Portable_Web_toolkit for all future sessions (user/global scope). Use those skills for Astro + Cloudflare site work.
+New managed site?       → site-starter
+State uncertain?        → site-readiness
+Deploy or Cloudflare?   → portable-web-toolkit
+Instagram fallback?     → instagram-clone
+SVG recovery candidate? → vectorize-pipeline
+Toolkit freshness?      → toolkit-update
+Live failure?           → site-doctor CLI
 ```
 
-**Do not ask the user to run one-shot git clone install flows manually** unless they prefer to — you handle skill installation.
+Use the existing project profile and package scripts. Audit and dry-run
+infrastructure changes before an authorized apply. Require separate production
+authorization.
 
-## 1b. Check for updates (every session)
+## 5. Separate maintenance
 
-```bash
-node ./scripts/check-toolkit-update.mjs
-# exit 2 → run node ./scripts/update-toolkit.mjs
-```
+Toolkit updates, skill distribution, host setup, and toolkit publication are
+separate tasks. Do not run them at the beginning of every site session.
 
-**Skills:**
+- Updates: use `toolkit-update` for comparison before mutation.
+- Host setup: inspect setup manifests and obtain authorization before system or
+  privileged changes.
+- Publication: require an intended release, source commit, validation, privacy
+  scan, and checksum sidecar.
 
-| Skill | Use when |
-|-------|----------|
-| `portable-web-toolkit` | Default — any Astro/Cloudflare client site work |
-| `site-starter` | Brand-new client project from scratch |
-| `site-readiness` | Run-all checks + what's missing (start every session) |
-| `toolkit-update` | Pull latest toolkit + reinstall skills |
-| `instagram-clone` | Public Instagram gallery (no Meta API) |
-
----
-
-## 2. Two folders, two roles
-
-| What | Role |
-|------|------|
-| **Toolkit repo** (`Portable_Web_toolkit/`) | CLIs, skills, templates — not a website |
-| **Client site** (separate folder) | Real site: `src/`, `package.json`, `.env`, `*.site-profile.json` |
-
-Link toolkit into client site:
-
-```bash
-node /path/to/Portable_Web_toolkit/scripts/link-web-toolkit.mjs \
-  --toolkit-path /path/to/Portable_Web_toolkit/Web_Toolkit \
-  --project-root /path/to/client-site
-```
-
----
-
-## 3. First command on any client site (always)
-
-```bash
-node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<site>.site-profile.json
-```
-
-Read `output/site-readiness-*.json` — follow **nextSteps** and **recommendedFixes**.
-
----
-
-## 4. Machine setup (agent-runnable — sudo/UAC may prompt)
-
-If host tools are missing (Git, Node, **pyenv-native / pyenv-gui**, Python), **you (the agent) should run setup** — do not ask the user to manually double-click scripts. The wizard does **not** require Node beforehand. It scans gaps, shows one list, and continues with `--yes`. When elevation is needed, the terminal/UAC prompts the user for their password.
-
-```bash
-# Preferred — agent runs this; user only approves sudo/UAC if asked
-bash ./Setup_Agent_Environment.sh --yes --workspace .
-```
-
-**macOS note:** double-clicking `Setup_Agent_Environment.command` does **not** grant Admin by itself (Finder never elevates `.command` files). After **Y**, bootstrap shows a GUI administrator dialog, then uses `sudo` for installs. Node comes from the official nodejs.org tarball — Homebrew is not required.
-
-```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Web_Toolkit\scripts\setup-interactive.ps1 -Workspace . -Yes
-```
-
-Python must come from **pyenv-native** (`pyenv`) + **pyenv-gui** (`pyenv gui`) only.
-
-| OS | Manual launcher (optional) |
-|----|----------------------------|
-| Windows | `Setup_Agent_Environment.bat` |
-| macOS | `Setup_Agent_Environment.command` / `./Setup_Agent_Environment.sh` |
-| Linux | `bash ./Setup_Agent_Environment.sh` |
-
----
-
-## 5. Decision tree
-
-```
-New folder?        → site-starter
-Existing client?   → site-readiness (first)
-Instagram gallery? → instagram-clone
-Deploy / CF?       → portable-web-toolkit
-Live site broken?  → site-doctor
-Update toolkit?    → toolkit-update
-Host tools missing? → agent runs Setup_Agent_Environment.sh --yes (sudo/UAC may prompt user)
-```
-
----
-
-## Instruction precedence
-
-1. User request  
-2. Installed **skills**  
-3. Client `BRAND_GUIDE.md` + site profile + `.env`  
-4. This file → `AGENTS.md` → `OPERATIONS.md` (reference)
-
-**Do not load** `docs/templates/AGENT.template.md` for toolkit work.
+See `skills/portable-web-toolkit/references/maintenance.md` only when one of
+these maintenance tasks is actually requested.

@@ -1,0 +1,13 @@
+{
+  "name": "portable-vectorize-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "bin": {
+    "vectorize-pipeline": "./bin/vectorize-pipeline.mjs"
+  },
+  "dependencies": {
+    "opentype.js": "^2.0.0"
+  }
+}

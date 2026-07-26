@@ -1,61 +1,78 @@
 ---
 name: toolkit-update
-description: Updates the Portable_Web_toolkit repo, reinstalls agent skills for all platforms, and verifies toolkit health. Use when the user asks to pull latest toolkit, refresh skills, or sync after git pull.
+description: Compare, plan, or apply an explicitly authorized Portable Web Toolkit or toolkit-skill update. Use when asked to check toolkit freshness, reconcile a local export with GitHub, inspect installed skill versions, or update to a selected tag or commit. Default to read-only status, preserve local-only capabilities, and never reinstall or overwrite skills automatically.
 ---
 
 # Toolkit Update
 
-Cross-platform conventions: `skills/CROSS_PLATFORM.md`
+Establish current state before choosing an update.
 
-## One command (any OS)
+## Preflight
 
-```bash
-cd /path/to/Portable_Web_toolkit
-node ./scripts/update-toolkit.mjs
-```
+Resolve the active repository and applicable instructions, preserve unrelated
+work, then locate the actual toolkit source and selected client skill roots.
 
-Platform-specific wrappers (optional):
+## Inspect
 
-| OS | Command |
-|----|---------|
-| **Windows** | `pwsh ./scripts/update-toolkit.ps1` |
-| **macOS / Linux** | `bash ./scripts/update-toolkit.sh` |
-| **Any (pwsh installed)** | `pwsh ./scripts/update-toolkit.ps1` |
+1. Resolve the toolkit root and determine whether it is a real Git worktree, an
+   export, a cache, or a linked client copy.
+2. Read `VERSION`, package versions, `skill-pack.json`, Git status, current
+   commit and remote, when available.
+3. Inspect the selected upstream release, tag, or immutable commit.
+4. Compare skill directories, versions, hashes, toolkit modules, templates,
+   instructions, and release notes.
+5. Classify local-only, upstream-only, modified, generated, and ignored content.
+6. Report the status and stop unless an update was explicitly authorized.
 
-## Steps performed
+Before reporting a Git remote, remove URL userinfo, credentials, query strings,
+and fragments. Describe private-fork locations generically unless the exact
+locator is necessary and authorized.
 
-1. `git pull --ff-only`  
-2. `install-agent-skills` (user scope, all agents)  
-3. `toolkit_verify` + `privacy_check`  
-
-## Install skills from GitHub URL only
-
-```bash
-node ./scripts/install-agent-skills.mjs -- -RepoUrl "https://github.com/imyourboyroy/Portable_Web_toolkit" -Agent all
-```
-
-Or:
+Use the optional status helper only as an aid:
 
 ```bash
-bash ./scripts/install-agent-skills.sh --repo-url "https://github.com/imyourboyroy/Portable_Web_toolkit" --agent all
+node ./scripts/check-agent-skills.mjs --agent <client> --scope <user-or-project>
 ```
 
-## Check for updates (every session)
+It must not be required for an agent-driven installation.
 
-```bash
-node ./scripts/check-toolkit-update.mjs   # exit 2 = update available
-node ./scripts/update-toolkit.mjs         # when exit code 2
-```
+## Plan
 
-## After update
+Prefer an upstream-backed Git worktree. For an exported local folder:
 
-```bash
-cd /path/to/client-site
-node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root .
-```
+1. create a recoverable backup
+2. clone the selected upstream source into staging
+3. port reviewed local-only capabilities without dependencies or caches
+4. resolve instruction and manifest changes
+5. validate in staging
+6. switch the active path only after review
 
-## User one-liner
+Never claim that `git pull` updated an export without `.git`.
 
-```text
-Run toolkit-update: pull Portable_Web_toolkit, reinstall all agent skills (user scope), verify toolkit.
-```
+## Apply
+
+Require exact update authorization. Use `git pull --ff-only` only when the
+worktree and branch permit it. Otherwise use a staging clone and explicit
+reconciliation.
+
+Do not:
+
+- run an unaudited remote installer
+- overwrite unmanaged or locally modified skills
+- reinstall every client as a side effect
+- delete a local-only module merely because upstream lacks it
+- install host software, push, tag, publish, or deploy without separate approval
+
+## Verify
+
+Run:
+
+- skill manifest validation
+- structural validation for every skill
+- positive and near-miss routing tests when available
+- toolkit verification and privacy checks
+- status comparison for selected installed clients
+
+Report the previous and resulting versions, source commit, preserved local
+capabilities, files changed, installed skills left untouched, checks, rollback
+location, and unresolved publication work.
