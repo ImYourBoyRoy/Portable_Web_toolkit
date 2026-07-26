@@ -146,6 +146,14 @@ For repository changes, run the complete portable validation gate:
 npm run validate
 ```
 
+## Related project
+
+For provider-neutral coding-agent instructions, project-memory conventions,
+skill lifecycle safeguards, and cross-client continuity, see
+[Agent Continuity Stack](https://github.com/ImYourBoyRoy/agent-continuity-stack).
+The projects are independent and complementary; Agent Continuity Stack is not
+required to use Portable Web Toolkit.
+
 ---
 
 ## Author
