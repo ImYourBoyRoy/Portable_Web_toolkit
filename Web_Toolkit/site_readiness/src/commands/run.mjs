@@ -68,6 +68,7 @@ function checkProjectFiles(projectRoot) {
     astroConfig: Boolean(findAstroConfig(projectRoot)),
     wrangler: fs.existsSync(path.join(projectRoot, 'wrangler.toml')),
     webToolkitLinked: toolkitLinked,
+    agentSkillsLinked: fs.existsSync(path.join(projectRoot, '.agents', 'skills')),
   };
 
   if (!checks.readme) issues.push('Add README.md with project synopsis and run instructions.');
@@ -79,6 +80,9 @@ function checkProjectFiles(projectRoot) {
   if (!checks.wrangler) issues.push('Copy site-starter workers.wrangler.toml or pages.wrangler.toml → wrangler.toml.');
   if (!checks.webToolkitLinked) {
     issues.push('Link Web_Toolkit at project root (link-web-toolkit.mjs). npm scripts call toolkit CLIs directly.');
+  }
+  if (!checks.agentSkillsLinked) {
+    issues.push('Link required agent skills into .agents/skills/ (manage-project-skills.mjs link).');
   }
 
   const status = issues.length === 0 ? 'pass' : issues.length <= 2 ? 'warn' : 'fail';
@@ -116,6 +120,52 @@ function checkToolkitLink(capabilities) {
   return stepResult('toolkit-link', 'fail', [
     'Link Web_Toolkit (junction/symlink) or set WEB_TOOLKIT_ROOT before using toolkit scripts.',
   ]);
+}
+
+function checkSkillArchitecture(projectRoot) {
+  const issues = [];
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const agentSkillsPath = path.join(projectRoot, '.agents', 'skills');
+  const internalSkillsLinked = fs.existsSync(agentSkillsPath);
+
+  if (!internalSkillsLinked) {
+    issues.push('Internal project skills missing in .agents/skills/. Run manage-project-skills.mjs link --project .');
+  }
+
+  const globalRouterCandidates = [
+    path.join(home, '.gemini', 'config', 'skills', 'portable-web-toolkit-router'),
+    path.join(home, '.cursor', 'skills', 'portable-web-toolkit-router'),
+    path.join(home, '.claude', 'skills', 'portable-web-toolkit-router'),
+  ];
+  const globalRouterPresent = globalRouterCandidates.some((p) => fs.existsSync(p));
+  if (!globalRouterPresent) {
+    issues.push('Global router skill missing. Copy skills/portable-web-toolkit-router to ~/.gemini/config/skills/ or ~/.cursor/skills/.');
+  }
+
+  const legacyGlobalNames = ['portable-web-toolkit', 'instagram-clone', 'vectorize-pipeline'];
+  const legacyGlobalFound = [];
+  for (const name of legacyGlobalNames) {
+    const legacyCandidates = [
+      path.join(home, '.gemini', 'config', 'skills', name),
+      path.join(home, '.cursor', 'skills', name),
+      path.join(home, '.claude', 'skills', name),
+    ];
+    if (legacyCandidates.some((p) => fs.existsSync(p))) {
+      legacyGlobalFound.push(name);
+    }
+  }
+  if (legacyGlobalFound.length > 0) {
+    issues.push(`Legacy global skills detected in home config (${legacyGlobalFound.join(', ')}). Purge global copies to prevent context bloat.`);
+  }
+
+  const checks = {
+    internalSkillsLinked,
+    globalRouterPresent,
+    legacyGlobalSkillsClean: legacyGlobalFound.length === 0,
+  };
+
+  const status = issues.length === 0 ? 'pass' : internalSkillsLinked ? 'warn' : 'fail';
+  return stepResult('skill-architecture', status, issues, { checks });
 }
 
 async function runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot }) {
@@ -188,6 +238,7 @@ export async function runSiteReadiness(flags = {}) {
   steps.push(checkToolkitLink(capabilities));
   steps.push(checkProjectFiles(projectRoot));
   steps.push(checkSiteProfile(profilePath, profile));
+  steps.push(checkSkillArchitecture(projectRoot));
 
   if (!capabilities.toolkitLinked) {
     steps.push(skippedStep('astro-env', 'Web_Toolkit not linked'));

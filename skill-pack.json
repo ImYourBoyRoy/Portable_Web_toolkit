@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "package": "portable-web-toolkit-skills",
-  "version": "1.0.0",
-  "toolkit_version": "0.3.1",
+  "version": "1.1.0",
+  "toolkit_version": "0.3.2",
   "source_base_commit": "86dddd9efb64c5b4219afe986699135a51e63f83",
   "skills": [
     {
@@ -22,6 +22,15 @@
       "install_by_default": true,
       "path": "skills/portable-web-toolkit",
       "content_sha256": "bae2b1fb25f60fff2debcfb75c4d922973753710ee13a0262e1401f898d62072"
+    },
+    {
+      "name": "portable-web-toolkit-router",
+      "version": "1.0.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": true,
+      "path": "skills/portable-web-toolkit-router",
+      "content_sha256": "a121ff6af0eddd387ec2aeb78d4cae0e01c0e770752678eb436d1db617d3b4e2"
     },
     {
       "name": "site-readiness",
@@ -48,7 +57,7 @@
       "status": "stable",
       "install_by_default": true,
       "path": "skills/toolkit-update",
-      "content_sha256": "b405154f728aab9b03ae2ba8f9f946daf5a18b07c14cc64086d4893c51ea3d56"
+      "content_sha256": "4fbd2c29687331fbc5863a5c3d9559bb66310dcb627f6589edf5b659dd275f40"
     },
     {
       "name": "vectorize-pipeline",

@@ -20,6 +20,15 @@
         "Create a new managed site from the Workers starter."
       ]
     },
+    "portable-web-toolkit-router": {
+      "positive": [
+        "Route and symlink the required Portable Web Toolkit skills into this project workspace."
+      ],
+      "near_miss": [
+        "Configure network routing on a Linux router server.",
+        "Install global system packages on the host operating system."
+      ]
+    },
     "site-readiness": {
       "positive": [
         "Run the toolkit readiness checks for this managed site and summarize the JSON findings."

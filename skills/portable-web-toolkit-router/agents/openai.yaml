@@ -1,0 +1,4 @@
+interface_version: 1
+prompt: |
+  Route and symlink Portable Web Toolkit skills into project scope (.agents/skills/).
+  Invoke $portable-web-toolkit-router.

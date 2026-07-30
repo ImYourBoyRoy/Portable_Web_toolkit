@@ -1,16 +1,16 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Version:** `0.3.1` · source: [`VERSION`](./VERSION) · packages: `0.3.1` / `0.3.1`
+**Toolkit Release:** `v0.3.2`
 
-| Pin | Value | Source |
-|-----|-------|--------|
-| Toolkit release | `0.3.1` | [`VERSION`](./VERSION) |
-| Node engines | `>=26` | `package.json` |
-| Node pin | `26.5.0` | [`.node-version`](./.node-version) |
-| Astro (site-starter) | `^7.1.1` → 7.1.1 | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| @astrojs/cloudflare | `^14.1.3` | site-starter |
-| Wrangler | `^4.112.0` | site-starter |
+| Component / Dependency | Version Pin | Source Location |
+|---|---|---|
+| **Toolkit Release** | `v0.3.2` | [`VERSION`](./VERSION) |
+| **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
+| **Node.js Runtime Pin** | `26.5.1` | [`.node-version`](./.node-version) |
+| **Astro Framework** | `^7.1.5` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.1.4` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.112.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·
@@ -28,27 +28,34 @@ You get ready-made **agent skills**, **command-line tools** for build/deploy/dis
 
 ## Get started (use your AI agent)
 
-Give your coding agent a selected client and scope:
+All AI coding tools (Antigravity, Cursor, Claude Code, Codex, Copilot, etc.) support `.agents/skills/` at project scope.
+
+Copy and paste this prompt to your AI coding agent:
 
 ```text
-Inspect the Portable Web Toolkit skill manifest from its GitHub repository.
-Compare the selected skills with this client's installed copies and report
-conflicts. Install only the explicitly selected client, scope, and skills;
-preserve displaced content outside skill-discovery directories.
+Inspect the Portable Web Toolkit skill index in docs/agent-skills/SKILL_INDEX.md. Symlink the required skills into this project's .agents/skills/ directory using manage-project-skills.mjs, then run site-readiness.
 ```
 
-The agent follows [`docs/agent-skills/INSTALL_PROTOCOL.md`](./docs/agent-skills/INSTALL_PROTOCOL.md)
-with ordinary Git and filesystem tools. Optional scripts report status only.
+Or run the CLI directly:
+
+```bash
+# Link required skills into project scope (.agents/skills/)
+node /path/to/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site
+```
+
+The agent inspects [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md) and symlinks only the required skills directly into `<client_project>/.agents/skills/`. Running `git pull` in `Portable_Web_toolkit` updates all client project skills live with zero file drift.
 
 ### Working on a site
 
-Tell your agent something like:
+Each client site lives in a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder using `scripts/link-web-toolkit.mjs`.
+
+### Upgrading & Migrating Existing Installs
+
+To upgrade an existing install to the new zero-context-bloat symlinked architecture, copy and paste this prompt to your AI coding agent:
 
 ```text
-Use the portable-web-toolkit skills on this project. Run site-readiness and fix anything it reports before we build or deploy.
+Please update the installed Portable Web Toolkit to the latest release, purge old heavy global web skills from home discovery directories (~/.gemini/config/skills/, ~/.cursor/skills/), install the global portable-web-toolkit-router skill, and symlink required skills into this project's .agents/skills/ directory using manage-project-skills.mjs.
 ```
-
-Each client site is a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder (your agent can do this with `scripts/link-web-toolkit.mjs`).
 
 ---
 
@@ -159,5 +166,3 @@ required to use Portable Web Toolkit.
 ## Author
 
 **Roy Dawson IV** · [@imyourboyroy](https://github.com/imyourboyroy)
-
-Client names, domains, and branding belong in each project’s site profile — not in this repository.

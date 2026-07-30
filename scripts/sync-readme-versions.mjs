@@ -50,16 +50,16 @@ function buildBlock() {
 
   return [
     BEGIN,
-    `**Version:** \`${version}\` · source: [\`VERSION\`](./VERSION) · packages: \`${rootPkg.version}\` / \`${toolkitPkg.version}\``,
+    `**Toolkit Release:** \`v${version}\``,
     '',
-    `| Pin | Value | Source |`,
-    `|-----|-------|--------|`,
-    `| Toolkit release | \`${version}\` | [\`VERSION\`](./VERSION) |`,
-    `| Node engines | \`${enginesNode}\` | \`package.json\` |`,
-    `| Node pin | \`${nodePin}\` | [\`.node-version\`](./.node-version) |`,
-    `| Astro (site-starter) | \`${astro}\` → ${stripRange(astro)} | [\`site-starter/workers.package.json\`](./site-starter/workers.package.json) |`,
-    `| @astrojs/cloudflare | \`${cloudflare}\` | site-starter |`,
-    `| Wrangler | \`${wrangler}\` | site-starter |`,
+    `| Component / Dependency | Version Pin | Source Location |`,
+    `|---|---|---|`,
+    `| **Toolkit Release** | \`v${version}\` | [\`VERSION\`](./VERSION) |`,
+    `| **Node.js Engine Target** | \`${enginesNode}\` | [\`package.json\`](./package.json) |`,
+    `| **Node.js Runtime Pin** | \`${nodePin}\` | [\`.node-version\`](./.node-version) |`,
+    `| **Astro Framework** | \`${astro}\` | [\`site-starter/workers.package.json\`](./site-starter/workers.package.json) |`,
+    `| **@astrojs/cloudflare** | \`${cloudflare}\` | [\`site-starter/workers.package.json\`](./site-starter/workers.package.json) |`,
+    `| **Cloudflare Wrangler** | \`${wrangler}\` | [\`site-starter/workers.package.json\`](./site-starter/workers.package.json) |`,
     END
   ].join('\n');
 }

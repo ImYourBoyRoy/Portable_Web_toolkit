@@ -63,6 +63,13 @@ Do not:
 - delete a local-only module merely because upstream lacks it
 - install host software, push, tag, publish, or deploy without separate approval
 
+### Upgrading to Dynamic Symlinked Skill Architecture
+
+When upgrading an existing install to v0.3.2+:
+1. Purge legacy heavy web skills (`instagram-clone`, `portable-web-toolkit`, `site-readiness`, `site-starter`, `toolkit-update`, `vectorize-pipeline`) from global home skill directories (`~/.gemini/config/skills/`, `~/.cursor/skills/`, `~/.claude/skills/`).
+2. Copy `skills/portable-web-toolkit-router` into global home skill discovery directories.
+3. Run `node scripts/manage-project-skills.mjs link --project .` to symlink required skills into active project scope (`.agents/skills/`).
+
 ## Verify
 
 Run:

@@ -183,6 +183,19 @@ function runAstroSafeFix(state, flags = {}, actions = []) {
   }
 }
 
+function runSkillSymlinkSafe(state, flags = {}, actions = []) {
+  const managerCliCandidates = [
+    path.join(PORTABLE_ROOT, 'scripts', 'manage-project-skills.mjs'),
+    path.join(PORTABLE_ROOT, '..', 'scripts', 'manage-project-skills.mjs'),
+  ];
+  const managerCli = managerCliCandidates.find((candidate) => fs.existsSync(candidate));
+  if (!managerCli) return;
+  const result = spawnSync(process.execPath, [managerCli, 'link', '--project', state.projectRoot], { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' });
+  if (result.status === 0) {
+    actions.push(`Symlinked required agent skills into ${path.join(state.projectRoot, '.agents', 'skills')}`);
+  }
+}
+
 export async function runAudit(flags = {}) {
   const state = collectState(resolveProjectContext(flags), flags, 'audit');
   const { jsonPath, markdownPath, nextSteps } = writeReport(state);
@@ -209,6 +222,7 @@ export async function runApplySafe(flags = {}) {
 
   const refreshedState = collectState(resolveProjectContext({ ...flags, 'project-root': state.projectRoot, 'site-profile': state.profilePath || flags['site-profile'] || '' }), flags, 'apply-safe');
   runAstroSafeFix(refreshedState, flags, actions);
+  runSkillSymlinkSafe(refreshedState, flags, actions);
 
   const { jsonPath, markdownPath, nextSteps } = writeReport(collectState(resolveProjectContext({ ...flags, 'project-root': state.projectRoot, 'site-profile': state.profilePath || flags['site-profile'] || '' }), flags, 'apply-safe'));
 

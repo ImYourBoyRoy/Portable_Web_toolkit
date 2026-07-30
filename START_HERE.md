@@ -17,24 +17,25 @@ Confirm toolkit management through repository instructions, package scripts, a
 compatible site profile, or explicit user direction. A `Web_Toolkit` folder
 alone may be stale and is not sufficient proof.
 
-## 2. Inspect skills before installation
+## 2. Inspect and link skills into project scope
 
 The agent should:
 
-1. read `skill-pack.json`
-2. locate the selected client's documented discovery root
-3. compare existing skill names, versions, and content
-4. report current, missing, different, and conflicting skills
-5. install or update only after explicit authorization
-6. preserve displaced content outside skill-discovery directories
+1. read `docs/agent-skills/SKILL_INDEX.md` and `skill-pack.json`
+2. locate the project discovery root (`.agents/skills/`)
+3. compare existing skill names, versions, and symlinks
+4. link required skills into `<project>/.agents/skills/` via symlinks
+5. preserve displaced content outside skill-discovery directories
 
-Optional helper:
+Project symlink helper:
 
 ```bash
-node ./scripts/check-agent-skills.mjs --agent <client> --scope <user-or-project>
-```
+# Link required skills into project scope (.agents/skills/)
+node ./scripts/manage-project-skills.mjs link --project <client-site-dir>
 
-Helper scripts are not required. They default to read-only status.
+# Check status
+node ./scripts/manage-project-skills.mjs status --project <client-site-dir>
+```
 
 Core skills:
 

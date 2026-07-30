@@ -5,6 +5,20 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-07-29
+
+### Added
+
+- Introduced `portable-web-toolkit-router` minimalist global skill (~60 tokens) for on-demand skill routing across Antigravity, Cursor, Claude Code, Codex, and Copilot.
+- Added `scripts/manage-project-skills.mjs` cross-platform manager for symlinking required skills into `<project>/.agents/skills/` with `--auto` optional skill detection.
+- Created `docs/agent-skills/SKILL_INDEX.md` fast-lookup selection matrix for AI coding agents.
+- Integrated automatic skill symlink scaffolding in `project-init apply-safe` and `.agents/skills/` health checks in `site-readiness`.
+
+### Changed
+
+- Updated skill status helper `scripts/check-agent-skills.mjs` to classify valid toolkit skill symlinks as `current-symlink`.
+- Purged heavy web skills from global home discovery directories, moving all web skills to per-project symlink scope to prevent context bloat in non-web projects.
+
 ## [0.3.1] - 2026-07-26
 
 ### Fixed

@@ -74,7 +74,13 @@ test('status helper classifies trees without mutating them', () => {
     fs.symlinkSync(sourceSkill, target, 'dir');
     result = status(temporary);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(JSON.parse(result.stdout).results[0].status, 'unsafe-symlink');
+    assert.equal(JSON.parse(result.stdout).results[0].status, 'current-symlink');
+
+    fs.unlinkSync(target);
+    fs.symlinkSync(temporary, target, 'dir');
+    result = status(temporary);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).results[0].status, 'external-symlink');
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

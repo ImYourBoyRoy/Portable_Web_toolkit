@@ -124,7 +124,25 @@ function main() {
         if (fs.existsSync(target)) {
           const stat = fs.lstatSync(target);
           if (stat.isSymbolicLink()) {
-            status = 'unsafe-symlink';
+            try {
+              const realTarget = fs.realpathSync(target);
+              if (realTarget === path.resolve(source)) {
+                status = 'current-symlink';
+                const metadataPath = path.join(target, 'skill.json');
+                if (fs.existsSync(metadataPath)) {
+                  try {
+                    installedVersion = readJson(metadataPath).version || null;
+                  } catch {
+                    detail = 'invalid skill.json';
+                  }
+                }
+              } else {
+                status = 'external-symlink';
+                detail = `points to ${realTarget}`;
+              }
+            } catch {
+              status = 'broken-symlink';
+            }
           } else if (!stat.isDirectory()) {
             status = 'unmanaged-conflict';
           } else {
