@@ -1,20 +1,75 @@
 {
-  "name": "portable-wcag-auditor-bridge",
-  "version": "1.0.0",
+  "name": "portable-wcag-auditor",
+  "version": "2.0.1",
   "private": true,
-  "description": "Site-profile bridge from Portable Web Toolkit to standalone @roydawsoniv/wcag-auditor.",
+  "description": "Evidence-oriented accessibility quality gate bundled in Portable Web Toolkit (self-contained for website workflows).",
   "type": "module",
   "bin": {
     "wcag-auditor": "./bin/wcag-auditor.mjs"
   },
+  "main": "./src/index.mjs",
+  "types": "./types/index.d.ts",
+  "files": [
+    "bin",
+    "docs",
+    "examples",
+    "src",
+    "types",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "MIGRATION.md",
+    "README.md",
+    "SECURITY.md",
+    "START_HERE.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./adapters": {
+      "types": "./types/adapters.d.ts",
+      "import": "./src/adapters/index.mjs"
+    },
+    "./reporters": {
+      "types": "./types/reporters.d.ts",
+      "import": "./src/reporters/index.mjs"
+    },
+    "./schema/config": "./src/schemas/config.schema.json",
+    "./schema/run": "./src/schemas/run.schema.json",
+    "./schema/evidence": "./src/schemas/evidence.schema.json",
+    "./schema/native-evidence": "./src/schemas/native-evidence.schema.json"
+  },
   "scripts": {
     "start": "node ./bin/wcag-auditor.mjs",
-    "help": "node ./bin/wcag-auditor.mjs help",
-    "core-path": "node ./bin/wcag-auditor.mjs core-path"
+    "audit": "node ./bin/wcag-auditor.mjs run",
+    "lint": "node ./scripts/lint.mjs",
+    "test": "node --unhandled-rejections=strict --throw-deprecation --test --test-reporter=spec ./tests/*.test.mjs",
+    "test:cli": "node ./scripts/test-cli.mjs",
+    "schema:check": "node ./scripts/schema-check.mjs",
+    "package:check": "node ./scripts/package-check.mjs",
+    "check": "npm run lint && npm run schema:check && npm run test && npm run test:cli && npm run package:check"
   },
   "author": "Roy Dawson IV",
   "license": "MIT",
   "engines": {
     "node": ">=20.11.0"
+  },
+  "peerDependencies": {
+    "@axe-core/playwright": ">=4.10.0 <5",
+    "playwright": ">=1.50.0 <2",
+    "svelte": ">=5.0.0 <7"
+  },
+  "peerDependenciesMeta": {
+    "@axe-core/playwright": {
+      "optional": true
+    },
+    "playwright": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
   }
 }

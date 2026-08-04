@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:roydawsoniv:wcag-auditor:schema:run:v1",
+  "title": "WCAG Auditor Run",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "toolkit",
+    "project",
+    "profile",
+    "startedAt",
+    "endedAt",
+    "surfaceCount",
+    "adapters",
+    "findings",
+    "summary",
+    "gate",
+    "durationMs",
+    "outputDirectory",
+    "metadata",
+    "reportFiles"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "toolkit": {
+      "type": "object"
+    },
+    "project": {
+      "type": "object"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "surfaceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "adapters": {
+      "type": "array"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ruleId",
+          "title",
+          "outcome",
+          "severity"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ruleVersion": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "passed",
+              "failed",
+              "inapplicable",
+              "cantTell",
+              "untested",
+              "executionError"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "serious",
+              "moderate",
+              "minor",
+              "advisory"
+            ]
+          },
+          "confidence": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "automation": {
+            "enum": [
+              "automatic",
+              "semi-automatic",
+              "manual"
+            ]
+          },
+          "target": {
+            "type": "object"
+          },
+          "standards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "document",
+                "requirement"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "document": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requirement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "level": {
+                  "type": "string"
+                },
+                "mapping": {
+                  "enum": [
+                    "conformance",
+                    "secondary",
+                    "policy"
+                  ]
+                }
+              }
+            }
+          },
+          "evidence": {},
+          "remediation": {
+            "type": "string"
+          },
+          "helpUrl": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "summary": {
+      "type": "object"
+    },
+    "gate": {
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "reportFiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outputDirectory": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

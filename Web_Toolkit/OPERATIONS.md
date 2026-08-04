@@ -14,7 +14,7 @@
 8. `Preview_Smoke` when local auto-probe matters
 9. `Site_Quality_Smoke run --site-profile <profile>` when live posture matters
 10. `Browser_Diagnostics run --site-profile <profile>` when real-browser behavior matters
-10a. **`WCAG_Auditor run --site-profile <profile>`** when UI accessibility evidence matters. Bridge to standalone `@roydawsoniv/wcag-auditor` (`AI/wcag-auditor`). Init first if no config. Opt into `Site_Doctor` via `--wcag` or `diagnostics.wcagAuditor.enabled`. For non-website apps, call the standalone package directly.
+10a. **`WCAG_Auditor run --site-profile <profile>`** when UI accessibility evidence matters. Engine is bundled in `Web_Toolkit/wcag_auditor` only — do not resolve `AI/` trees. Init first if no config. Opt into `Site_Doctor` via `--wcag` or `diagnostics.wcagAuditor.enabled`.
 11. `Integration_Doctor run --site-profile <profile>` when env/live integration readiness matters
 12. `Site_Doctor run --site-profile <profile>` when broad triage is needed
 13. `Headers_Deploy scaffold-public --site-profile <profile> --apply` when public/_headers cache baseline is missing

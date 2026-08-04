@@ -5,6 +5,17 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-08-04
+
+### Fixed
+
+- **WCAG Auditor stays inside Web_Toolkit**: website workflows no longer resolve `AI/wcag-auditor`, `WCAG_AUDITOR_ROOT`, or sibling checkouts. `core-path` always points at `Web_Toolkit/wcag_auditor`.
+- Playwright CJS interop when browsers live under `playwright.default` (fixes “Unsupported Playwright browser: chromium”).
+
+### Changed
+
+- Re-bundled the full evidence engine under `Web_Toolkit/wcag_auditor` (self-contained for toolkit-managed sites).
+
 ## [0.3.3] - 2026-08-04
 
 ### Added

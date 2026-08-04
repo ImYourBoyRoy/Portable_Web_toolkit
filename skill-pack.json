@@ -2,7 +2,7 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.1.0",
-  "toolkit_version": "0.3.3",
+  "toolkit_version": "0.3.4",
   "source_base_commit": "86dddd9efb64c5b4219afe986699135a51e63f83",
   "skills": [
     {
@@ -21,7 +21,7 @@
       "status": "stable",
       "install_by_default": true,
       "path": "skills/portable-web-toolkit",
-      "content_sha256": "46c31fb8908f7e02bfab005234e8f2905d2377bf99eb29ea7fd0097748a76779"
+      "content_sha256": "3af9b9be6e57131e725a38e9acd869d7e4f5af9601d083b43b3edd7608867980"
     },
     {
       "name": "portable-web-toolkit-router",

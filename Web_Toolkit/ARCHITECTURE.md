@@ -52,7 +52,7 @@ Do **not** load `docs/templates/AGENT.template.md` for toolkit work — that fil
 | `project_init/` | Non-destructive client bootstrap |
 | `cloudflare-agent-toolkit/` | CF audit, deploy, DNS, hardening |
 | `discovery_doctor/` | robots/sitemap/llms/JSON-LD verification |
-| `wcag_auditor/` | Thin bridge only → standalone `@roydawsoniv/wcag-auditor` at `AI/wcag-auditor` (hard-segregated; not vendored) |
+| `wcag_auditor/` | Self-contained accessibility evidence gate (site-profile aware; no external AI/ resolution) |
 | `headers_deploy/` | `public/_headers` scaffold and deploy merge |
 | `toolkit_verify/` | Self-validation before publish |
 | `privacy_check/` | Secrets scan before export |

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "producer": {
+    "name": "nomos-accesskit-export",
+    "version": "1.0.0",
+    "kind": "bevy-accesskit"
+  },
+  "surfaceCount": 2,
+  "findings": [
+    {
+      "ruleId": "bevy/interactive-name",
+      "title": "Interactive AccessKit node has an accessible name",
+      "outcome": "passed",
+      "severity": "serious",
+      "confidence": "high",
+      "automation": "automatic",
+      "target": {
+        "routeOrScene": "main-menu",
+        "selectorOrNode": "entity:42"
+      },
+      "evidence": {
+        "role": "Button",
+        "name": "Play"
+      },
+      "tags": ["accesskit", "bevy"]
+    }
+  ]
+}

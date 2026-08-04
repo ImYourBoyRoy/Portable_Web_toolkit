@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "project": "example-web-app",
+  "updatedAt": "2026-07-30T00:00:00.000Z",
+  "checks": [
+    {
+      "id": "keyboard-home",
+      "title": "Keyboard operation of home workflow",
+      "outcome": "untested",
+      "severity": "serious",
+      "tester": "replace-with-tester",
+      "testedAt": null,
+      "expiresAt": null,
+      "environment": "Supported OS and browser",
+      "standards": [
+        { "document": "WCAG-2.2", "requirement": "2.1.1", "level": "A", "mapping": "conformance" }
+      ],
+      "evidence": "",
+      "notes": "",
+      "remediation": "Complete the workflow with keyboard only."
+    }
+  ]
+}

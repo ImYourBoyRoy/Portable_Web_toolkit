@@ -58,7 +58,7 @@ None of these override safety policy or explicit repository constraints.
   `discovery-doctor` when the client repository adopts that contract. Do not
   create a parallel generator.
 - **Styles:** external CSS in `src/styles/` with tokens; run `stylesheet-check scan --root <project>` when changing UI CSS.
-- **Accessibility:** toolkit sites use `Web_Toolkit/wcag_auditor` (bridge). Core engine is standalone `@roydawsoniv/wcag-auditor` at `AI/wcag-auditor`. Apps should call the standalone package directly. Evidence gate — not a conformance certificate.
+- **Accessibility:** toolkit sites use bundled `Web_Toolkit/wcag_auditor` only — never resolve `AI/wcag-auditor` or other trees outside the linked toolkit. Evidence gate — not a conformance certificate.
 - **Assets:** no stock/placeholder favicons or heroes; WebP for raster; SVG masters for icons/logos.
 - **Workers-over-external:** prefer Cloudflare Workers/bindings (KV, D1, R2, Vectorize) before adding SaaS.
 - **Version truth:** verify Astro/Wrangler/Node from repo + registry — never trust stale model memory.
@@ -87,7 +87,7 @@ See `Web_Toolkit/OPERATIONS.md` for the full numbered list. Short form:
 |--------|--------|
 | Cloudflare agent | `Web_Toolkit/cloudflare-agent-toolkit/bin/cf-agent.mjs` |
 | Discovery doctor | `Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs` |
-| WCAG auditor (site bridge) | `Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs` → core `@roydawsoniv/wcag-auditor` |
+| WCAG auditor | `Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs` (self-contained under Web_Toolkit) |
 | Project init | `Web_Toolkit/project_init/bin/project-init.mjs` |
 | Site readiness | `Web_Toolkit/site_readiness/bin/site-readiness.mjs` |
 | Toolkit report | `Web_Toolkit/toolkit_report/bin/toolkit-report.mjs` |

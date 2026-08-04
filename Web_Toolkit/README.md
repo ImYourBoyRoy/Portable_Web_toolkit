@@ -78,7 +78,7 @@ Verify that the site meets all performance and quality targets.
 - **[PageSpeed Diagnostics](./pagespeed_diagnostics/README.md)**: Automated Google PSI metrics tracking.
 - **PageSpeed Agent Batch/Diff**: JSON-only, problem-only PageSpeed batch runner and regression comparator for AI agents.
 - **[Browser Diagnostics](./browser_diagnostics/README.md)**: Real-browser error scraping and request classification.
-- **[WCAG Auditor](./wcag_auditor/README.md)**: Thin site-profile bridge to standalone `@roydawsoniv/wcag-auditor` (`AI/wcag-auditor`). Evidence gate — does **not** certify WCAG conformance. Use the standalone package directly for Tauri/apps.
+- **[WCAG Auditor](./wcag_auditor/README.md)**: Self-contained accessibility evidence gate under `Web_Toolkit/wcag_auditor`. Does **not** certify WCAG conformance. Website workflows must not resolve outside this toolkit.
 - **[Site Doctor](./site_doctor/README.md)**: Combined local + cloud health diagnostics (optional `--wcag`).
 
 ---

@@ -1,61 +1,41 @@
-# WCAG Auditor — Toolkit Bridge
+# WCAG Auditor (toolkit-bundled)
 
-Thin **site-profile** bridge for Portable Web Toolkit Astro/Cloudflare sites.
+Self-contained accessibility evidence gate for **Portable Web Toolkit website workflows**.
 
-The accessibility engine itself lives in the standalone package:
+This module lives entirely under `Web_Toolkit/wcag_auditor/`. Website agents and CLIs must **not** resolve `AI/wcag-auditor` or any other tree outside the linked toolkit.
+
+**Not a WCAG conformance certificate** — evidence gate only.
+
+## Run
+
+```bash
+node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs help
+node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs core-path
+# → …/Web_Toolkit/wcag_auditor
+
+node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs init --site-profile ./site.site-profile.json
+node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run --site-profile ./site.site-profile.json --base-url https://example.com
+```
+
+Peers in the **client** project (when using Playwright + axe):
+
+```bash
+npm install --save-dev playwright @axe-core/playwright
+npx playwright install chromium
+```
+
+## Layout
 
 ```text
-/home/v1x0r/Desktop/AI/wcag-auditor
-@roydawsoniv/wcag-auditor
+Web_Toolkit/wcag_auditor/
+  bin/wcag-auditor.mjs     ← toolkit entry (--site-profile aware)
+  src/                     ← full auditor core (bundled)
+  src/toolkit/             ← site-profile / Astro helpers only
+  docs/ examples/ tests/
 ```
 
-This module does **not** vendor the auditor core. It only adds toolkit conventions (`--site-profile`, Astro preview/`baseURL`, `output/wcag-auditor-*` reports, `site-doctor --wcag`).
+`core-path` must always print this module directory (never an `AI/` sibling).
 
-## Resolve the core
+## Apps outside the toolkit
 
-| Method | Example |
-|---|---|
-| Sibling checkout (default) | `Portable_Web_toolkit/../../wcag-auditor` → `AI/wcag-auditor` |
-| Env override | `export WCAG_AUDITOR_ROOT=/path/to/wcag-auditor` |
-| npm / file dep in client | `npm i -D file:../../wcag-auditor` |
-
-```bash
-node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs core-path
-```
-
-## When to use which
-
-| Target | Use |
-|---|---|
-| Toolkit-managed Astro site | This bridge (`Web_Toolkit/wcag_auditor`) |
-| Tauri / desktop / arbitrary app | Standalone `AI/wcag-auditor` directly |
-| CI for a non-toolkit repo | Standalone package |
-
-## Quick start (toolkit site)
-
-```bash
-node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs init --site-profile ./site.site-profile.json
-# in client: npm i -D playwright @axe-core/playwright && npx playwright install chromium
-node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run \
-  --site-profile ./site.site-profile.json \
-  --base-url http://127.0.0.1:4321
-```
-
-Ephemeral profile-driven run:
-
-```bash
-node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run \
-  --site-profile ./site.site-profile.json \
-  --from-profile \
-  --base-url http://127.0.0.1:4321
-```
-
-## Site profile knobs
-
-`diagnostics.wcagAuditor`: `enabled`, `config`, `routes`, `baseURL`, `profile`, `manageServer`, `previewCommand`, `serverTimeoutMs`.
-
-## Docs
-
-- Standalone package: `../../wcag-auditor/README.md` (from this toolkit) / `AI/wcag-auditor`
-- Deep architecture: `AI/wcag-auditor/docs/`
-- This is an evidence gate — **not** a WCAG conformance certificate.
+Non-website apps may keep a separate checkout or npm package if you want one. That path is **out of scope for toolkit-managed sites**.

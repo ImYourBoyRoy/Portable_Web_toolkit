@@ -1,0 +1,25 @@
+# Dependencies and install artifacts
+node_modules/
+*.tgz
+package-lock.json
+
+# Audit / build outputs
+.wcag-audit-results/
+wcag-audit.json
+wcag-audit.sarif
+wcag-audit.junit.xml
+wcag-audit.html
+wcag-audit.md
+coverage/
+dist/
+*.log
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local-only operator memory (optional — keep if you want MEMORY local)
+# MEMORY.md
