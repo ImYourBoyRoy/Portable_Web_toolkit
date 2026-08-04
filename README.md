@@ -1,16 +1,16 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.2`
+**Toolkit Release:** `v0.3.3`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.2` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.3` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
-| **Node.js Runtime Pin** | `26.5.1` | [`.node-version`](./.node-version) |
-| **Astro Framework** | `^7.1.5` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **@astrojs/cloudflare** | `^14.1.4` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **Cloudflare Wrangler** | `^4.112.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Node.js Runtime Pin** | `26.6.0` | [`.node-version`](./.node-version) |
+| **Astro Framework** | `^7.1.6` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.1.7` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.118.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·
@@ -108,6 +108,8 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed �
 |------|-------------------|
 | Check a site before deploy | `site-readiness` on the client project |
 | New site from scratch | `site-starter` skill + copy templates |
+| Accessibility evidence (sites) | `Web_Toolkit/wcag_auditor` bridge → standalone `AI/wcag-auditor` |
+| Accessibility evidence (apps) | Standalone `@roydawsoniv/wcag-auditor` at `AI/wcag-auditor` |
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
 | Compare toolkit + skills | `toolkit-update` or `node scripts/update-toolkit.mjs` |
 | Prepare an SVG candidate | Optional `vectorize-pipeline` skill |

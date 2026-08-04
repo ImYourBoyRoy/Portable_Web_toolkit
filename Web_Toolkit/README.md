@@ -77,9 +77,9 @@ Verify that the site meets all performance and quality targets.
 - **[Site Quality Smoke](./site_quality_smoke/README.md)**: Post-deployment header, cache, SEO, and metadata verification (replaces legacy smoke_doctor).
 - **[PageSpeed Diagnostics](./pagespeed_diagnostics/README.md)**: Automated Google PSI metrics tracking.
 - **PageSpeed Agent Batch/Diff**: JSON-only, problem-only PageSpeed batch runner and regression comparator for AI agents.
-- **[Site Quality Smoke](./site_quality_smoke/README.md)**: SEO and metadata posture checks.
 - **[Browser Diagnostics](./browser_diagnostics/README.md)**: Real-browser error scraping and request classification.
-- **[Site Doctor](./site_doctor/README.md)**: Combined local + cloud health diagnostics.
+- **[WCAG Auditor](./wcag_auditor/README.md)**: Thin site-profile bridge to standalone `@roydawsoniv/wcag-auditor` (`AI/wcag-auditor`). Evidence gate — does **not** certify WCAG conformance. Use the standalone package directly for Tauri/apps.
+- **[Site Doctor](./site_doctor/README.md)**: Combined local + cloud health diagnostics (optional `--wcag`).
 
 ---
 

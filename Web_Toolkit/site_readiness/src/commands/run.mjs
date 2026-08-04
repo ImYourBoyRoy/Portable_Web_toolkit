@@ -221,7 +221,7 @@ export async function runSiteReadiness(flags = {}) {
   }
 
   const deployTarget = String(profile?.deployTarget || '').toLowerCase();
-  const capabilities = await probeCapabilities({ projectRoot, deployTarget });
+  const capabilities = await probeCapabilities({ projectRoot, deployTarget, profile });
   if (capabilities.toolkitRoot) toolkitRoot = capabilities.toolkitRoot;
 
   const autoFixes = await runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot });

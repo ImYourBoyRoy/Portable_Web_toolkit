@@ -246,6 +246,55 @@
           },
           "additionalProperties": true
         },
+        "wcagAuditor": {
+          "type": "object",
+          "description": "Evidence-oriented accessibility gate (Playwright + axe). Opt-in for site-doctor via enabled=true. Not a WCAG conformance certificate.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When true, site-doctor run includes wcag-auditor."
+            },
+            "config": {
+              "type": "string",
+              "description": "Path to wcag-auditor.config.mjs relative to project root."
+            },
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Scenario paths for profile-built or starter configs."
+            },
+            "baseURL": {
+              "type": "string",
+              "description": "Origin for Playwright scenarios (local preview or staging)."
+            },
+            "baseUrl": {
+              "type": "string",
+              "description": "Alias for baseURL."
+            },
+            "profile": {
+              "type": "string",
+              "description": "Reporting label only (e.g. wcag22-aa). Never a conformance claim."
+            },
+            "manageServer": {
+              "type": "boolean",
+              "description": "Start commands.preview (or previewCommand) for profile-built configs."
+            },
+            "previewCommand": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Explicit argv for managed preview server, e.g. [\"npm\",\"run\",\"preview\"]."
+            },
+            "serverTimeoutMs": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": true
+        },
         "integrations": {
           "type": "object",
           "properties": {

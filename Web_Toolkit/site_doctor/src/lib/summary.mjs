@@ -63,6 +63,16 @@ export function summarizeStep(step = {}) {
     if (issueCount > 0) summary.issues.push(...detailIssues);
   }
 
+  if (step.id === 'wcag-auditor') {
+    const gate = report.gate || {};
+    summary.metrics.wcagExitCode = Number(step.exitCode ?? gate.exitCode ?? 0);
+    summary.metrics.wcagFailed = Number(gate.counts?.failed ?? report.summary?.failed ?? 0);
+    if (step.exitCode === 1) summary.issues.push('WCAG auditor reported blocking accessibility findings.');
+    if (step.exitCode === 2) summary.issues.push('WCAG auditor failed to execute (config, dependency, adapter, or empty surface).');
+    if (step.exitCode === 3) summary.issues.push('WCAG auditor left required evidence untested or inconclusive.');
+    if (step.stderr) summary.issues.push(step.stderr.split('\n').filter(Boolean).slice(0, 3).join(' | '));
+  }
+
   if (step.id === 'brand-doctor') {
     const detailIssues = Array.isArray(report.summary?.issues) ? report.summary.issues : [];
     const issueCount = detailIssues.length;

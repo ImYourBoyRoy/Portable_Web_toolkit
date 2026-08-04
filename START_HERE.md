@@ -69,6 +69,7 @@ infrastructure mutation, or deployment.
 New managed site?       → site-starter
 State uncertain?        → site-readiness
 Deploy or Cloudflare?   → portable-web-toolkit
+Accessibility evidence? → wcag-auditor toolkit bridge (sites) or AI/wcag-auditor (apps)
 Instagram fallback?     → instagram-clone
 SVG recovery candidate? → vectorize-pipeline
 Toolkit freshness?      → toolkit-update

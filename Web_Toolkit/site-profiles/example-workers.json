@@ -44,6 +44,15 @@
         "/sitemap.xml"
       ],
       "assetSampleSize": 3
+    },
+    "wcagAuditor": {
+      "enabled": false,
+      "routes": [
+        "/"
+      ],
+      "baseURL": "http://127.0.0.1:4321",
+      "profile": "wcag22-aa",
+      "manageServer": false
     }
   },
   "cloudflare": {

@@ -10,9 +10,10 @@ Use this when the site, build path, or deploy path is unstable and root cause is
 2. `Setup_Astro_Environment doctor`
 3. `Preview_Smoke`
 4. `Site_Quality_Smoke`
-5. `Integration_Doctor`
-6. `Site_Doctor`
-7. Cloudflare sub-audits only after the basics are confirmed
+5. `Browser_Diagnostics` (and `WCAG_Auditor` when UI accessibility evidence is in scope)
+6. `Integration_Doctor`
+7. `Site_Doctor`
+8. Cloudflare sub-audits only after the basics are confirmed
 
 ### Symptom map
 
@@ -21,6 +22,7 @@ Use this when the site, build path, or deploy path is unstable and root cause is
 - **Prod works, dev fails** → dev host, dev route, dev config mismatch
 - **Forms or analytics missing** → project root `.env`, integration markers, script loading
 - **Mail fails after DNS work** → MX/SPF/DKIM/DMARC or provider cutover drift
+- **Accessibility / keyboard / AT defects** → `wcag-auditor` (evidence gate) + manual evidence; not PageSpeed accessibility score alone
 
 ### Triage rules
 

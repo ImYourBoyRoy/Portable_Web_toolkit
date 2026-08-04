@@ -5,6 +5,20 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-08-04
+
+### Added
+
+- Thin **WCAG Auditor bridge** (`Web_Toolkit/wcag_auditor/`) wired to the hard-segregated standalone package `@roydawsoniv/wcag-auditor` (`AI/wcag-auditor`).
+- Launchers: `WCAG_Auditor.bat` / `WCAG_Auditor.command`.
+- Site-profile schema + example knobs under `diagnostics.wcagAuditor`.
+- Optional `site-doctor --wcag` step; OPERATIONS step 10a; agent routing in `START_HERE.md` / skills operations index.
+
+### Changed
+
+- Accessibility evidence engine is **hard-segregated** from the toolkit: core adapters/tests/docs live in `AI/wcag-auditor`; the toolkit keeps only a site-profile / Astro bridge.
+- Refreshed `site-starter` floors to current registry latest: Astro `^7.1.6`, `@astrojs/cloudflare` `^14.1.7`, Wrangler `^4.118.0`, Vite `^8.2.0`, Playwright `^1.62.1`; `.node-version` → `26.6.0`. TypeScript stays on `^6.0.3` until `@astrojs/check` supports 7.x.
+
 ## [0.3.2] - 2026-07-29
 
 ### Added

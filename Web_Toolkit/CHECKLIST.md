@@ -20,7 +20,7 @@
 - preferred framework if fixed
 - content owner
 - brand assets
-- accessibility expectations
+- accessibility expectations (WCAG target level + whether automated evidence gate is required)
 - SEO requirements
 - analytics requirements
 - legal/privacy requirements

@@ -44,8 +44,17 @@ function commandResult(id, command, result, projectRoot) {
   return step;
 }
 
-function buildCommands(projectRoot, profilePath, flags = {}) {
+function buildCommands(projectRoot, profilePath, flags = {}, profile = {}) {
   const skipCloudflare = boolFlag(flags['skip-cloudflare'], false);
+  const wcagEnabledInProfile = boolFlag(profile?.diagnostics?.wcagAuditor?.enabled, false);
+  const wcagRequested =
+    boolFlag(flags.wcag, false)
+    || boolFlag(flags['wcag-auditor'], false)
+    || wcagEnabledInProfile;
+  const wcagConfigPath = String(profile?.diagnostics?.wcagAuditor?.config || 'wcag-auditor.config.mjs').trim();
+  const wcagConfigExists = fs.existsSync(path.resolve(projectRoot, wcagConfigPath))
+    || fs.existsSync(path.join(projectRoot, 'wcag-auditor.config.mjs'));
+  const wcagFromProfile = boolFlag(flags['wcag-from-profile'], false) || !wcagConfigExists;
   const commands = [
     {
       id: 'agent-env',
@@ -84,6 +93,25 @@ function buildCommands(projectRoot, profilePath, flags = {}) {
         ...(boolFlag(flags['browser-lighthouse'], false) ? ['--lighthouse'] : []),
         ...(flags['browser-lighthouse-preset'] ? ['--lighthouse-preset', String(flags['browser-lighthouse-preset'])] : []),
         ...(boolFlag(flags['browser-screenshots'], false) ? ['--screenshots'] : [])
+      ]
+    },
+    {
+      id: 'wcag-auditor',
+      // Opt-in: requires Playwright peers + reachable preview/baseURL.
+      // Enable via --wcag or site-profile diagnostics.wcagAuditor.enabled.
+      enabled: !boolFlag(flags['skip-wcag-auditor'], false) && wcagRequested,
+      script: 'wcag_auditor/bin/wcag-auditor.mjs',
+      args: [
+        'run',
+        '--project-root',
+        projectRoot,
+        '--site-profile',
+        profilePath,
+        ...(wcagFromProfile ? ['--from-profile'] : []),
+        ...(flags['wcag-base-url'] ? ['--base-url', String(flags['wcag-base-url'])] : []),
+        ...(boolFlag(flags['wcag-manage-server'], false) || boolFlag(profile?.diagnostics?.wcagAuditor?.manageServer, false)
+          ? ['--manage-server']
+          : [])
       ]
     },
     {
@@ -170,7 +198,7 @@ export async function runSiteDoctor(flags = {}) {
   fs.mkdirSync(paths.outputDir, { recursive: true });
 
   const steps = [];
-  for (const entry of buildCommands(projectRoot, profilePath, flags)) {
+  for (const entry of buildCommands(projectRoot, profilePath, flags, profile)) {
     const result = runNodeScript(entry.script, entry.args, { cwd: projectRoot });
     steps.push(commandResult(entry.id, `node ${entry.script} ${entry.args.join(' ')}`, result, projectRoot));
   }

@@ -60,7 +60,7 @@ export function resolveDistPath(projectRoot, deployTarget = '') {
   return '';
 }
 
-export async function probeCapabilities({ projectRoot, deployTarget = '' } = {}) {
+export async function probeCapabilities({ projectRoot, deployTarget = '', profile = null } = {}) {
   const projectEnv = loadEnvFile(path.join(projectRoot, '.env'));
   const env = { ...projectEnv, ...process.env };
   const sandboxHints = hasSandboxHints();
@@ -69,6 +69,17 @@ export async function probeCapabilities({ projectRoot, deployTarget = '' } = {})
   const distPath = resolveDistPath(projectRoot, deployTarget);
   const nodeModules = fs.existsSync(path.join(projectRoot, 'node_modules'));
   const feedJson = fs.existsSync(path.join(projectRoot, 'src', 'data', 'instagram', 'feed.json'));
+  const wcagConfigCandidates = [
+    path.join(projectRoot, 'wcag-auditor.config.mjs'),
+    path.join(projectRoot, 'wcag-auditor.config.js'),
+    path.join(projectRoot, 'wcag-auditor.config.json'),
+  ];
+  const profileWcagConfig = String(profile?.diagnostics?.wcagAuditor?.config || '').trim();
+  if (profileWcagConfig) {
+    wcagConfigCandidates.unshift(path.resolve(projectRoot, profileWcagConfig));
+  }
+  const wcagAuditorConfig = wcagConfigCandidates.find((candidate) => fs.existsSync(candidate)) || '';
+  const wcagAuditorEnabled = Boolean(profile?.diagnostics?.wcagAuditor?.enabled);
 
   const cloudflareAuth = Boolean(
     String(env.CLOUDFLARE_API_TOKEN || '').trim()
@@ -96,6 +107,8 @@ export async function probeCapabilities({ projectRoot, deployTarget = '' } = {})
     distBuilt: Boolean(distPath),
     distPath,
     feedJson,
+    wcagAuditorConfig,
+    wcagAuditorEnabled,
     sandboxHints,
     writableProject,
   };

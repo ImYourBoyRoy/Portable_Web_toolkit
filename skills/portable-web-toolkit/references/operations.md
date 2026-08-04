@@ -10,6 +10,7 @@ contract. Verify exact flags rather than relying on this routing index.
 | Site profile creation | `init-site-profile` |
 | Site and integration diagnosis | `site-doctor`, `integration-doctor` |
 | Browser and PageSpeed diagnosis | `browser-diagnostics`, `pagespeed-diagnostics` |
+| Accessibility evidence gate | `wcag-auditor` toolkit bridge → standalone `@roydawsoniv/wcag-auditor` (apps use the standalone package directly) |
 | Discovery validation | `discovery-doctor` |
 | Cloudflare audit or authorized mutation | `cf-agent` |
 | Header generation and audit | `headers-deploy` |

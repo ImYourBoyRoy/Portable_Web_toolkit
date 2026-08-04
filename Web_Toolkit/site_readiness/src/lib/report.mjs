@@ -85,6 +85,20 @@ export function buildRecommendedFixes({ steps = [], capabilities = {}, flags = {
     });
   }
 
+  // Accessibility evidence is opt-in; surface when a config already exists or profile enables it.
+  const wcagEnabled = Boolean(capabilities.wcagAuditorEnabled);
+  const wcagConfigPresent = Boolean(capabilities.wcagAuditorConfig);
+  if (wcagEnabled || wcagConfigPresent) {
+    fixes.push({
+      id: 'wcag-auditor',
+      command:
+        'node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run --site-profile <profile> --base-url http://127.0.0.1:4321',
+      description:
+        'Run the evidence-oriented WCAG auditor against local preview or staging (not a conformance certificate).',
+      auto: false,
+    });
+  }
+
   return fixes;
 }
 

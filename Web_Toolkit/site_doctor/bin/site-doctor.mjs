@@ -29,6 +29,11 @@ function printHelp() {
       { name: '--skip-quality-smoke', description: 'Skip live headers/SEO/cache smoke checks.' },
       { name: '--skip-browser-diagnostics', description: 'Skip live browser console/request/runtime diagnostics.' },
       { name: '--skip-brand-doctor', description: 'Skip branding/meta asset diagnostics.' },
+      { name: '--wcag', description: 'Also run the evidence-oriented WCAG auditor (Playwright + axe).' },
+      { name: '--skip-wcag-auditor', description: 'Skip WCAG auditor even when diagnostics.wcagAuditor.enabled is true.' },
+      { name: '--wcag-from-profile', description: 'Force ephemeral WCAG config from the site profile routes/hosts.' },
+      { name: '--wcag-base-url <url>', description: 'Override WCAG auditor baseURL (local preview or staging).' },
+      { name: '--wcag-manage-server', description: 'Ask WCAG auditor to start commands.preview when using profile-built config.' },
       { name: '--browser-lighthouse', description: 'Also run Lighthouse through the browser-diagnostics step.' },
       { name: '--browser-lighthouse-preset <mobile|desktop>', description: 'Select the Lighthouse preset forwarded to browser-diagnostics.' },
       { name: '--browser-screenshots', description: 'Capture screenshots during the browser-diagnostics step.' },
@@ -41,11 +46,13 @@ function printHelp() {
     examples: [
       'site-doctor run --site-profile ../site-profiles/example-workers.json',
       'site-doctor run --site-profile ../site-profiles/example-workers.json --skip-cloudflare',
+      'site-doctor run --site-profile ../site-profiles/example-workers.json --wcag --wcag-base-url http://127.0.0.1:4321',
       'site-doctor diff --site-profile ../site-profiles/example-workers.json'
     ],
     notes: [
       'This is the best first-stop command when the model needs root-cause analysis without guessing.',
-      'Browser diagnostics are non-mutating and can be skipped if Playwright/browser tooling is unavailable.'
+      'Browser diagnostics are non-mutating and can be skipped if Playwright/browser tooling is unavailable.',
+      'WCAG auditor is opt-in (--wcag or diagnostics.wcagAuditor.enabled). It is an evidence gate, not a conformance certificate.'
     ],
     exitCodes: [
       { name: '0', description: 'All steps passed.' },

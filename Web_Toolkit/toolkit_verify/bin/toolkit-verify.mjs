@@ -107,6 +107,10 @@ function verifySteps(flags = {}, exportRoot) {
       args: [toolkitScript('site_doctor/bin/site-doctor.mjs'), 'help']
     },
     {
+      name: 'wcag-auditor help',
+      args: [toolkitScript('wcag_auditor/bin/wcag-auditor.mjs'), 'help']
+    },
+    {
       name: 'export portable toolkit',
       args: [toolkitScript('scripts/export-portable-toolkit.mjs'), '--to', exportRoot]
     },
