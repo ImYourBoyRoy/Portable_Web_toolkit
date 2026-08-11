@@ -30,8 +30,12 @@ The agent should:
 Project symlink helper:
 
 ```bash
-# Link required skills into project scope (.agents/skills/)
+# Default link = light router only (install_by_default)
 node ./scripts/manage-project-skills.mjs link --project <client-site-dir>
+
+# Explicit skills for active website work / onboarding
+node ./scripts/manage-project-skills.mjs link --project <client-site-dir> \
+  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,toolkit-update
 
 # Check status
 node ./scripts/manage-project-skills.mjs status --project <client-site-dir>
@@ -39,6 +43,7 @@ node ./scripts/manage-project-skills.mjs status --project <client-site-dir>
 
 Core skills:
 
+- `site-onboarding` (staged hand-holding — see `docs/agent-skills/ONBOARDING_STAGES.md`)
 - `portable-web-toolkit`
 - `site-readiness`
 - `site-starter`
@@ -66,7 +71,8 @@ infrastructure mutation, or deployment.
 ## 4. Route narrowly
 
 ```text
-New managed site?       → site-starter
+New machine / Cloudflare beginner? → site-onboarding (ONBOARDING_STAGES S0–S9)
+New managed site?       → site-onboarding or site-starter (ask Workers vs Pages/static first)
 State uncertain?        → site-readiness
 Deploy or Cloudflare?   → portable-web-toolkit
 Accessibility evidence? → Web_Toolkit/wcag_auditor (bundled; never AI/)
@@ -75,6 +81,11 @@ SVG recovery candidate? → vectorize-pipeline
 Toolkit freshness?      → toolkit-update
 Live failure?           → site-doctor CLI
 ```
+
+For a **new site**, follow `docs/agent-skills/ONBOARDING_STAGES.md` and always ask
+whether they want **Cloudflare Workers** (SSR/API/forms/bindings) or
+**Cloudflare Pages static**, then use the matching `site-starter` templates and
+`site-starter/.env.example`.
 
 Use the existing project profile and package scripts. Audit and dry-run
 infrastructure changes before an authorized apply. Require separate production

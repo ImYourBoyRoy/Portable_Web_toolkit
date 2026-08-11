@@ -50,6 +50,23 @@ If no API token secret is configured, some read-only audits can fall back to Wra
 Mutating commands and token-inspection commands still require a real `CLOUDFLARE_API_TOKEN`.
 `robots audit|fix` additionally require Cloudflare API token scopes for **Bot Management Read** and **Bot Management Write**.
 
+## API token recipe (hand-holding)
+
+Agents cannot create dashboard tokens. Guide the user to **My Profile → API Tokens → Create Token → Custom** with **Edit/Write** groups matching `REQUIRED_PERMISSION_NAMES` in `src/config/defaults.mjs`, including:
+
+- Zone Edit family (Zone/DNS/Cache/SSL/WAF/Workers Routes/Pages, …)
+- Account Edit family (Workers Scripts/KV/R2/D1, Account Rulesets, …)
+- **API Tokens Write** and **Account API Tokens Write** (needed for `permissions repair`)
+- **Gateway Write** (Cloudflare One / Gateway Edit when Zero Trust Gateway is in scope)
+
+Include the target **Account** and **Zone** resources. Paste into the **client project** `.env` as `CLOUDFLARE_API_TOKEN` (never commit). Verify with:
+
+```bash
+node ./bin/cf-agent.mjs permissions audit --site-profile <profile>
+```
+
+Full staged walkthrough: [`docs/agent-skills/ONBOARDING_STAGES.md`](../../docs/agent-skills/ONBOARDING_STAGES.md) stage **S3**.
+
 ## Agent-only performance audit
 
 `performance audit` is intentionally machine-readable:

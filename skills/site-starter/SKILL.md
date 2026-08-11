@@ -19,14 +19,21 @@ portable Node commands; adapt only path and shell quoting to the active host.
 
 ## Workers vs Pages
 
-| | **Workers** | **Pages** |
-|---|-------------|-----------|
-| Use when | SSR, API, KV/cron, `output: 'server'` | Static site, `output: 'static'` |
+**Always ask the user before scaffolding** which deploy target they want:
+
+| | **Workers** | **Pages (static)** |
+|---|-------------|-------------|
+| Ask when | Need SSR, API routes, built-in forms, Turnstile/server handlers, KV/D1/R2/cron, or other edge logic | Pure marketing/static site with no server runtime |
+| Astro output | `output: 'server'` | `output: 'static'` |
 | Package | `site-starter/workers.package.json` → `package.json` | `site-starter/pages.package.json` → `package.json` |
 | Wrangler | `workers.wrangler.toml` → `wrangler.toml` | `pages.wrangler.toml` → `wrangler.toml` |
 | Astro config | `astro.config.workers.example.mjs` → `astro.config.mjs` | `astro.config.pages.example.mjs` → `astro.config.mjs` |
 | Profile | `"deployTarget": "workers"` | `"deployTarget": "pages"` |
 | Discovery doctor | `./dist/client` | `./dist` |
+
+Prefer **Workers** when the site will collect form submissions or need server APIs. Prefer **Pages static** only when the user confirms a static-only site.
+
+After choosing a target, copy `.env.example` from `site-starter/` (includes `GOOGLE_PAGESPEED_API_KEY`, Cloudflare, forms, analytics, Turnstile slots) and fill secrets in the project root `.env` only.
 
 ## Portable scaffold transaction
 

@@ -4,18 +4,22 @@ Copy these files into a **new client site folder** (not into this toolkit repo r
 
 Requires **`Web_Toolkit/`** linked at the project root (`node …/link-web-toolkit.mjs`).
 
-**Baseline (verified 2026-07-18):** Node `>=26` (pin `26.5.0`), Astro `^7.1.1`, `@astrojs/cloudflare` `^14.1.3`, Vite `^8.1.5`, Wrangler `^4.112.0`, `@cloudflare/workers-types` `^5.x`, TypeScript `^6.0.3` (held on 6.x for `@astrojs/check` peers).
+**Baseline:** match root `VERSION` / `.node-version` / site-starter pins (refresh with `node ./scripts/sync-readme-versions.mjs`). TypeScript stays on `^6.0.3` until `@astrojs/check` peers allow 7.x.
 
 Cross-platform: [`docs/agent-skills/CROSS_PLATFORM.md`](../docs/agent-skills/CROSS_PLATFORM.md)
 
 ## Pick a deploy target
 
-| Target | Copy → project root |
-|--------|---------------------|
-| **Workers** (SSR, API) | `workers.package.json` → `package.json`, `workers.wrangler.toml` → `wrangler.toml`, `astro.config.workers.example.mjs` → `astro.config.mjs` |
-| **Pages** (static) | `pages.package.json` → `package.json`, `pages.wrangler.toml` → `wrangler.toml`, `astro.config.pages.example.mjs` → `astro.config.mjs` |
+**Ask the user first** — do not assume:
+
+| Target | When to choose | Copy → project root |
+|--------|----------------|---------------------|
+| **Workers** | SSR, API routes, **built-in forms**, Turnstile/server handlers, Workers bindings | `workers.package.json` → `package.json`, `workers.wrangler.toml` → `wrangler.toml`, `astro.config.workers.example.mjs` → `astro.config.mjs` |
+| **Pages (static)** | Static HTML/assets only; no server runtime | `pages.package.json` → `package.json`, `pages.wrangler.toml` → `wrangler.toml`, `astro.config.pages.example.mjs` → `astro.config.mjs` |
 
 Set `deployTarget` in `*.site-profile.json` to `workers` or `pages`.
+
+Copy [`.env.example`](./.env.example) into the project (includes `GOOGLE_PAGESPEED_API_KEY` and other toolkit API slots). Live secrets go only in project-root `.env`.
 
 ## Quick start
 

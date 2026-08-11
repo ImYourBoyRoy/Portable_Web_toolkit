@@ -9,8 +9,9 @@ This index is the fast-lookup manifest used by AI coding agents (**Antigravity, 
 | Skill Name | Tier | Purpose & Selection Criteria | Primary Use-Case | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | **`portable-web-toolkit`** | `core` | **Master Workflow Router**: Operational rules, Cloudflare Workers/Pages contracts, site profile management, and build workflow. | Any Astro + Cloudflare project managed by the toolkit. | None |
+| **`site-onboarding`** | `core` | **Staged hand-holding**: Host setup, Cloudflare token/MCP, Workers vs Pages, site-starter scaffold with checkpoints (see `ONBOARDING_STAGES.md`). | New machine, Cloudflare beginners, brand-new sites. | None |
 | **`site-readiness`** | `core` | **Auditing & Gates**: readiness checks, discovery doctor, build gates. Accessibility: bundled `Web_Toolkit/wcag_auditor`. | Pre-flight before build/staging/deploy. | `portable-web-toolkit` |
-| **`site-starter`** | `core` | **Site Scaffolding**: Bootstraps brand-new Astro + Cloudflare client sites from starter templates. | Initializing a new client site directory. | None |
+| **`site-starter`** | `core` | **Site Scaffolding**: Bootstraps brand-new Astro + Cloudflare client sites from starter templates. | Initializing a new client site directory (after Workers vs Pages choice). | None |
 | **`toolkit-update`** | `core` | **Reconciliation & Version Sync**: Compares client site / toolkit checkout with source releases and reconciles versions. | Upgrading or auditing toolkit health. | None |
 | **`portable-web-toolkit-router`** | `core` | **Minimalist Router**: Global launcher skill that inspects project needs and symlinks required skills into `.agents/skills/`. | Initializing skills in a project workspace. | None |
 | **`instagram-clone`** | `optional` | **Static Gallery Fallback**: Clones public Instagram profile posts into local `feed.json` and static WebP media for Astro galleries without API tokens. | Client site requiring Instagram feed gallery. | `portable-web-toolkit` |

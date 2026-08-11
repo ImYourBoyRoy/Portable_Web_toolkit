@@ -383,13 +383,15 @@ function Ensure-PythonRuntime($Manifest, [hashtable]$Report, [hashtable]$Flags) 
     try {
         $versionsOutput = (Invoke-Pyenv -Args @('versions')) -join "`n"
         if ($versionsOutput -notmatch [Regex]::Escape($desiredVersion)) { Invoke-Pyenv -Args @('install', $desiredVersion) | Out-Null; $versionsOutput = (Invoke-Pyenv -Args @('versions')) -join "`n" }
+        # Prefer the desired line as the user-global Python (latest installed for that prefix).
+        try { Invoke-Pyenv -Args @('global', $desiredVersion) | Out-Null } catch { }
         $targetSpec = "$desiredVersion/envs/$venvName"
         if ($versionsOutput -notmatch [Regex]::Escape($targetSpec)) { Invoke-Pyenv -Args @('venv', 'create', $desiredVersion, $venvName) | Out-Null }
         Invoke-Pyenv -Args @('local', $targetSpec) -WorkingDirectory $workspace | Out-Null
         Invoke-Pyenv -Args @('exec', 'python', '-m', 'pip', 'install', '--upgrade', 'pip') -WorkingDirectory $workspace | Out-Null
         $afterPython = (Invoke-Pyenv -Args @('exec', 'python', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
         $afterPip = (Invoke-Pyenv -Args @('exec', 'python', '-m', 'pip', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
-        Add-ReportEntry $Report installed 'Python runtime' $required $beforePython $afterPython 'pyenv-native' 'installed-or-selected' "Workspace bound to $targetSpec"
+        Add-ReportEntry $Report installed 'Python runtime' $required $beforePython $afterPython 'pyenv-native' 'installed-or-selected' "Workspace bound to $targetSpec; pyenv global set to $desiredVersion"
         Add-ReportEntry $Report installed 'pip' '' $beforePip $afterPip 'pyenv-native' 'installed-or-updated' 'pip upgraded inside the managed venv'
         return
     } catch {

@@ -114,7 +114,9 @@ manifest. Check existing client skill directories first, preserve conflicts,
 and change only explicitly selected clients and skills.
 ```
 
-**Core:** `portable-web-toolkit`, `site-readiness`, `site-starter`,
+**Core:** `portable-web-toolkit-router` (global default), `site-onboarding`,
+`portable-web-toolkit`, `site-readiness`, `site-starter`,
+`toolkit-update`
 `toolkit-update`
 
 **Optional:** `instagram-clone`, `vectorize-pipeline`

@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.5`
+**Toolkit Release:** `v0.3.6`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.5` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.6` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -28,33 +28,65 @@ You get ready-made **agent skills**, **command-line tools** for build/deploy/dis
 
 ## Get started (use your AI agent)
 
-All AI coding tools (Antigravity, Cursor, Claude Code, Codex, Copilot, etc.) support `.agents/skills/` at project scope.
+All AI coding tools (Antigravity, Cursor, Claude Code, Codex, Copilot, etc.)
+support `.agents/skills/` at project scope.
 
-Copy and paste this prompt to your AI coding agent:
+**Copy and paste this entire prompt** into your AI coding agent:
 
 ```text
-Inspect the Portable Web Toolkit skill index in docs/agent-skills/SKILL_INDEX.md. Symlink the required skills into this project's .agents/skills/ directory using manage-project-skills.mjs, then run site-readiness.
+Use the Portable Web Toolkit for Astro + Cloudflare website work.
+
+Source of truth:
+https://github.com/imyourboyroy/Portable_Web_toolkit
+Read README.md first, then docs/agent-skills/ONBOARDING_STAGES.md (skill: site-onboarding),
+START_HERE.md, docs/agent-skills/SKILL_INDEX.md, and skill-pack.json.
+
+Follow onboarding stages S0–S9 with a checkpoint after each stage.
+Use the host question / confirm UI (popup) when available; otherwise ask clearly in chat.
+
+S0 Access/sandbox — detect limits; prefer full agent control.
+S1 Host bootstrap — ask before Setup_Agent_Environment (Git, Node, pyenv-native, Python).
+S2 Toolkit + skills — global portable-web-toolkit-router ONLY; purge legacy heavy PWT skills;
+   link project skills with manage-project-skills.mjs --skills site-onboarding,…
+S3 Cloudflare API token — guide Custom token with Zone/Account Edit scopes, API Tokens Write,
+   and Gateway Edit when needed; user pastes into project .env; run cf-agent permissions audit.
+S4 Cloudflare MCP/plugin — ask first; then follow live
+   https://developers.cloudflare.com/agent-setup/prompt.md (and agent page e.g. Cursor).
+S5 Site intent — ask Workers (forms/SSR/API) vs Pages static; domain; integrations.
+S6 Scaffold site-starter into a fresh client folder (files appearing is success); link Web_Toolkit.
+S7 Profile, Brand Guide, .env from site-starter/.env.example (incl. GOOGLE_PAGESPEED_API_KEY).
+S8 Build + discovery-doctor + site-readiness (Workers dist/client vs Pages dist).
+S9 Staging → smoke → production only with explicit authorization; CF dry-run before --apply.
+
+Prefer toolkit CLIs to inventing scripts. Never commit secrets.
 ```
 
-Or run the CLI directly:
+Or run the CLI yourself after the toolkit is cloned:
 
 ```bash
-# Link required skills into project scope (.agents/skills/)
+# Default = light router only
 node /path/to/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site
+
+# Active website work — pass explicit skills
+node /path/to/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site \
+  --skills portable-web-toolkit,site-readiness,site-starter,toolkit-update
 ```
 
-The agent inspects [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md) and symlinks only the required skills directly into `<client_project>/.agents/skills/`. Running `git pull` in `Portable_Web_toolkit` updates all client project skills live with zero file drift.
+The agent follows [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md). Running `git pull` in `Portable_Web_toolkit` updates all symlinked client skills live.
 
 ### Working on a site
 
-Each client site lives in a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder using `scripts/link-web-toolkit.mjs`.
+Each client site lives in a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder using `scripts/link-web-toolkit.mjs`. Copy secrets from [`site-starter/.env.example`](./site-starter/.env.example) (includes PageSpeed, Cloudflare, forms, analytics slots).
 
 ### Upgrading & Migrating Existing Installs
 
-To upgrade an existing install to the new zero-context-bloat symlinked architecture, copy and paste this prompt to your AI coding agent:
+Copy and paste:
 
 ```text
-Please update the installed Portable Web Toolkit to the latest release, purge old heavy global web skills from home discovery directories (~/.gemini/config/skills/, ~/.cursor/skills/), install the global portable-web-toolkit-router skill, and symlink required skills into this project's .agents/skills/ directory using manage-project-skills.mjs.
+Update my Portable Web Toolkit install from https://github.com/imyourboyroy/Portable_Web_toolkit (latest release).
+Purge legacy heavy web skills from global agent homes, keep only portable-web-toolkit-router globally,
+symlink selected project skills with manage-project-skills.mjs --skills …, and ask before running
+Setup_Agent_Environment. Prefer toolkit CLIs to correct the project.
 ```
 
 ---

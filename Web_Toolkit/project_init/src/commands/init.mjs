@@ -199,7 +199,7 @@ function runSkillSymlinkSafe(state, flags = {}, actions = []) {
       state.projectRoot,
       // Explicit project-scoped set for a new toolkit site (not skill-pack defaults).
       '--skills',
-      'portable-web-toolkit,site-readiness,site-starter,toolkit-update',
+      'site-onboarding,portable-web-toolkit,site-readiness,site-starter,toolkit-update',
     ],
     { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' },
   );

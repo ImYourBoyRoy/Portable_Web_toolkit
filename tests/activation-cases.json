@@ -29,6 +29,15 @@
         "Install global system packages on the host operating system."
       ]
     },
+    "site-onboarding": {
+      "positive": [
+        "I am new to Cloudflare and this machine. Guide me through Portable Web Toolkit host setup, API token creation, MCP plugin install, and scaffolding my first Astro site with checkpoints."
+      ],
+      "near_miss": [
+        "Run readiness for this already-managed site and summarize the JSON.",
+        "Only scaffold the Workers starter into an empty folder without host or token setup."
+      ]
+    },
     "site-readiness": {
       "positive": [
         "Run the toolkit readiness checks for this managed site and summarize the JSON findings."

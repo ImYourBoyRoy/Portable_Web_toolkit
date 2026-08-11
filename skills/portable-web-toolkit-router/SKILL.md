@@ -7,10 +7,23 @@ description: Dynamic router for Portable Web Toolkit. Inspects project needs and
 
 Use this skill when initializing or managing skills for an Astro + Cloudflare web design project using the Portable Web Toolkit.
 
+## Route first
+
+| Need | Skill |
+|---|---|
+| New machine, Cloudflare beginner, guided setup | `site-onboarding` → read `docs/agent-skills/ONBOARDING_STAGES.md` |
+| New site scaffold only (already onboarded) | `site-starter` (ask Workers vs Pages first) |
+| Readiness / gates | `site-readiness` |
+| Deploy / Cloudflare ops | `portable-web-toolkit` |
+| Toolkit freshness | `toolkit-update` |
+| Instagram gallery | `instagram-clone` |
+| SVG wordmark recovery | `vectorize-pipeline` |
+
 ## Operational Sequence
 
 1. **Check Project Scope**: Verify if `.agents/skills/` exists in the active project workspace root.
 2. **Inspect Skill Index**: Read `docs/agent-skills/SKILL_INDEX.md` in the Portable_Web_toolkit repository to determine which skills this workspace requires:
+   - `site-onboarding` (Core: staged hand-holding S0–S9)
    - `portable-web-toolkit` (Core: routing, Cloudflare contracts, workflow)
    - `site-readiness` (Core: auditing, pre-flight, discovery-doctor)
    - `site-starter` (Core: site creation & templates)
@@ -23,7 +36,7 @@ Use this skill when initializing or managing skills for an Astro + Cloudflare we
    Only `portable-web-toolkit-router` is `install_by_default`. Always pass `--skills` for the heavy core/optional skills you need:
 
    ```bash
-   node <path-to-Portable_Web_toolkit>/scripts/manage-project-skills.mjs link --project . --skills portable-web-toolkit,site-readiness
+   node <path-to-Portable_Web_toolkit>/scripts/manage-project-skills.mjs link --project . --skills site-onboarding,portable-web-toolkit,site-readiness
    ```
 
 4. **Verify Symlinks**:

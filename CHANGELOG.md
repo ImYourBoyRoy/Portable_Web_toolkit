@@ -5,6 +5,21 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-08-11
+
+### Added
+
+- **Staged agent onboarding** (`docs/agent-skills/ONBOARDING_STAGES.md` S0–S9) with stop-and-ask checkpoints for host setup, Cloudflare token/MCP, Workers vs Pages, scaffold, readiness, and production auth.
+- Core skill **`site-onboarding`** (`install_by_default: false`) — thin loader for the stages contract; wired in router, START_HERE, SKILL_INDEX, skill-pack, and project-init link lists.
+- cf-agent token handoff recipe documenting Edit/Write scopes including **API Tokens Write**, **Account API Tokens Write**, and **Gateway Write**.
+
+### Changed
+
+- README get-started paste prompt and `docs/agent-skills/getting-started.md` lead with README → ONBOARDING_STAGES / `site-onboarding`.
+- `REQUIRED_PERMISSION_NAMES` extended for token repair + Cloudflare One Gateway work.
+- Host bootstrap sets `pyenv global` to the desired installed Python line in addition to workspace `local` venv (bash + PowerShell).
+- Setup_agent_environment README Node pin wording refreshed to `.node-version` `26.7.0`.
+
 ## [0.3.5] - 2026-08-11
 
 ### Changed

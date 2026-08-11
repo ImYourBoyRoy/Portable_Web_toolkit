@@ -24,7 +24,12 @@ export const REQUIRED_PERMISSION_NAMES = [
   'D1 Write',
   'Pages Write',
   'Account Rulesets Write',
-  'Dynamic URL Redirects Write'
+  'Dynamic URL Redirects Write',
+  // Token self-repair (cf-agent permissions repair) and dashboard Edit recipes
+  'API Tokens Write',
+  'Account API Tokens Write',
+  // Cloudflare One / Gateway Edit when Zero Trust Gateway work is in scope
+  'Gateway Write'
 ];
 
 export const SETTINGS_TO_CHECK = [

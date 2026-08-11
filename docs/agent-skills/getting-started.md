@@ -1,6 +1,30 @@
 # Getting started with agent skills
 
-Each toolkit repo ships a **`skills/`** folder with structured workflows agents follow instead of guessing CLI/API behavior.
+**Start here for humans and agents:** the repository root
+[`README.md`](../../README.md).
+
+That README owns the copy-paste onboarding prompt. This page covers **skill
+install mechanics** only. For checkpoint-driven setup (host tools, Cloudflare
+tokens, MCP, Workers vs Pages, site-starter), follow
+[`ONBOARDING_STAGES.md`](./ONBOARDING_STAGES.md) via the `site-onboarding` skill.
+
+---
+
+## Tell your agent (copy-paste)
+
+Prefer the full prompt in [`README.md`](../../README.md). Short form:
+
+```text
+Follow https://github.com/imyourboyroy/Portable_Web_toolkit — read README.md first,
+then docs/agent-skills/ONBOARDING_STAGES.md (skill: site-onboarding).
+
+Run stages S0–S9 with a checkpoint after each stage (use the host question UI when
+available). Ask before host bootstrap, Cloudflare API token work, Cloudflare MCP/plugin
+install, scaffold writes, and production deploy. Keep global PWT skills light
+(portable-web-toolkit-router only).
+```
+
+---
 
 ## Supported agents
 
@@ -26,18 +50,6 @@ directory. Optional helpers report status:
 
 See also [`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md).
 
-## Tell your agent (copy-paste)
-
-```text
-Inspect the selected Portable Web Toolkit skills from GitHub, compare them with
-this client's installed copies, and report conflicts before installing. Use the
-repository manifest, preserve displaced content, and install only the approved
-client, scope, and skill set.
-```
-
-The agent performs the documented protocol directly. The status helper is
-optional and never installs.
-
 ## Optional: inspect skills yourself
 
 ```bash
@@ -60,7 +72,7 @@ Run from a **client project root** to inspect that repo without changing it:
 
 ## After install
 
-- Invoke by name: `portable-web-toolkit`, `site-readiness`, `site-starter`, `toolkit-update`, `instagram-clone`
+- Invoke by name: `site-onboarding`, `portable-web-toolkit`, `site-readiness`, `site-starter`, `toolkit-update`, `instagram-clone`
 - Blind agents: repo **`START_HERE.md`** at root
 - Read repo **`AGENTS.md`** when editing toolkit source
 - Per-agent details: see the other guides in this folder

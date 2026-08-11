@@ -56,11 +56,24 @@ export function buildProjectEnvExample({ projectRoot = '', profile = null } = {}
   pushEntry(optionalEntries, 'CF_ZONE_NAME', zoneName, zoneName ? 'defaults to the linked site profile zone' : 'fill in the production zone/domain');
   pushEntry(optionalEntries, 'CLOUDFLARE_ACCOUNT_ID', cloudflareAccountId, 'optional Cloudflare account id hint');
   pushEntry(optionalEntries, 'CF_ACCOUNT_NAME', cloudflareAccountName, 'optional Cloudflare account name hint');
-  pushEntry(optionalEntries, 'GOOGLE_PAGESPEED_API_KEY', '', 'optional PageSpeed Insights API key');
+  pushEntry(optionalEntries, 'CF_WORKER_NAME', '', 'Workers deploy name hint (when deployTarget=workers)');
+  pushEntry(optionalEntries, 'CF_PAGES_PROJECT', '', 'Pages project name hint (when deployTarget=pages)');
+  pushEntry(optionalEntries, 'GOOGLE_PAGESPEED_API_KEY', '', 'Google PageSpeed Insights API key (pagespeed-diagnostics / quality smoke)');
+  pushEntry(optionalEntries, 'PUBLIC_SITE_URL', '', 'optional production URL override');
+  pushEntry(optionalEntries, 'PUBLIC_SECURITY_CONTACT', '', 'optional security.txt contact (mailto: or https:)');
 
   if (integrationEntries.length === 0) {
     pushEntry(optionalEntries, 'PUBLIC_ANALYTICS_ENABLED', 'true', 'common analytics toggle');
-    pushEntry(optionalEntries, 'WEB3FORMS_ACCESS_KEY', '', 'optional basic contact-form provider key');
+    pushEntry(optionalEntries, 'PUBLIC_GA4_MEASUREMENT_ID', '', 'optional GA4 measurement id');
+    pushEntry(optionalEntries, 'PUBLIC_POSTHOG_API_KEY', '', 'optional PostHog project key');
+    pushEntry(optionalEntries, 'PUBLIC_POSTHOG_API_HOST', 'https://us.i.posthog.com', 'PostHog API host');
+    pushEntry(optionalEntries, 'WEB3FORMS_ACCESS_KEY', '', 'optional contact-form provider key');
+    pushEntry(optionalEntries, 'RESEND_API_KEY', '', 'optional Resend API key for transactional email');
+    pushEntry(optionalEntries, 'RESEND_FROM', '', 'optional Resend from address');
+    pushEntry(optionalEntries, 'PUBLIC_TURNSTILE_SITE_KEY', '', 'optional Cloudflare Turnstile site key');
+    pushEntry(optionalEntries, 'TURNSTILE_SECRET_KEY', '', 'optional Cloudflare Turnstile secret');
+    pushEntry(optionalEntries, 'INSTAGRAM_USERNAME', '', 'optional Instagram handle for instagram-clone');
+    pushEntry(optionalEntries, 'INSTAGRAM_CLONE_LIMIT', '24', 'optional Instagram clone post limit');
   }
 
   for (const entry of integrationEntries) {

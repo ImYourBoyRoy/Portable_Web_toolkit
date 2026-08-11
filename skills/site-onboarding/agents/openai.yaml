@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Onboarding"
+  short_description: "Guided host, Cloudflare, and first-site setup"
+  default_prompt: "Use $site-onboarding and follow docs/agent-skills/ONBOARDING_STAGES.md with stop-and-ask checkpoints."

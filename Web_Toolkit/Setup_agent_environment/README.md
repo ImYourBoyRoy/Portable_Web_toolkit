@@ -73,12 +73,12 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ### Required host tools
 
 - Git
-- Node.js **26.0.0 or newer** (pinned `.node-version` = `26.5.0`)
+- Node.js **26.0.0 or newer** (pinned `.node-version` = `26.7.0`)
 - npm
 - npx
 - `pyenv-native` **0.2.30 or newer** (`pyenv` CLI)
 - **pyenv-gui** present (launch: `pyenv gui`)
-- Python 3.14+ preferred (3.13+ minimum) provisioned through `pyenv-native` only
+- Python 3.14+ preferred (3.13+ minimum) provisioned through `pyenv-native` only — bootstrap sets `pyenv global` to the desired installed line **and** a workspace `local` venv
 - pip inside the `pyenv-native`-managed workspace venv
 
 ### Recommended extras

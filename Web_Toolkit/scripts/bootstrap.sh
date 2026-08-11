@@ -480,6 +480,8 @@ ensure_python_runtime_posix() {
   before_pip="$(command_version pip --version || true)"
   versions_output="$(invoke_pyenv versions 2>/dev/null || true)"
   grep -Fq "$desired" <<<"$versions_output" || invoke_pyenv install "$desired"
+  # Prefer the desired line as the user-global Python (latest installed for that prefix).
+  invoke_pyenv global "$desired" || true
   target_spec="$desired/envs/$venv_name"
   versions_output="$(invoke_pyenv versions 2>/dev/null || true)"
   grep -Fq "$target_spec" <<<"$versions_output" || invoke_pyenv venv create "$desired" "$venv_name"
@@ -487,7 +489,7 @@ ensure_python_runtime_posix() {
   invoke_pyenv --cwd "$WORKSPACE" exec python -m pip install --upgrade pip
   after_python="$(invoke_pyenv --cwd "$WORKSPACE" exec python --version | head -n1 || true)"
   after_pip="$(invoke_pyenv --cwd "$WORKSPACE" exec python -m pip --version | head -n1 || true)"
-  report_add installed "Python runtime" "$required" "$before_python" "$after_python" "pyenv-native" "installed-or-selected" "Workspace bound to $target_spec"
+  report_add installed "Python runtime" "$required" "$before_python" "$after_python" "pyenv-native" "installed-or-selected" "Workspace bound to $target_spec; pyenv global set to $desired"
   report_add installed "pip" "" "$before_pip" "$after_pip" "pyenv-native" "installed-or-updated" "pip upgraded inside the managed venv"
 }
 
