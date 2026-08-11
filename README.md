@@ -1,16 +1,16 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.4`
+**Toolkit Release:** `v0.3.5`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.4` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.5` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
-| **Node.js Runtime Pin** | `26.6.0` | [`.node-version`](./.node-version) |
-| **Astro Framework** | `^7.1.6` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **@astrojs/cloudflare** | `^14.1.7` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **Cloudflare Wrangler** | `^4.118.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
+| **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.120.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·

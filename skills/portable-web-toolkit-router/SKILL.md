@@ -18,7 +18,9 @@ Use this skill when initializing or managing skills for an Astro + Cloudflare we
    - `instagram-clone` (Optional: static fallback gallery without API keys)
    - `vectorize-pipeline` (Optional: SVG trace & font conversion)
 3. **Symlink Selected Skills**:
-   Run the cross-platform symlink manager from the Portable_Web_toolkit repository to link selected skills into `<project_root>/.agents/skills/`:
+   Run the cross-platform symlink manager from the Portable_Web_toolkit repository to link selected skills into `<project_root>/.agents/skills/`.
+
+   Only `portable-web-toolkit-router` is `install_by_default`. Always pass `--skills` for the heavy core/optional skills you need:
 
    ```bash
    node <path-to-Portable_Web_toolkit>/scripts/manage-project-skills.mjs link --project . --skills portable-web-toolkit,site-readiness

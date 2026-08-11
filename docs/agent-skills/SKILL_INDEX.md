@@ -25,10 +25,13 @@ All AI coding tools (Antigravity, Cursor, Claude Code, Codex, Gemini CLI, Copilo
 To link selected skills into a client project:
 
 ```bash
-# Link core skills (default)
+# Default link = only the light router (install_by_default=true)
 node /home/v1x0r/Desktop/AI/WebDesign/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site
 
-# Link specific skills (e.g. core + instagram-clone)
+# Explicit project skills when actively working a toolkit site
+node /home/v1x0r/Desktop/AI/WebDesign/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site --skills portable-web-toolkit,site-readiness,site-starter,toolkit-update
+
+# Add an optional skill
 node /home/v1x0r/Desktop/AI/WebDesign/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --project /path/to/client-site --skills portable-web-toolkit,site-readiness,instagram-clone
 
 # Check active symlinks

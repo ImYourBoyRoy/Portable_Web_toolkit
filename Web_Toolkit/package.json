@@ -1,6 +1,6 @@
 {
   "name": "@imyourboyroy/web-toolkit",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "AI-agent-first portable website diagnostics, Cloudflare, PageSpeed, and publishing toolkit.",
   "type": "module",
   "license": "MIT",

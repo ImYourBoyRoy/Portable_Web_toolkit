@@ -5,6 +5,18 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-08-11
+
+### Changed
+
+- **Skill defaults are light**: only `portable-web-toolkit-router` has `install_by_default: true`. Core/optional skills require explicit `--skills` (project-init still links the core four for new sites).
+- Refreshed site-starter floors via `package-updater`: Astro `^7.2.1`, `@astrojs/cloudflare` `^14.2.1`, Wrangler `^4.120.1`, Vite `^8.2.1`, `@astrojs/upgrade` `^0.7.4`, `@types/node` `^26.2.0`, `@cloudflare/workers-types` `^5.20260811.1`. TypeScript stays `^6.0.3` (capped; registry latest is 7.x).
+- `.node-version` and host-bootstrap Node tarballs → **26.7.0**.
+
+### Fixed
+
+- Playwright axe focus-indicator probe scrolls focused controls into view with `scroll-behavior: auto` so headless Chromium does not no-op smooth scroll.
+
 ## [0.3.4] - 2026-08-04
 
 ### Fixed

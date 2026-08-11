@@ -67,7 +67,7 @@ Commands:
 
 Options:
   --project, -p <dir>   Target project directory (default: current working directory)
-  --skills, -s <list>   Comma-separated list of skills (default: all core default skills)
+  --skills, -s <list>   Comma-separated skills (default: only install_by_default=true → portable-web-toolkit-router)
   --json                Output results in JSON format
   --force               Overwrite non-symlink target directories if linking
 `);

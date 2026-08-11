@@ -129,7 +129,7 @@ function checkSkillArchitecture(projectRoot) {
   const internalSkillsLinked = fs.existsSync(agentSkillsPath);
 
   if (!internalSkillsLinked) {
-    issues.push('Internal project skills missing in .agents/skills/. Run manage-project-skills.mjs link --project .');
+    issues.push('Internal project skills missing in .agents/skills/. Run manage-project-skills.mjs link --project . --skills portable-web-toolkit,site-readiness,site-starter,toolkit-update');
   }
 
   const globalRouterCandidates = [

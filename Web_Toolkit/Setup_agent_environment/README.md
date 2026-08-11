@@ -111,7 +111,7 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ## Manifest-driven policy
 
 - The source of truth is now `Setup_agent_environment/config/host-bootstrap.manifest.json`.
-- Node policy is **latest/current only** — minimum **26.x**; Linux bootstrap tarball targets **26.5.0** (verify against https://nodejs.org/dist/ before bumps).
+- Node policy is **latest/current only** — minimum **26.x**; bootstrap tarball targets **26.7.0** (verify against https://nodejs.org/dist/ before bumps).
 - Python policy prefers the **3.14** line (`desired_prefix` / `fallback_version` in the manifest) while accepting **3.13+** as minimum.
 - **`tool.python.install_policy` = `pyenv-native-only`** — system/winget/Homebrew Python installs are out of policy.
 - Bootstrap must install **pyenv-native + pyenv-gui**; operators launch the GUI with `pyenv gui`.

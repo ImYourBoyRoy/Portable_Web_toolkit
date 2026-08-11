@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "package": "portable-web-toolkit-skills",
-  "version": "1.1.0",
-  "toolkit_version": "0.3.4",
+  "version": "1.1.1",
+  "toolkit_version": "0.3.5",
   "source_base_commit": "86dddd9efb64c5b4219afe986699135a51e63f83",
   "skills": [
     {
@@ -19,7 +19,7 @@
       "version": "2.1.0",
       "tier": "core",
       "status": "stable",
-      "install_by_default": true,
+      "install_by_default": false,
       "path": "skills/portable-web-toolkit",
       "content_sha256": "3af9b9be6e57131e725a38e9acd869d7e4f5af9601d083b43b3edd7608867980"
     },
@@ -30,14 +30,14 @@
       "status": "stable",
       "install_by_default": true,
       "path": "skills/portable-web-toolkit-router",
-      "content_sha256": "a121ff6af0eddd387ec2aeb78d4cae0e01c0e770752678eb436d1db617d3b4e2"
+      "content_sha256": "e7650289bfa6ca8111d49a36cdf7bdeaff548241192b38a7a921313215d4e0f6"
     },
     {
       "name": "site-readiness",
       "version": "1.2.0",
       "tier": "core",
       "status": "stable",
-      "install_by_default": true,
+      "install_by_default": false,
       "path": "skills/site-readiness",
       "content_sha256": "5620cf02b63dd9bd9653bc5e601e06fdddab1a4a1995ddfa753561fd0a1e5dd3"
     },
@@ -46,7 +46,7 @@
       "version": "1.1.0",
       "tier": "core",
       "status": "stable",
-      "install_by_default": true,
+      "install_by_default": false,
       "path": "skills/site-starter",
       "content_sha256": "2b7a2b0719fd97bb56a3c7ea0bd739cb9487d2440e1f758d2c8fc4188d1a23cb"
     },
@@ -55,9 +55,9 @@
       "version": "2.1.0",
       "tier": "core",
       "status": "stable",
-      "install_by_default": true,
+      "install_by_default": false,
       "path": "skills/toolkit-update",
-      "content_sha256": "4fbd2c29687331fbc5863a5c3d9559bb66310dcb627f6589edf5b659dd275f40"
+      "content_sha256": "02992a66264793264ff33f8d019f38cdaf00f52d58f741bc009ed6e5e955738c"
     },
     {
       "name": "vectorize-pipeline",

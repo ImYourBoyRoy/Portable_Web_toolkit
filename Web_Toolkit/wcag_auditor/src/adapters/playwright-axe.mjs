@@ -312,6 +312,20 @@ async function runFocusIndicatorProbe(page, options, adapterName, scenarioName) 
 
   for (let index = 0; index < maxTabs; index += 1) {
     await page.keyboard.press('Tab');
+    // Scroll focused control into view. Force scroll-behavior:auto — smooth scrolling
+    // can no-op programmatic scrollTop/scrollTo in headless Chromium.
+    await page.evaluate(() => {
+      const element = document.activeElement;
+      if (!element || element === document.body || element === document.documentElement) return;
+      const root = document.documentElement;
+      const previousBehavior = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      const rect = element.getBoundingClientRect();
+      const absoluteTop = rect.top + window.scrollY;
+      const target = Math.max(0, absoluteTop - (window.innerHeight / 2) + (rect.height / 2));
+      window.scrollTo(0, target);
+      root.style.scrollBehavior = previousBehavior;
+    });
     const snapshot = await page.evaluate(() => {
       const element = document.activeElement;
       if (!element || element === document.body || element === document.documentElement) return null;

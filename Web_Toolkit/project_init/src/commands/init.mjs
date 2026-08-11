@@ -190,7 +190,19 @@ function runSkillSymlinkSafe(state, flags = {}, actions = []) {
   ];
   const managerCli = managerCliCandidates.find((candidate) => fs.existsSync(candidate));
   if (!managerCli) return;
-  const result = spawnSync(process.execPath, [managerCli, 'link', '--project', state.projectRoot], { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' });
+  const result = spawnSync(
+    process.execPath,
+    [
+      managerCli,
+      'link',
+      '--project',
+      state.projectRoot,
+      // Explicit project-scoped set for a new toolkit site (not skill-pack defaults).
+      '--skills',
+      'portable-web-toolkit,site-readiness,site-starter,toolkit-update',
+    ],
+    { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' },
+  );
   if (result.status === 0) {
     actions.push(`Symlinked required agent skills into ${path.join(state.projectRoot, '.agents', 'skills')}`);
   }
