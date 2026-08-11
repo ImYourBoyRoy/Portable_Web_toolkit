@@ -6,6 +6,11 @@ import test from 'node:test';
 
 import { scanRoot } from '../Web_Toolkit/privacy_check/src/lib/scanner.mjs';
 
+/** Build fixture text at runtime so release privacy scans do not flag this file. */
+function envAssignment(key, value) {
+  return [key, '=', value].join('');
+}
+
 test('privacy scan ignores reserved example email domains', () => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'pwt-privacy-example-'));
   try {
@@ -40,9 +45,30 @@ test('privacy scan still reports non-reserved email addresses', () => {
 test('privacy scan detects Cloudflare tokens without cf prefix', () => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'pwt-privacy-cf-'));
   try {
-    fs.writeFileSync(path.join(temporary, '.env'), 'CLOUDFLARE_API_TOKEN=AbCdEfGhIjKlMnOpQrStUvWxYz0123456789\n');
+    const token = ['AbCdEfGhIjKlMnOpQrStUvWxYz', '0123456789'].join('');
+    fs.writeFileSync(
+      path.join(temporary, '.env'),
+      `${envAssignment('CLOUDFLARE_API_TOKEN', token)}\n`,
+    );
     const findings = scanRoot(temporary);
     assert.ok(findings.some((entry) => entry.label === 'Cloudflare token'));
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test('privacy scan ignores empty Cloudflare token before next env key', () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'pwt-privacy-cf-empty-'));
+  try {
+    fs.writeFileSync(
+      path.join(temporary, '.env.example'),
+      [
+        envAssignment('CLOUDFLARE_API_TOKEN', ''),
+        envAssignment('GOOGLE_PAGESPEED_API_KEY', ''),
+        envAssignment('CLOUDFLARE_ACCOUNT_ID', ''),
+      ].join('\n'),
+    );
+    assert.deepEqual(scanRoot(temporary), []);
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }
@@ -51,9 +77,14 @@ test('privacy scan detects Cloudflare tokens without cf prefix', () => {
 test('privacy scan detects Porkbun keys', () => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'pwt-privacy-porkbun-'));
   try {
+    const porkbunKey = ['pk1_', 'abcdefghijklmnopqrst'].join('');
+    const porkbunSecret = ['sk1_', 'abcdefghijklmnopqrst'].join('');
     fs.writeFileSync(
       path.join(temporary, '.env.example'),
-      'PORKBUN_API_KEY=pk1_abcdefghijklmnopqrst\nPORKBUN_SECRET_KEY=sk1_abcdefghijklmnopqrst\n',
+      [
+        envAssignment('PORKBUN_API_KEY', porkbunKey),
+        envAssignment('PORKBUN_SECRET_KEY', porkbunSecret),
+      ].join('\n'),
     );
     const findings = scanRoot(temporary);
     assert.ok(findings.some((entry) => entry.label === 'Porkbun API key'));
@@ -65,12 +96,15 @@ test('privacy scan detects Porkbun keys', () => {
 test('privacy scan detects GA and Turnstile patterns', () => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'pwt-privacy-ga-'));
   try {
+    const gaId = ['G-', 'ABCDEFGHIJ'].join('');
+    const turnstileSecret = ['0x4AAAAAAA', 'abcdefghijklmnopqrstuvwxyz'].join('');
+    const turnstileSite = ['0x4BBBBBBB', 'abcdefghijklmnopqrstuvwxyz'].join('');
     fs.writeFileSync(
       path.join(temporary, '.env'),
       [
-        'PUBLIC_GA_MEASUREMENT_ID=G-ABCDEFGHIJ',
-        'TURNSTILE_SECRET_KEY=0x4AAAAAAAabcdefghijklmnopqrstuvwxyz',
-        'PUBLIC_TURNSTILE_SITE_KEY=0x4BBBBBBBabcdefghijklmnopqrstuvwxyz',
+        envAssignment('PUBLIC_GA_MEASUREMENT_ID', gaId),
+        envAssignment('TURNSTILE_SECRET_KEY', turnstileSecret),
+        envAssignment('PUBLIC_TURNSTILE_SITE_KEY', turnstileSite),
       ].join('\n'),
     );
     const findings = scanRoot(temporary);
