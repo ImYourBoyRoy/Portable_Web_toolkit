@@ -45,8 +45,9 @@ export function deepMerge(target, source) {
 
 /**
  * Merges defaults, config, CLI, and spec for Open Graph.
+ * Optional brandGuide object may supply fallback accent/text colors from BRAND_GUIDE.md.
  */
-export function mergeConfigAndSpec(config, spec, cli = {}) {
+export function mergeConfigAndSpec(config, spec, cli = {}, brandGuide = null) {
   const defaults = {
     version: 1,
     type: 'open_graph',
@@ -97,6 +98,16 @@ export function mergeConfigAndSpec(config, spec, cli = {}) {
 
   // 1. Start with defaults
   let merged = JSON.parse(JSON.stringify(defaults));
+
+  // 1b. Soft Brand Guide color hints when profile branding has not overridden yet
+  if (brandGuide?.found && Array.isArray(brandGuide.colors) && brandGuide.colors.length > 0) {
+    const [first, second] = brandGuide.colors;
+    if (first) {
+      merged.colors.accent = first;
+      merged.colors.glow = first;
+    }
+    if (second) merged.colors.text_secondary = second;
+  }
 
   // 2. Merge brand-doctor.config.json or Site Profile snippets
   if (config) {

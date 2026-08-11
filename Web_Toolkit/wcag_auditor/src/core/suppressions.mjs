@@ -1,4 +1,11 @@
+// ./Web_Toolkit/wcag_auditor/src/core/suppressions.mjs
+/**
+ * Bounded, accountable suppressions for failed findings and optional cantTell
+ * (e.g. axe color-contrast incomplete on glassmorphism / frost UI).
+ */
+
 import { parseIsoDateTime } from './dates.mjs';
+import { normalizeSuppressionOutcomes } from './frost-ui.mjs';
 
 export function applySuppressions(findings, suppressions = [], now = new Date()) {
   const expired = [];
@@ -15,11 +22,13 @@ export function applySuppressions(findings, suppressions = [], now = new Date())
       expired.push(suppression);
       continue;
     }
-    usable.push(suppression);
+    usable.push({
+      ...suppression,
+      outcomes: normalizeSuppressionOutcomes(suppression.outcomes)
+    });
   }
 
   const applied = findings.map((finding) => {
-    if (finding.outcome !== 'failed') return finding;
     const match = usable.find((suppression) => matchesSuppression(finding, suppression));
     if (!match) return finding;
     return {
@@ -30,7 +39,8 @@ export function applySuppressions(findings, suppressions = [], now = new Date())
         owner: match.owner,
         ticket: match.ticket,
         createdAt: match.createdAt,
-        expiresAt: match.expiresAt
+        expiresAt: match.expiresAt,
+        outcomes: match.outcomes
       }
     };
   });
@@ -44,6 +54,9 @@ export function validateSuppression(value, now) {
   for (const field of ['justification', 'owner', 'ticket', 'createdAt', 'expiresAt']) {
     if (typeof value[field] !== 'string' || value[field].trim() === '') return `${field} is required`;
   }
+  if (normalizeSuppressionOutcomes(value.outcomes) === null) {
+    return 'outcomes must be a non-empty array of failed and/or cantTell';
+  }
   const createdAt = parseIsoDateTime(value.createdAt);
   const expiresAt = parseIsoDateTime(value.expiresAt);
   if (createdAt === null) return 'createdAt must be an ISO date-time';
@@ -54,6 +67,7 @@ export function validateSuppression(value, now) {
 }
 
 function matchesSuppression(finding, suppression) {
+  if (!suppression.outcomes.includes(finding.outcome)) return false;
   if (suppression.fingerprint) return suppression.fingerprint === finding.fingerprint;
   return suppression.ruleId === finding.ruleId
     && (!suppression.adapter || suppression.adapter === finding.target.adapter)

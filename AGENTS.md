@@ -59,7 +59,7 @@ None of these override safety policy or explicit repository constraints.
   create a parallel generator.
 - **Styles:** external CSS in `src/styles/` with tokens; run `stylesheet-check scan --root <project>` when changing UI CSS.
 - **Accessibility:** toolkit sites use bundled `Web_Toolkit/wcag_auditor` only — never resolve `AI/wcag-auditor` or other trees outside the linked toolkit. Evidence gate — not a conformance certificate.
-- **Assets:** no stock/placeholder favicons or heroes; WebP for raster; SVG masters for icons/logos.
+- **Assets:** no stock/placeholder favicons or heroes; **Astro `Image`/`Picture`** (`astro:assets`, `imageService: 'compile'` on Workers) for content photos — prefer `OptimizedPicture` with AVIF+WebP. **image-pipeline** only for leftover `public/` rasters. SVG masters for icons/logos.
 - **Workers-over-external:** prefer Cloudflare Workers/bindings (KV, D1, R2, Vectorize) before adding SaaS.
 - **Version truth:** verify Astro/Wrangler/Node from repo + registry — never trust stale model memory.
 
@@ -115,11 +115,12 @@ and change only explicitly selected clients and skills.
 ```
 
 **Core:** `portable-web-toolkit-router` (global default), `site-onboarding`,
-`portable-web-toolkit`, `site-readiness`, `site-starter`,
-`toolkit-update`
-`toolkit-update`
+`portable-web-toolkit`, `site-readiness`, `site-starter`, `site-maintenance`,
+`wcag-auditor`, `pagespeed-diagnostics`, `discovery-doctor`, `toolkit-update`
 
-**Optional:** `instagram-clone`, `vectorize-pipeline`
+**Optional:** `brand-doctor`, `image-pipeline`, `instagram-clone`,
+`vectorize-pipeline`
+
 
 Optional helper scripts default to status. Agent-driven installation remains
 the primary path.

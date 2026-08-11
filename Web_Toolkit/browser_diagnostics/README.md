@@ -28,6 +28,8 @@ node ./bin/browser-diagnostics.mjs run --site-profile ../site-profiles/example-w
 
 ## Notes
 
-- `Setup_agent_environment` can install Python Playwright and Chromium automatically.
+- Soft-ensures **Python Playwright + Chromium** on run (unless `--skip-playwright-install`).
+- `Setup_agent_environment` can also install Python Playwright and Chromium in the managed venv.
 - This tool is non-mutating.
 - `site-doctor run` can include this tool automatically unless you pass `--skip-browser-diagnostics`.
+- For JS-injected cookie banners missed by HTML-only smoke, prefer this tool.

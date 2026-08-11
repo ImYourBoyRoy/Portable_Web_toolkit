@@ -1,49 +1,47 @@
-# Discovery Doctor Toolkit 🩺
+# Discovery Doctor
 
-The definitive Zenith-level audit utility for verifying the site's AI-Native discovery markers, structured storytelling endpoints, and A+ security signatures.
+Audit Zenith discovery posture for a built `dist/` tree or a live site URL.
 
-## Purpose
-
-`Discovery Doctor` ensures that the site remains at the absolute forefront of AI-Native architecture. It validates the "High-Density Discovery" layer—including Vision-Ready Sitemaps, Deep Manifests, JSON-LD Knowledge Graphs, and the Dynamic Search API.
-
-> [!IMPORTANT]
-> **Operator Note**: This is the primary verification tool for all SEO, AI-Storytelling, and Hardening workflows. No protocol change is considered verified until `Discovery Doctor` returns a 100% PASS rate.
-
-## Features
-
-- **Zenith Posture Audit**: Point the tool at a live URL (e.g., `https://example.com`) to check production discovery.
-- **Build-Fidelity Audit**: Point the tool at a local directory (e.g., `./dist`) to verify artifacts before deployment.
-- **Deep Manifest Validation**:
-  - ✅ **Sitemap**: XML validity and image-extension manifests.
-  - ✅ **Robots**: AI-friendly posture and sitemap linkage.
-  - ✅ **Structured Data**: Deep-scan for `Person`, `WebSite`, and `BreadcrumbList` schemas.
-  - ✅ **Security Hardening**: Detection of A+ headers (HSTS, CSP, Nosniff) in Cloudflare `_headers`.
-  - ✅ **Dynamic Endpoints**: Validation of `api/content.json`, `api/search.json`, and `humans.txt`.
+**Fail-closed:** any failing check exits **2**. Warnings alone exit **0** unless `--strict`.
 
 ## Usage
 
-### Local Build Audit
-
 ```bash
-node bin/discovery-doctor.mjs ../../dist
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist/client
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs https://example.com
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist --strict
 ```
 
-### Path-to-URL Audit
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | No failures (warnings allowed unless `--strict`) |
+| 1 | Usage / missing target |
+| 2 | One or more check failures |
+
+## Checks
+
+| Artifact | Rule |
+|----------|------|
+| Sitemap | `/sitemap.xml` **or** `/sitemap-index.xml` present; body must contain `<urlset` or `<sitemapindex` |
+| robots.txt | Present; warn if no `Sitemap:` directive |
+| llms.txt / llms-full.txt | Present |
+| humans.txt | Present |
+| `/.well-known/security.txt` | Present |
+| `/api/content.json` | Present + valid JSON |
+| `/api/search.json` | Live: fetch; static dist: INFO (SSR OK) |
+| `_headers` | Full Zenith baseline under `dist/` or `dist/client/` |
+| JSON-LD | `application/ld+json` with `WebSite`, `Organization`, or `Person` |
+| BreadcrumbList | Warn-only when missing on homepage |
+
+## Cross-platform
+
+Uses `node:path` and `path.resolve`. No hardcoded path separators in operator output.
+
+## Tests
 
 ```bash
-node bin/discovery-doctor.mjs https://example.com
+npm test --prefix ./Web_Toolkit/discovery_doctor
 ```
-
-## Integration Guide
-
-All models and operators should include `Discovery Doctor` in their verification cycle:
-
-1. Modify pages, metadata, or hardening rules.
-2. Run your build pipeline (`npm run build`).
-3. Execute `Web_Toolkit/Discovery_Doctor.bat` against your `dist` folder.
-4. Resolve all `[FAIL]` status before shipping to production.
-
----
-Created by: Roy Dawson IV
-GitHub: [https://github.com/imyourboyroy](https://github.com/imyourboyroy)
-

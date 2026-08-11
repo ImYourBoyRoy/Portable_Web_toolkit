@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { findBrandDoctorConfig, loadJsonFile, mergeConfigAndSpec } from '../lib/spec.mjs';
+import { findBrandGuide } from '../lib/brand-guide.mjs';
 import { validateConfig, validateOgSpec, validateResolvedSpec } from '../lib/schema.mjs';
 import { detectSeoHead, detectBrandingCandidates, detectThemeColors } from '../lib/detect.mjs';
 import { generateOg } from '../lib/python.mjs';
@@ -72,8 +73,12 @@ export async function runGenerateOg(flags = {}) {
   if (flags.glowPasses) synthesisCli.visuals.glow_passes = parseInt(flags.glowPasses, 10);
   if (flags.delimiter) synthesisCli.visuals.signature_delimiter = flags.delimiter;
 
-  // 4. Merge Pipeline
-  const resolved = mergeConfigAndSpec(config, spec, synthesisCli);
+  // 4. Merge Pipeline (Brand Guide soft-fills colors before profile/config overrides)
+  const brandGuide = findBrandGuide(projectRoot);
+  if (brandGuide.found) {
+    console.log(`- Brand Guide: ${brandGuide.relativePath || brandGuide.path}`);
+  }
+  const resolved = mergeConfigAndSpec(config, spec, synthesisCli, brandGuide);
 
   // 5. Synthesis: assets if not explicitly defined
   if (!resolved.assets.logo) {

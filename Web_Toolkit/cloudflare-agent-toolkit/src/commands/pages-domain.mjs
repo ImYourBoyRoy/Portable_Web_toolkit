@@ -13,7 +13,7 @@
  * Key inputs:
  *   .env: CF_PAGES_PROJECT_NAME, CF_PAGES_CUSTOM_DOMAINS, CF_ZONE_NAME,
  *         CLOUDFLARE_API_TOKEN, CF_OUTPUT_DIR
- *   CLI:  --project, --domain, --domains, --zone, --cleanup-dns, --dry-run
+ *   CLI:  --project, --domain, --domains, --zone, --cleanup-dns, --apply
  *
  * Outputs: console summary + JSON report in CF_OUTPUT_DIR.
  */
@@ -31,7 +31,7 @@ import {
     safeCloudflareRequest
 } from '../lib/cloudflare-api.mjs';
 import { DEFAULT_OUTPUT_DIR } from '../lib/paths.mjs';
-import { prettyJson, utcStamp } from '../lib/format.mjs';
+import { prettyJson, toBool, utcStamp } from '../lib/format.mjs';
 
 /* ── Squarespace fingerprint helpers ── */
 
@@ -137,8 +137,15 @@ async function pagesAddDomain(flags) {
     if (!domain) throw new Error('Missing --domain flag.');
 
     const { accountId } = await resolveAccountId(token, zoneName);
+    const apply = toBool(flags.apply, false);
 
     console.log(`\nAdding custom domain "${domain}" to project "${projectName}"...`);
+    console.log(`- Mode: ${apply ? 'apply' : 'dry-run'}`);
+    if (!apply) {
+        console.log(`  [dry-run] Would add: ${domain}`);
+        console.log('  Re-run with --apply to attach the domain.');
+        return 0;
+    }
     const result = await addPagesCustomDomain(token, accountId, projectName, domain);
     console.log(`  ✓ Added: ${result?.result?.name || domain}`);
     return 0;
@@ -151,7 +158,7 @@ async function pagesSetup(flags) {
     if (!zoneName) throw new Error('Missing zone name. Set CF_ZONE_NAME or pass --zone.');
     const projectName = resolveProjectName(flags, env);
     const outputDir = String(flags['output-dir'] || envValue(env, 'CF_OUTPUT_DIR', DEFAULT_OUTPUT_DIR));
-    const dryRun = Boolean(flags['dry-run']);
+    const apply = toBool(flags.apply, false);
     const cleanupDns = Boolean(flags['cleanup-dns']);
     const requestedDomains = parseDomainsCSV(flags.domains || envValue(env, 'CF_PAGES_CUSTOM_DOMAINS', ''));
 
@@ -161,7 +168,8 @@ async function pagesSetup(flags) {
 
     const { zone, accountId } = await resolveAccountId(token, zoneName);
 
-    console.log(`\nPages domain setup${dryRun ? ' [DRY RUN]' : ''}`);
+    console.log(`\nPages domain setup${apply ? '' : ' [DRY RUN]'}`);
+    console.log(`- Mode: ${apply ? 'apply' : 'dry-run'}`);
     console.log(`  Zone: ${zone.name} (${zone.id})`);
     console.log(`  Account: ${accountId}`);
     console.log(`  Project: ${projectName}`);
@@ -182,7 +190,7 @@ async function pagesSetup(flags) {
     /* ── Step 2: Add missing domains ── */
     const addResults = [];
     for (const domain of toAdd) {
-        if (dryRun) {
+        if (!apply) {
             console.log(`  [dry-run] Would add: ${domain}`);
             addResults.push({ domain, action: 'dry-run' });
         } else {
@@ -216,7 +224,7 @@ async function pagesSetup(flags) {
             console.log(`\n  Stale Squarespace DNS records: ${staleRecords.length}`);
             for (const record of staleRecords) {
                 const label = `${record.type} ${record.name} → ${record.content}`;
-                if (dryRun) {
+                if (!apply) {
                     console.log(`  [dry-run] Would delete: ${label} (${record.id})`);
                     dnsResults.push({ id: record.id, label, action: 'dry-run' });
                 } else {
@@ -237,7 +245,8 @@ async function pagesSetup(flags) {
     /* ── Report ── */
     const report = {
         checkedAt: new Date().toISOString(),
-        dryRun,
+        apply,
+        dryRun: !apply,
         zone: { id: zone.id, name: zone.name },
         project: projectName,
         requestedDomains,

@@ -170,7 +170,7 @@ function checkSkillArchitecture(projectRoot) {
 
 async function runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot }) {
   const autoFixes = [];
-  if (!boolFlag(flags['apply-safe-fixes'], false)) return autoFixes;
+  if (!boolFlag(flags['apply-safe-fixes'], false)) return { autoFixes, failed: false };
 
   const initArgs = ['apply-safe', '--project-root', projectRoot];
   if (profilePath) initArgs.push('--site-profile', profilePath);
@@ -183,11 +183,11 @@ async function runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot }) {
   );
   if (initResult.status === 0) {
     autoFixes.push('project-init apply-safe (missing starter files only)');
-  } else {
-    autoFixes.push(`project-init apply-safe failed (exit ${initResult.status})`);
+    return { autoFixes, failed: false };
   }
-
-  return autoFixes;
+  autoFixes.push(`project-init apply-safe failed (exit ${initResult.status})`);
+  if (initResult.stderr) console.error(initResult.stderr.trim());
+  return { autoFixes, failed: true };
 }
 
 export async function runSiteReadiness(flags = {}) {
@@ -201,7 +201,7 @@ export async function runSiteReadiness(flags = {}) {
       const context = loadSiteProfileContext({
         portableRoot: PORTABLE_ROOT,
         flags,
-        requireProfile: false,
+        requireProfile: true,
         validateProfile: false,
       });
       projectRoot = context.projectRoot;
@@ -213,6 +213,10 @@ export async function runSiteReadiness(flags = {}) {
       profile = profilePath ? JSON.parse(fs.readFileSync(profilePath, 'utf8')) : null;
     }
   } catch (error) {
+    if (flags['site-profile']) {
+      console.error(`[site-readiness] ${error instanceof Error ? error.message : String(error)}`);
+      return 1;
+    }
     projectRoot = path.resolve(String(flags['project-root'] || process.cwd()));
     profilePath = discoverProfilePath(projectRoot);
     profile = profilePath && fs.existsSync(profilePath)
@@ -224,7 +228,7 @@ export async function runSiteReadiness(flags = {}) {
   const capabilities = await probeCapabilities({ projectRoot, deployTarget, profile });
   if (capabilities.toolkitRoot) toolkitRoot = capabilities.toolkitRoot;
 
-  const autoFixes = await runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot });
+  const { autoFixes, failed: autoFixFailed } = await runAutoFixes({ projectRoot, profilePath, flags, toolkitRoot });
   const steps = [];
 
   steps.push(stepResult('capabilities', 'pass', [], {
@@ -242,6 +246,7 @@ export async function runSiteReadiness(flags = {}) {
 
   if (!capabilities.toolkitLinked) {
     steps.push(skippedStep('astro-env', 'Web_Toolkit not linked'));
+    steps.push(skippedStep('image-posture', 'Web_Toolkit not linked'));
     steps.push(skippedStep('stylesheet-check', 'Web_Toolkit not linked'));
     steps.push(skippedStep('discovery', 'Web_Toolkit not linked'));
     steps.push(skippedStep('instagram', 'Web_Toolkit not linked'));
@@ -275,6 +280,24 @@ export async function runSiteReadiness(flags = {}) {
       }
       const astroStatus = astroResult.status === 2 ? 'warn' : statusFromExitCode(astroResult.status);
       steps.push(stepResult('astro-env', issues.length ? astroStatus : 'pass', issues, { report: astroJson }));
+    }
+
+    // Astro Image / Picture posture (default) vs public/ gap-fill via image-pipeline
+    {
+      const imageArgs = ['audit', '--project-root', projectRoot];
+      if (profilePath) imageArgs.push('--site-profile', profilePath);
+      const imageResult = runToolkitScript(
+        'image_pipeline/bin/image-pipeline.mjs',
+        imageArgs,
+        { toolkitRoot, cwd: projectRoot },
+      );
+      const issues = [];
+      if (imageResult.status !== 0) {
+        issues.push(
+          'Astro Image posture or public/ raster gaps — prefer astro:assets Image/Picture; use image-pipeline optimize only for public/ leftovers.'
+        );
+      }
+      steps.push(stepResult('image-posture', statusFromExitCode(imageResult.status), issues));
     }
 
     if (!fs.existsSync(path.join(projectRoot, 'src'))) {
@@ -381,6 +404,7 @@ export async function runSiteReadiness(flags = {}) {
 
   const hardFails = steps.filter((step) => step.status === 'fail').length;
   const warns = steps.filter((step) => step.status === 'warn').length;
+  if (autoFixFailed) return 1;
   if (hardFails > 0) return 1;
   if (warns > 0) return 2;
   return 0;

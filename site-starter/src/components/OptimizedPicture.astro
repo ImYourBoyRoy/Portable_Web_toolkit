@@ -1,0 +1,35 @@
+---
+# ./src/components/OptimizedPicture.astro
+# Toolkit default photographic image component — AVIF + WebP via Astro assets.
+# Import masters from `src/assets/` (not `public/`) so Sharp can optimize at build.
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  widths?: number[];
+  sizes?: string;
+  class?: string;
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  src,
+  alt,
+  widths = [640, 960, 1280, 1600],
+  sizes = '(min-width: 960px) 960px, 100vw',
+  class: className = '',
+  loading = 'lazy'
+} = Astro.props;
+---
+
+<Picture
+  src={src}
+  formats={['avif', 'webp']}
+  widths={widths}
+  sizes={sizes}
+  alt={alt}
+  class={className}
+  loading={loading}
+/>

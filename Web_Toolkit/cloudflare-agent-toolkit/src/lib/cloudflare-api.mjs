@@ -149,3 +149,29 @@ export async function updateDnsRecord(token, zoneId, recordId, body) {
   );
 }
 
+/**
+ * Paginate all DNS records for a zone (Cloudflare caps per_page at 5000; we use 200 pages).
+ * @param {string} token
+ * @param {string} zoneId
+ * @param {{ type?: string }} [query]
+ */
+export async function listAllDnsRecords(token, zoneId, query = {}) {
+  const records = [];
+  let page = 1;
+  const perPage = 200;
+  for (;;) {
+    const params = new URLSearchParams({
+      page: String(page),
+      per_page: String(perPage)
+    });
+    if (query.type) params.set('type', String(query.type));
+    const payload = await cloudflareRequest(token, `/zones/${zoneId}/dns_records?${params}`);
+    const batch = Array.isArray(payload?.result) ? payload.result : [];
+    records.push(...batch);
+    const totalPages = Number(payload?.result_info?.total_pages || 1);
+    if (page >= totalPages || batch.length === 0) break;
+    page += 1;
+  }
+  return records;
+}
+

@@ -35,6 +35,10 @@ export function latestReport(projectRoot, prefix) {
   return files[0] || '';
 }
 
+export function latestPagespeedReport(projectRoot) {
+  return latestReport(projectRoot, 'pagespeed-');
+}
+
 export function readJsonIfExists(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return null;
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));

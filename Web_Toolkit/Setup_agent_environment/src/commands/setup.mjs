@@ -278,7 +278,8 @@ function linuxPackageManager() {
 
 function isElevated() {
   if (process.platform === 'win32') {
-    const result = safeCommand('powershell', ['-NoProfile', '-Command', '([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)']);
+    const shell = commandAvailable('pwsh') ? 'pwsh' : 'powershell';
+    const result = safeCommand(shell, ['-NoProfile', '-Command', '([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)']);
     return result.ok && /true/i.test(result.stdout);
   }
   if (typeof process.getuid === 'function') return process.getuid() === 0;

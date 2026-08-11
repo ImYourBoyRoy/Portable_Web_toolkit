@@ -9,8 +9,10 @@ contract. Verify exact flags rather than relying on this routing index.
 | Safe project bootstrap | `project-init` |
 | Site profile creation | `init-site-profile` |
 | Site and integration diagnosis | `site-doctor`, `integration-doctor` |
-| Browser and PageSpeed diagnosis | `browser-diagnostics`, `pagespeed-diagnostics` |
-| Accessibility evidence gate | `Web_Toolkit/wcag_auditor` (bundled; never resolve outside linked toolkit) |
+| Accessibility evidence gate | `wcag-auditor` skill → `Web_Toolkit/wcag_auditor` (bundled; never resolve outside linked toolkit) |
+| PageSpeed Insights | `pagespeed-diagnostics` skill → `pagespeed-diagnostics` CLI |
+| Discovery layer | `discovery-doctor` skill |
+| Maintenance loop | `site-maintenance` skill → `HOW_TO.md` |
 | Discovery validation | `discovery-doctor` |
 | Cloudflare audit or authorized mutation | `cf-agent` |
 | Header generation and audit | `headers-deploy` |

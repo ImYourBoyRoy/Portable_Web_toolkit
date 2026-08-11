@@ -6,6 +6,7 @@
     "author":  "Roy Dawson IV",
     "license":  "MIT",
     "scripts":  {
-                    "start":  "node ./bin/site-quality-smoke.mjs"
+                    "start":  "node ./bin/site-quality-smoke.mjs",
+                    "test":  "node --test ./tests/*.test.mjs"
                 }
 }

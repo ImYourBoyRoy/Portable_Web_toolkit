@@ -1,0 +1,4 @@
+interface:
+  display_name: "PageSpeed Diagnostics"
+  short_description: "Google PSI for toolkit sites"
+  default_prompt: "Use $pagespeed-diagnostics with GOOGLE_PAGESPEED_API_KEY from the project .env and the site profile."

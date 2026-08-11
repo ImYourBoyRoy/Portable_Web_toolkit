@@ -1,5 +1,5 @@
 # ./Web_Toolkit/image_pipeline/src/python/image_pipeline.py
-"""Image inspection and lossless WebP conversion helpers for the portable toolkit."""
+"""Image inspection and WebP/AVIF conversion helpers for the portable toolkit."""
 
 from __future__ import annotations
 
@@ -22,6 +22,8 @@ def inspect(path_value: str) -> dict:
             ".png": "PNG",
             ".jpg": "JPEG",
             ".jpeg": "JPEG",
+            ".webp": "WEBP",
+            ".avif": "AVIF",
         }.get(extension, actual_format)
         return {
             "format": actual_format,
@@ -41,14 +43,45 @@ def convert_webp(input_value: str, output_value: str) -> dict:
     output_path = Path(output_value)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(input_path) as image:
-        save_kwargs = {
-            "format": "WEBP",
-            "lossless": True,
-            "method": 6,
-        }
-        image.save(output_path, **save_kwargs)
+        image.save(
+            output_path,
+            format="WEBP",
+            lossless=True,
+            method=6,
+        )
     return {
         "output": str(output_path),
+        "format": "WEBP",
+        "sizeBytes": os.path.getsize(output_path),
+    }
+
+
+def convert_avif(input_value: str, output_value: str, quality: int = 55) -> dict:
+    """Convert a raster image to AVIF when Pillow/libavif support is available.
+
+    Requires Pillow built with AVIF (or pillow-avif-plugin). Raises a clear error
+    when AVIF encode is unavailable so callers can fail soft or skip.
+    """
+
+    input_path = Path(input_value)
+    output_path = Path(output_value)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with Image.open(input_path) as image:
+        working = image
+        if image.mode not in ("RGB", "RGBA"):
+            working = image.convert("RGBA" if "A" in image.mode else "RGB")
+        try:
+            working.save(output_path, format="AVIF", quality=int(quality))
+        except Exception as exc:  # noqa: BLE001 — surface encoder gaps clearly
+            raise RuntimeError(
+                f"AVIF encode failed ({exc}). "
+                "Install pillow-avif-plugin / libavif-backed Pillow, or use --format webp."
+            ) from exc
+
+    return {
+        "output": str(output_path),
+        "format": "AVIF",
         "sizeBytes": os.path.getsize(output_path),
     }
 
@@ -65,6 +98,12 @@ def parse_args() -> argparse.Namespace:
     convert_parser = subparsers.add_parser("convert-webp")
     convert_parser.add_argument("--input", required=True)
     convert_parser.add_argument("--output", required=True)
+
+    avif_parser = subparsers.add_parser("convert-avif")
+    avif_parser.add_argument("--input", required=True)
+    avif_parser.add_argument("--output", required=True)
+    avif_parser.add_argument("--quality", type=int, default=55)
+
     return parser.parse_args()
 
 
@@ -78,9 +117,11 @@ def main() -> int:
     if args.command == "convert-webp":
         print(json.dumps(convert_webp(args.input, args.output)))
         return 0
+    if args.command == "convert-avif":
+        print(json.dumps(convert_avif(args.input, args.output, args.quality)))
+        return 0
     raise SystemExit("Unknown command")
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

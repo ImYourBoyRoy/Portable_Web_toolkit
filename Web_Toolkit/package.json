@@ -1,6 +1,6 @@
 {
   "name": "@imyourboyroy/web-toolkit",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "AI-agent-first portable website diagnostics, Cloudflare, PageSpeed, and publishing toolkit.",
   "type": "module",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "init-site-profile": "./init_site_profile/bin/init-site-profile.mjs",
     "integration-doctor": "./integration_doctor/bin/integration-doctor.mjs",
     "junk-purge": "./junk_purge/bin/junk-purge.mjs",
+    "package-updater": "./package_updater/bin/package-updater.mjs",
     "pagespeed-diagnostics": "./pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs",
     "performance-fixes": "./performance_fixes/bin/performance-fixes.mjs",
     "privacy-check": "./privacy_check/bin/privacy-check.mjs",
@@ -28,7 +29,10 @@
     "toolkit-purge": "./toolkit_purge/bin/toolkit-purge.mjs",
     "toolkit-report": "./toolkit_report/bin/toolkit-report.mjs",
     "toolkit-verify": "./toolkit_verify/bin/toolkit-verify.mjs",
-    "vectorize-pipeline": "./vectorize_pipeline/bin/vectorize-pipeline.mjs"
+    "vectorize-pipeline": "./vectorize_pipeline/bin/vectorize-pipeline.mjs",
+    "wcag-auditor": "./wcag_auditor/bin/wcag-auditor.mjs",
+    "agent-env-setup": "./Setup_agent_environment/bin/agent-env-setup.mjs",
+    "astro-env-setup": "./Setup_astro_environment/bin/astro-env-setup.mjs"
   },
   "scripts": {
     "check:syntax": "node ./scripts/check-syntax.mjs",

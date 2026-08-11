@@ -15,6 +15,7 @@ at `Web_Toolkit/wcag_auditor/`.
 - Do **not** invent WCAG conformance percentages or claim certification.
 - Prefer adapter evidence (`playwright-axe`, `svelte`, `manual-evidence`, `native-evidence`) over source regex heuristics.
 - Fail closed: missing targets, empty surfaces, and adapter failures are exit `2` / unresolved `3`, never silent passes.
+- Glassmorphism / frost UI is supported: axe contrast incompletes are `cantTell`, not a mandate to remove frost. Resolve via AA design tweaks + `frost-glass-contrast` manual evidence + bounded `outcomes: ["cantTell"]` suppressions (`docs/GLASSMORPHISM.md`).
 - Keep secrets out of configs, suppressions, and committed reports.
 - Verify Node/package versions from this repo + registry — do not trust model memory.
 - Website / toolkit workflows resolve **only** this module (`core-path` under `Web_Toolkit/wcag_auditor`). Never open sibling `AI/` trees for the auditor.

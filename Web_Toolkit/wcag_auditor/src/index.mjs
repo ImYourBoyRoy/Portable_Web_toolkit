@@ -16,8 +16,18 @@ export { createFindingFingerprint, normalizeFinding, summarizeFindings } from '.
 export { getBuiltinRules, findBuiltinRule } from './core/rules.mjs';
 export { runAccessibility } from './core/runner.mjs';
 export { applySuppressions, validateSuppression } from './core/suppressions.mjs';
+export {
+  axeRemediationWithFrostHint,
+  frostContrastCantTellSuppressionExample,
+  frostGlassContrastCheck,
+  looksLikeFrostOrTranslucent,
+  normalizeSuppressionOutcomes,
+  DEFAULT_SUPPRESSION_OUTCOMES,
+  SUPPRESSABLE_OUTCOMES
+} from './core/frost-ui.mjs';
 export { getBuiltinAdapters } from './adapters/index.mjs';
 export {
+  renderDashboardReport,
   renderHtmlReport,
   renderJsonReport,
   renderJunitReport,

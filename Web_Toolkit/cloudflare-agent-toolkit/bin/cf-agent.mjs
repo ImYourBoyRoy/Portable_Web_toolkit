@@ -9,7 +9,6 @@
 
 import { parseCliArgs } from '../src/lib/cli.mjs';
 import { PORTABLE_ROOT } from '../src/lib/paths.mjs';
-import { toBool } from '../src/lib/format.mjs';
 import { enforceTemporarySession } from '../src/lib/wrangler.mjs';
 import { loadSiteProfile } from '../src/lib/profile.mjs';
 import { runDoctor } from '../src/commands/doctor.mjs';
@@ -119,7 +118,7 @@ Commands:
 
   scaffold astro-analytics [--project-root <dir>] [--ga4-id G-XXXX] [--posthog-key phc_xxx]
       Create/patch Astro analytics files (ga4.astro, posthog.astro, CSP middleware, env keys).
-      Optional: --dry-run --force --layout-path src/layouts/BaseLayout.astro --write-env false
+      Optional: --apply --force --layout-path src/layouts/BaseLayout.astro --write-env false
 
   pages list [--zone <name>]
       List all Pages projects in the account.
@@ -127,11 +126,11 @@ Commands:
   pages domains [--project <name>] [--zone <name>]
       List custom domains attached to a Pages project.
 
-  pages add-domain --domain <d> [--project <name>] [--zone <name>]
-      Add a single custom domain to a project.
+  pages add-domain --domain <d> [--project <name>] [--zone <name>] [--apply]
+      Add a single custom domain to a project (dry-run unless --apply).
 
-  pages setup [--domains d1,d2] [--project <name>] [--zone <name>] [--cleanup-dns] [--dry-run]
-      Add configured custom domains + optionally remove stale Squarespace DNS records.
+  pages setup [--domains d1,d2] [--project <name>] [--zone <name>] [--cleanup-dns] [--apply]
+      Add configured custom domains + optionally remove stale Squarespace DNS records (dry-run unless --apply).
 
 Examples:
   npm run start -- doctor
@@ -140,7 +139,10 @@ Examples:
   npm run start -- site audit --site-profile ../site-profiles/example-workers.json
   npm run start -- dns audit --site-profile ../site-profiles/example-workers.json
   npm run start -- site harden --site-profile ../site-profiles/example-workers.json
+  npm run start -- site harden --site-profile ../site-profiles/example-workers.json --apply
   npm run start -- deploy dev --site-profile ../site-profiles/example-workers.json
+  npm run start -- deploy dev --site-profile ../site-profiles/example-workers.json --apply
+  npm run start -- deploy pages --site-profile ../site-profiles/example-workers.json --apply
   npm run start -- cache purge --site-profile ../site-profiles/example-workers.json
   npm run start -- dns public --site-profile ../site-profiles/example-workers.json
   npm run start -- rules audit --site-profile ../site-profiles/example-workers.json
@@ -152,8 +154,8 @@ Examples:
   npm run start -- test minify --zone example.com
   npm run start -- scaffold astro-analytics --project-root C:/sites/app --ga4-id G-XXXX --posthog-key phc_xxx
   npm run start -- pages list
-  npm run start -- pages setup --dry-run
-  npm run start -- pages setup --cleanup-dns
+  npm run start -- pages setup
+  npm run start -- pages setup --apply --cleanup-dns
   npm run start -- env sync
 `.trim());
 }
@@ -199,7 +201,7 @@ async function main() {
 
   if (primary === 'permissions' && secondary === 'repair') {
     enforceTemporarySession();
-    return runFixPermissions({ ...flags, zone: site.zoneName, 'dry-run': !toBool(flags.apply, false) });
+    return runFixPermissions({ ...flags, zone: site.zoneName });
   }
 
   if (primary === 'site' && secondary === 'audit') {

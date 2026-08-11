@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Maintenance"
+  short_description: "Upgrade, smoke, deploy, purge, warm, PSI loop"
+  default_prompt: "Use $site-maintenance and follow HOW_TO.md full maintenance loop with checkpoints before deploy or Cloudflare --apply."

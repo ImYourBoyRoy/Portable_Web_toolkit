@@ -1,0 +1,13 @@
+{
+  "name": "portable-package-updater",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "package-updater": "./bin/package-updater.mjs"
+  },
+  "scripts": {
+    "test": "node --test ./tests/*.test.mjs"
+  }
+}

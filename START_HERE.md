@@ -33,9 +33,9 @@ Project symlink helper:
 # Default link = light router only (install_by_default)
 node ./scripts/manage-project-skills.mjs link --project <client-site-dir>
 
-# Explicit skills for active website work / onboarding
+# Explicit skills for active website work / onboarding / maintenance
 node ./scripts/manage-project-skills.mjs link --project <client-site-dir> \
-  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,toolkit-update
+  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,site-maintenance,wcag-auditor,pagespeed-diagnostics,discovery-doctor,toolkit-update
 
 # Check status
 node ./scripts/manage-project-skills.mjs status --project <client-site-dir>
@@ -43,14 +43,21 @@ node ./scripts/manage-project-skills.mjs status --project <client-site-dir>
 
 Core skills:
 
+- `portable-web-toolkit-router` (global default)
 - `site-onboarding` (staged hand-holding — see `docs/agent-skills/ONBOARDING_STAGES.md`)
 - `portable-web-toolkit`
 - `site-readiness`
 - `site-starter`
+- `site-maintenance`
+- `wcag-auditor`
+- `pagespeed-diagnostics`
+- `discovery-doctor`
 - `toolkit-update`
 
 Optional skills:
 
+- `brand-doctor`
+- `image-pipeline`
 - `instagram-clone`
 - `vectorize-pipeline`
 
@@ -75,7 +82,12 @@ New machine / Cloudflare beginner? → site-onboarding (ONBOARDING_STAGES S0–S
 New managed site?       → site-onboarding or site-starter (ask Workers vs Pages/static first)
 State uncertain?        → site-readiness
 Deploy or Cloudflare?   → portable-web-toolkit
-Accessibility evidence? → Web_Toolkit/wcag_auditor (bundled; never AI/)
+Accessibility evidence? → wcag-auditor skill → Web_Toolkit/wcag_auditor (never AI/)
+PageSpeed Insights?     → pagespeed-diagnostics
+Discovery layer?        → discovery-doctor
+Maintenance day?        → site-maintenance (HOW_TO.md loop)
+Brand / OG / favicons?  → brand-doctor
+Raster → WebP?          → image-pipeline
 Instagram fallback?     → instagram-clone
 SVG recovery candidate? → vectorize-pipeline
 Toolkit freshness?      → toolkit-update

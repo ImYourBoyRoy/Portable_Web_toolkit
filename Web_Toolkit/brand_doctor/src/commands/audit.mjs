@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { detectBrandingCandidates, detectManifest, detectSeoHead } from '../lib/detect.mjs';
+import { brandGuideColorDrift, findBrandGuide } from '../lib/brand-guide.mjs';
 import { findBrandDoctorConfig } from '../lib/spec.mjs';
 import { outputPaths, resolveProjectRoot } from '../lib/paths.mjs';
 import { inspectImage } from '../lib/python.mjs';
@@ -44,6 +45,7 @@ function assetReport(projectRoot, assetPath) {
 export async function runAudit(flags = {}) {
   const projectRoot = resolveProjectRoot(flags);
   const config = findBrandDoctorConfig(projectRoot);
+  const brandGuide = findBrandGuide(projectRoot);
   const seo = detectSeoHead(projectRoot);
   const manifest = detectManifest(projectRoot);
   const og = assetReport(projectRoot, seo.ogImagePath);
@@ -54,6 +56,26 @@ export async function runAudit(flags = {}) {
   const issues = [];
   const recommendations = [];
   const designWarnings = [];
+
+  // BRAND GUIDE
+  if (!brandGuide.found) {
+    designWarnings.push(
+      'No project Brand Guide (BRAND_GUIDE.md). Create one before open-ended visual design; profile branding alone is not enough for identity continuity.'
+    );
+    recommendations.push(
+      recommendation(
+        'medium',
+        'Add BRAND_GUIDE.md at the project root (or docs/) with colors, typography, logo paths, and voice/tone.',
+        'Create BRAND_GUIDE.md then re-run brand-doctor audit'
+      )
+    );
+  } else {
+    for (const warning of brandGuide.warnings || []) designWarnings.push(`Brand Guide: ${warning}`);
+    const branding = config?.branding || config?.brand || {};
+    for (const drift of brandGuideColorDrift(branding, brandGuide)) {
+      designWarnings.push(drift);
+    }
+  }
 
   // COMPLIANCE CHECKS
   if (!seo.exists) issues.push('SEO configuration file was not found in common paths.');
@@ -97,6 +119,13 @@ export async function runAudit(flags = {}) {
   const report = {
     checkedAt: new Date().toISOString(),
     projectRoot,
+    brandGuide: {
+      found: brandGuide.found,
+      path: brandGuide.relativePath || brandGuide.path,
+      colors: brandGuide.colors,
+      logoHints: brandGuide.logoHints,
+      warnings: brandGuide.warnings
+    },
     seo,
     manifest,
     og,
@@ -121,6 +150,7 @@ export async function runAudit(flags = {}) {
   
   console.log('\x1b[36m[brand-doctor]\x1b[0m Audit Report');
   console.log(`- Project root: ${projectRoot}`);
+  console.log(`- Brand Guide: ${brandGuide.found ? brandGuide.relativePath || brandGuide.path : 'missing'}`);
   console.log(`- Overall Status: ${report.summary.overall.toUpperCase()}`);
   
   if (issues.length > 0) {

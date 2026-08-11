@@ -31,8 +31,9 @@ import { loadSiteProfileContext } from '../shared/lib/context.mjs';
 import { mergeEnvFiles } from '../shared/lib/env.mjs';
 
 // Cloudflare API (reuse existing toolkit)
-import { resolveZoneByName, safeCloudflareRequest, cloudflareRequest } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
+import { resolveZoneByName, safeCloudflareRequest, cloudflareRequest, listAllDnsRecords } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
 import { resolveCloudflareCredential } from '../cloudflare-agent-toolkit/src/lib/auth.mjs';
+import { apexHasMx, evaluateMxGate } from './mx-gate.mjs';
 
 // Porkbun API
 import {
@@ -105,16 +106,29 @@ function parseCliArgs(argv) {
 
 // ── Environment resolution ──
 
-function resolveEnv(flags) {
-  const projectRoot = String(flags['project-root'] || '').trim();
-  const envPaths = [path.join(PORTABLE_ROOT, '.env')];
-  if (projectRoot) envPaths.push(path.join(path.resolve(projectRoot), '.env'));
+/**
+ * Merge env with project-root precedence: profile projectRoot/.env (or --project-root)
+ * overrides toolkit .env. Prefer site.env from loadSiteProfileContext when available.
+ */
+function resolveEnv(flags, site = null) {
+  if (site?.env && typeof site.env === 'object') {
+    return { ...site.env };
+  }
 
-  // Also try the parent project root (two levels up from portable)
+  const envPaths = [];
+  const projectRoot = String(flags['project-root'] || '').trim();
+  if (projectRoot) envPaths.push(path.join(path.resolve(projectRoot), '.env'));
+  envPaths.push(path.join(PORTABLE_ROOT, '.env'));
+
   const parentEnvPath = path.join(PORTABLE_ROOT, '..', '.env');
   if (fs.existsSync(parentEnvPath)) envPaths.push(parentEnvPath);
 
   return mergeEnvFiles(...envPaths);
+}
+
+async function zoneHasMx(token, zoneId, zoneName) {
+  const records = await listAllDnsRecords(token, zoneId, { type: 'MX' });
+  return apexHasMx(records, zoneName);
 }
 
 function requirePorkbunCreds(env) {
@@ -211,11 +225,9 @@ async function cmdDomains(flags) {
 }
 
 async function cmdNsAudit(flags) {
-  const env = resolveEnv(flags);
-  const { apiKey, secretKey } = requirePorkbunCreds(env);
-
-  // Load site profile
   const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
+  const env = resolveEnv(flags, site);
+  const { apiKey, secretKey } = requirePorkbunCreds(env);
   const domain = site.zoneName;
   if (!domain) throw new Error('Missing zone name in site profile.');
 
@@ -289,12 +301,12 @@ async function cmdNsAudit(flags) {
 }
 
 async function cmdNsUpdate(flags) {
-  const env = resolveEnv(flags);
+  const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
+  const env = resolveEnv(flags, site);
   const { apiKey, secretKey } = requirePorkbunCreds(env);
   const apply = toBool(flags.apply, false);
+  const allowMissingEmail = toBool(flags['allow-missing-email'], false);
 
-  // Load site profile
-  const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
   const domain = site.zoneName;
   if (!domain) throw new Error('Missing zone name in site profile.');
 
@@ -303,12 +315,12 @@ async function cmdNsUpdate(flags) {
   console.log(`  Profile: ${site.profile.siteId}`);
 
   // Get current NS from Porkbun
-  console.log('\n  [1/4] Checking current Porkbun nameservers...');
+  console.log('\n  [1/5] Checking current Porkbun nameservers...');
   const currentNs = await porkbunGetNs(apiKey, secretKey, domain);
   console.log(`        Current: ${currentNs.join(', ')}`);
 
   // Get Cloudflare-assigned NS
-  console.log('  [2/4] Getting Cloudflare-assigned nameservers...');
+  console.log('  [2/5] Getting Cloudflare-assigned nameservers...');
   const cfAuth = resolveCloudflareCredential(env, { allowWranglerOauth: true });
   const zone = await resolveZoneByName(cfAuth.token, domain);
   const cloudflareNs = Array.isArray(zone.name_servers) ? zone.name_servers : [];
@@ -316,6 +328,23 @@ async function cmdNsUpdate(flags) {
     throw new Error('Cloudflare has not assigned nameservers for this zone. Is the zone added?');
   }
   console.log(`        Target:  ${cloudflareNs.join(', ')}`);
+
+  // Email / MX gate — NS cutover without MX can break inbound mail
+  console.log('  [3/5] Checking Cloudflare zone MX (email gate)...');
+  const hasMx = await zoneHasMx(cfAuth.token, zone.id, domain);
+  const gate = evaluateMxGate({ hasMx, allowMissingEmail });
+  if (hasMx) {
+    console.log('        ✓ Apex MX present on Cloudflare zone');
+  } else if (gate.ok) {
+    console.warn('        ⚠ No apex MX on Cloudflare zone — continuing because --allow-missing-email was set');
+    console.warn('          Inbound email may break after NS cutover.');
+  } else {
+    console.error('        ✗ No apex MX records on the Cloudflare zone.');
+    console.error('          NS cutover without MX can break inbound mail.');
+    console.error('          Add MX (and ideally SPF/DMARC) in Cloudflare first, or pass --allow-missing-email.');
+    console.error('          Hint: node cloudflare-agent-toolkit/bin/cf-agent.mjs email audit --site-profile <path>');
+    return 2;
+  }
 
   // Check if already matching
   const currentSet = new Set(currentNs.map(ns => ns.toLowerCase()));
@@ -328,14 +357,14 @@ async function cmdNsUpdate(flags) {
   }
 
   // Update
-  console.log('  [3/4] Updating nameservers at Porkbun...');
+  console.log('  [4/5] Updating nameservers at Porkbun...');
   let updateResult = null;
   if (apply) {
     await porkbunUpdateNs(apiKey, secretKey, domain, cloudflareNs);
     console.log(`        ✓ Updated to: ${cloudflareNs.join(', ')}`);
 
     // Verify
-    console.log('  [4/4] Verifying update...');
+    console.log('  [5/5] Verifying update...');
     const verifyNs = await porkbunGetNs(apiKey, secretKey, domain);
     const verifySet = new Set(verifyNs.map(ns => ns.toLowerCase()));
     const verified = verifySet.size === expectedSet.size && [...verifySet].every(ns => expectedSet.has(ns));
@@ -345,13 +374,13 @@ async function cmdNsUpdate(flags) {
       console.log(`        ⚠ Verification mismatch — registrar reports: ${verifyNs.join(', ')}`);
       console.log('          This may resolve with a small delay. Re-run ns audit to check.');
     }
-    updateResult = { action: 'applied', verified, verifiedNs: verifyNs };
+    updateResult = { action: 'applied', verified, verifiedNs: verifyNs, hasMx, allowMissingEmail };
   } else {
     console.log(`        [dry-run] Would update from: ${currentNs.join(', ')}`);
     console.log(`        [dry-run] Would update to:   ${cloudflareNs.join(', ')}`);
-    console.log('  [4/4] Skipped (dry-run)');
+    console.log('  [5/5] Skipped (dry-run)');
     console.log('\n  → To apply: registrar ns update --site-profile <path> --apply');
-    updateResult = { action: 'dry-run' };
+    updateResult = { action: 'dry-run', hasMx, allowMissingEmail };
   }
 
   const report = {
@@ -371,11 +400,9 @@ async function cmdNsUpdate(flags) {
 }
 
 async function cmdZoneEnsure(flags) {
-  const env = resolveEnv(flags);
-  const apply = toBool(flags.apply, false);
-
-  // Load site profile
   const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
+  const env = resolveEnv(flags, site);
+  const apply = toBool(flags.apply, false);
   const domain = site.zoneName;
   if (!domain) throw new Error('Missing zone name in site profile.');
 
@@ -527,15 +554,15 @@ async function cmdStatus(flags) {
 }
 
 async function runSingleStatus(flags, siteProfileFlag) {
-  const env = resolveEnv(flags);
   const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
+  const env = resolveEnv(flags, site);
   const domain = site.zoneName;
   if (!domain) throw new Error('Missing zone name in site profile.');
 
   let porkbunCreds = null;
   try { porkbunCreds = requirePorkbunCreds(env); } catch { /* optional */ }
 
-  const result = checkMigrationPipeline({
+  const result = await checkMigrationPipeline({
     domain,
     profile: site.profile,
     env,
@@ -588,15 +615,15 @@ async function runSingleStatus(flags, siteProfileFlag) {
 // ── Redirect setup ──
 
 async function cmdRedirectSetup(flags) {
-  const env = resolveEnv(flags);
-  const apply = toBool(flags.apply, false);
   const site = loadSiteProfileContext({ portableRoot: PORTABLE_ROOT, flags });
+  const env = resolveEnv(flags, site);
+  const apply = toBool(flags.apply, false);
   const domain = site.zoneName;
   if (!domain) throw new Error('Missing zone name in site profile.');
 
   const cfAuth = resolveCloudflareCredential(env, { allowWranglerOauth: !apply, requireApiToken: apply });
 
-  const result = runRedirect({
+  const result = await runRedirect({
     domain,
     profile: site.profile,
     token: cfAuth.token,
@@ -638,8 +665,10 @@ Pipeline Commands (run in order):
   ns audit --site-profile <path>
       Compare current registrar nameservers against Cloudflare-assigned NS.
 
-  ns update --site-profile <path> [--apply]
-      Update registrar nameservers to Cloudflare.
+  ns update --site-profile <path> [--apply] [--allow-missing-email]
+      Update registrar nameservers to Cloudflare (dry-run unless --apply).
+      Blocks --apply when the Cloudflare zone has no apex MX unless
+      --allow-missing-email is passed (loud warning).
 
   redirect --site-profile <path> [--apply]
       Create Cloudflare redirect rules for alias/vanity domains.

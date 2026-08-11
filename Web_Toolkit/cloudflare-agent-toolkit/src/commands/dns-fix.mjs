@@ -10,7 +10,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { mergedEnv, envValue } from '../lib/env.mjs';
 import { resolveCloudflareCredential } from '../lib/auth.mjs';
-import { cloudflareRequest, resolveZoneByName, updateDnsRecord } from '../lib/cloudflare-api.mjs';
+import { cloudflareRequest, resolveZoneByName, updateDnsRecord, listAllDnsRecords } from '../lib/cloudflare-api.mjs';
+import { findDnsRecordByNameAndType } from '../lib/dns-match.mjs';
 import { prettyJson, toBool, utcStamp } from '../lib/format.mjs';
 import { DEFAULT_OUTPUT_DIR } from '../lib/paths.mjs';
 import { loadSiteProfile } from '../lib/profile.mjs';
@@ -25,8 +26,7 @@ export async function runDnsFix(flags = {}) {
   const createMissing = toBool(flags['create-missing'], false);
 
   const zone = await resolveZoneByName(token, site.zoneName);
-  const dnsPayload = await cloudflareRequest(token, `/zones/${zone.id}/dns_records?per_page=200`);
-  const records = Array.isArray(dnsPayload?.result) ? dnsPayload.result : [];
+  const records = await listAllDnsRecords(token, zone.id);
   const expectedRecords = Array.isArray(site.profile?.cloudflare?.dns?.expectedRecords)
     ? site.profile.cloudflare.dns.expectedRecords
     : Array.isArray(site.profile?.cloudflare?.dns?.records)
@@ -35,7 +35,8 @@ export async function runDnsFix(flags = {}) {
 
   const actions = [];
   for (const expected of expectedRecords) {
-    const match = records.find((record) => String(record.name || '').toLowerCase() === String(expected.name || '').toLowerCase());
+    const expectedType = String(expected.type || 'CNAME').toUpperCase();
+    const match = findDnsRecordByNameAndType(records, expected);
     if (!match) {
       // Record missing — create it if content is specified
       if (!expected.content) {

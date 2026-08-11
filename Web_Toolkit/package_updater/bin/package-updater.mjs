@@ -3,6 +3,7 @@
 /**
  * CLI entrypoint for package.json updater to latest versions.
  * Preserves existing range operators (^, ~, >=, …); defaults to ^.
+ * Astro projects also run `npx @astrojs/upgrade` (dry-run unless --apply).
  */
 
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
@@ -32,33 +33,39 @@ function parseCliArgs(argv = []) {
 function printHelp() {
   return printStandardHelp({
     name: 'package-updater',
-    summary: 'Check package.json dependencies and update them to the latest registry versions (preserves ^ / ~ / >= operators).',
+    summary: 'Update package.json dependency pins from the npm registry, and for Astro projects run npx @astrojs/upgrade.',
     usage: [
-      'package-updater run --project-root <path> [--apply]',
+      'package-updater run --project-root <path> [--apply] [--skip-astro-upgrade] [--astro-tag <tag>]',
     ],
     commands: [
       {
         name: 'run',
-        description: 'Verify current package versions and check npm registry for updates.',
+        description: 'Run @astrojs/upgrade when Astro is detected, then check/update remaining package pins.',
       },
     ],
     flags: [
       { name: '--project-root <path>', description: 'Target project root directory.' },
-      { name: '--apply', description: 'Write updated version ranges back to package.json.' },
+      { name: '--apply', description: 'Apply @astrojs/upgrade (not dry-run) and write updated pin ranges to package.json.' },
+      { name: '--skip-astro-upgrade', description: 'Skip the official @astrojs/upgrade step (pins only).' },
+      { name: '--astro-tag <tag>', description: 'Dist-tag for @astrojs/upgrade (default: latest). Example: beta.' },
     ],
     examples: [
       'package-updater run --project-root .',
       'package-updater run --project-root . --apply',
+      'package-updater run --project-root . --apply --astro-tag latest',
+      'package-updater run --project-root . --skip-astro-upgrade --apply',
     ],
     notes: [
-      'Queries the official npm registry to find the latest stable version of each package.',
+      'Astro projects (astro dependency and/or astro.config.*) run `npx --yes @astrojs/upgrade` first; dry-run unless --apply.',
+      'Then queries the official npm registry for each remaining dependency pin.',
       'Preserves the existing range operator on each pin (^, ~, >=, >, <=, <, =); defaults to ^ when none is present.',
       'TypeScript is capped at the latest 6.x while @astrojs/check peers only allow ^5 || ^6.',
       'Use engines.node with >= for runtime floors (e.g. ">=26"); use ^ for npm dependencies.',
+      'After --apply, run `npm install` if the lockfile still needs refresh.',
     ],
     exitCodes: [
-      { name: '0', description: 'Check completed successfully (with or without updates).' },
-      { name: '1', description: 'Error occurred during processing (e.g., missing package.json).' },
+      { name: '0', description: 'Check/upgrade completed successfully (with or without updates).' },
+      { name: '1', description: 'Missing package.json, registry fetch failure, or @astrojs/upgrade failure.' },
     ],
   });
 }

@@ -199,13 +199,16 @@ function runSkillSymlinkSafe(state, flags = {}, actions = []) {
       state.projectRoot,
       // Explicit project-scoped set for a new toolkit site (not skill-pack defaults).
       '--skills',
-      'site-onboarding,portable-web-toolkit,site-readiness,site-starter,toolkit-update',
+      'site-onboarding,portable-web-toolkit,site-readiness,site-starter,site-maintenance,wcag-auditor,pagespeed-diagnostics,discovery-doctor,toolkit-update',
     ],
     { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' },
   );
   if (result.status === 0) {
     actions.push(`Symlinked required agent skills into ${path.join(state.projectRoot, '.agents', 'skills')}`);
+    return;
   }
+  const detail = (result.stderr || result.stdout || 'unknown error').trim();
+  throw new Error(`manage-project-skills link failed (exit ${result.status}): ${detail}`);
 }
 
 export async function runAudit(flags = {}) {

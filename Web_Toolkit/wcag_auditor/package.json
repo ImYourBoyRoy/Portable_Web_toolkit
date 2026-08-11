@@ -1,6 +1,6 @@
 {
   "name": "portable-wcag-auditor",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "private": true,
   "description": "Evidence-oriented accessibility quality gate bundled in Portable Web Toolkit (self-contained for website workflows).",
   "type": "module",

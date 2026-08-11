@@ -8,6 +8,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { frostGlassContrastCheck } from '../core/frost-ui.mjs';
 
 function routesFromProfile(profile = {}) {
   const wcag = profile.diagnostics?.wcagAuditor || {};
@@ -146,7 +147,8 @@ export function buildAstroConfigObject({
     schemaVersion: 1,
     project: {
       name: String(siteId),
-      root: '.'
+      // Absolute root so ephemeral configs living under output/ still locate client src/
+      root: path.resolve(projectRoot || process.cwd())
     },
     profile: profileLevel,
     outputDirectory: outputDirectory || '.wcag-audit-results',
@@ -155,7 +157,7 @@ export function buildAstroConfigObject({
       failOnSeverities: ['critical', 'serious', 'moderate', 'minor'],
       failOnOutcomes: ['failed'],
       unresolvedOutcomes: ['cantTell', 'untested'],
-      unresolvedEvidence: includeManualEvidence ? 'error' : 'warn',
+      unresolvedEvidence: includeManualEvidence ? 'error' : 'ignore',
       executionErrors: 'error',
       requireApplicableSurface: true
     },
@@ -165,6 +167,7 @@ export function buildAstroConfigObject({
       { type: 'sarif', file: 'wcag-audit.sarif' },
       { type: 'junit', file: 'wcag-audit.junit.xml' },
       { type: 'html', file: 'wcag-audit.html' },
+      { type: 'dashboard', file: 'wcag-audit-dashboard.html' },
       { type: 'markdown', file: 'wcag-audit.md' }
     ],
     suppressions: [],
@@ -222,7 +225,8 @@ export function starterManualEvidence(projectName = 'site') {
         evidence: '',
         notes: '',
         remediation: 'Smoke-test primary routes with a screen reader and record defects.'
-      }
+      },
+      frostGlassContrastCheck()
     ]
   };
 }

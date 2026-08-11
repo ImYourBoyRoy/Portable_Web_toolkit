@@ -42,13 +42,30 @@ for (const finding of [evidenceFinding, nativeFinding, runFinding]) {
   assert.deepEqual(finding.standards.items.properties.mapping.enum, ['conformance', 'secondary', 'policy']);
 }
 
-for (const configFile of ['examples/basic/wcag-auditor.config.mjs', 'examples/tauri/wcag-auditor.config.mjs']) {
+for (const configFile of [
+  'examples/basic/wcag-auditor.config.mjs',
+  'examples/tauri/wcag-auditor.config.mjs',
+  'examples/astro/wcag-auditor.config.mjs'
+]) {
   const imported = await import(`${pathToFileURL(path.join(root, configFile)).href}?schema-check=1`);
   assert.deepEqual(validateConfig(imported.default), [], `${configFile} must satisfy runtime config validation`);
 }
 
 const manual = await json('examples/basic/manual-evidence.json');
 assert.deepEqual(validateEvidenceDocument(manual), [], 'manual evidence example must satisfy runtime validation');
+const frostManual = await json('examples/astro/manual-evidence-frost.json');
+assert.deepEqual(validateEvidenceDocument(frostManual), [], 'frost manual evidence example must satisfy runtime validation');
+const frostSuppression = await import(`${pathToFileURL(path.join(root, 'examples/astro/frost-canttell-suppression.example.mjs')).href}?schema-check=1`);
+assert.deepEqual(
+  validateConfig({
+    schemaVersion: 1,
+    project: { name: 'example-astro-site', root: '.' },
+    adapters: [{ type: 'manual-evidence', file: 'examples/astro/manual-evidence-frost.json', required: false }],
+    suppressions: [frostSuppression.frostColorContrastCantTellSuppression]
+  }),
+  [],
+  'frost cantTell suppression example must satisfy runtime config validation'
+);
 const native = await json('examples/bevy/native-evidence.example.json');
 assert.deepEqual(validateNativeEvidenceDocument(native), [], 'native evidence example must satisfy runtime validation');
 

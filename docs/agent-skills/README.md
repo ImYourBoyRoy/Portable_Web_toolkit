@@ -48,10 +48,18 @@ Inspect skills in the current project:
 
 | Skill | Purpose |
 |-------|---------|
+| `portable-web-toolkit-router` | Global light router only |
 | `portable-web-toolkit` | Router for toolkit-managed Astro and Cloudflare work |
+| `site-onboarding` | Staged S0–S9 hand-holding |
 | `site-readiness` | Readiness evidence and next actions |
 | `site-starter` | New client site from `site-starter/` templates |
+| `site-maintenance` | Healthy upgrade → deploy → purge → warm → PSI loop |
+| `wcag-auditor` | Bundled accessibility evidence gate + Playwright |
+| `pagespeed-diagnostics` | Google PSI via toolkit CLI |
+| `discovery-doctor` | robots/sitemap/llms/JSON-LD verification |
 | `toolkit-update` | Read-only comparison and authorized reconciliation |
+| `brand-doctor` | Optional brand / favicon / OG assets |
+| `image-pipeline` | Optional WebP / media rationalization |
 | `instagram-clone` | Optional public Instagram gallery fallback |
 | `vectorize-pipeline` | Optional raster or font-outline SVG preparation |
 

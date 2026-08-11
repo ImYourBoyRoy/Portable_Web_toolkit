@@ -1,0 +1,4 @@
+interface:
+  display_name: "Discovery Doctor"
+  short_description: "robots, sitemap, llms, JSON-LD gates"
+  default_prompt: "Use $discovery-doctor on ./dist (or ./dist/client for Workers) and optionally the live URL."

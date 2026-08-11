@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { toBool } from '../format.mjs';
 import {
   loadDeployContext,
   resolvePagesProjectName,
@@ -51,12 +52,25 @@ export function deployPagesToCloudflare({ projectRoot, projectName, deployEnv })
 export function runDeployPages(flags = {}) {
   const { profilePath, profile, projectRoot, deployEnv } = loadDeployContext(flags);
   const projectName = resolvePagesProjectName(flags, profile, projectRoot);
+  const apply = toBool(flags.apply, false);
+  const clientDir = path.join(projectRoot, 'dist', 'client');
 
   console.log('\n[cf-deploy-pages]');
   console.log(`- Project root: ${projectRoot}`);
   console.log(`- Site profile: ${profilePath || '(none)'}`);
   console.log(`- Pages project: ${projectName}`);
   console.log(`- Preview URL: https://${projectName}.pages.dev`);
+  console.log(`- Apply: ${apply ? 'yes' : 'no (dry-run)'}`);
+
+  if (!fs.existsSync(clientDir)) {
+    throw new Error(`Missing ${clientDir}. Run npm run build first.`);
+  }
+
+  if (!apply) {
+    console.log(`- Asset source: ${clientDir}`);
+    console.log('- Dry-run only. Re-run with --apply to deploy.');
+    return 0;
+  }
 
   const result = deployPagesToCloudflare({ projectRoot, projectName, deployEnv });
   return typeof result.status === 'number' ? result.status : 1;

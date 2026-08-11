@@ -25,7 +25,7 @@ export async function runWriteDeploy(flags = {}) {
   const projectRoot = resolveProjectRoot(flags, resolved);
   const headersConfig = resolveHeadersConfig(resolved?.profile || {});
   const environment = String(flags.environment || flags.env || 'production').toLowerCase();
-  const apply = toBool(flags.apply, true);
+  const apply = toBool(flags.apply, false);
 
   const publicHeadersPath = resolvePublicHeadersPath(projectRoot);
   const distHeadersPath = resolveDistHeadersPath(projectRoot, headersConfig);

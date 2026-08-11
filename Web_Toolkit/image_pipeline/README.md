@@ -1,26 +1,35 @@
 # Image Pipeline
 
-Audits raster assets and converts eligible JPG/PNG files to **lossless WebP**.
+**Policy:** Astro `Image` / `Picture` (`astro:assets`) is the default for content photos. This CLI **fills gaps** — rasters under `public/` that never go through Astro.
 
 ## Purpose
 
-- reduce image weight without changing pixels
-- keep Open Graph and icon/favicon assets out of the automatic WebP conversion path
-- give the model exact dimensions and format details before it changes branding/media
+1. **Audit Astro image posture** (config `imageService`, `OptimizedPicture`, bare `<img>` JPG/PNG, `public/` leftovers)
+2. Convert eligible `public/` JPG/PNG → **WebP** (default) or optional **AVIF**
+3. Keep Open Graph / favicon / icon assets out of automatic conversion
 
 ## Commands
 
 ```bash
 node ./bin/image-pipeline.mjs audit --project-root /path/to/project
 node ./bin/image-pipeline.mjs optimize --project-root /path/to/project --apply --replace-references
+node ./bin/image-pipeline.mjs optimize --project-root /path/to/project --apply --format both
 ```
 
-## Defaults
+| Flag | Meaning |
+|------|---------|
+| `--apply` | Write files (dry-run otherwise) |
+| `--replace-references` | Rewrite source refs to `.webp` siblings only |
+| `--format webp\|avif\|both` | Default `webp` |
 
-Excluded from automatic WebP conversion:
+## Default path (do this first)
 
-- Open Graph images
-- favicon assets
-- apple-touch icons
-- manifest icons
-- files under `public/assets/icons/`
+1. Put masters in `src/assets/`
+2. Use `src/components/OptimizedPicture.astro` (`formats={['avif','webp']}`)
+3. Workers: `adapter: cloudflare({ imageService: 'compile' })`
+4. Only then run image-pipeline for remaining `public/` dumps
+
+## Requirements
+
+- Python + Pillow (WebP)
+- For AVIF: Pillow+libavif or `pillow-avif-plugin`

@@ -6,6 +6,8 @@ A reusable operator + AI toolkit for standing up, checking, diagnosing, hardenin
 
 This toolkit is **highly portable**, **spec-driven**, and **AI-Ready**. It is designed to be the "Connective Tissue" between a fresh project and a production-grade, premium deployment.
 
+**Node pin:** exact runtime pin is the **repository root** [`.node-version`](../.node-version) only. Do not place a second `.node-version` under `Web_Toolkit/`. Module `engines.node` floors stay `>=26`.
+
 ## The Brain: `site-profile.json`
 
 Every tool in this toolkit is an execution engine for the **[Master Site Specification](./site-profile.schema.json)**.
@@ -29,9 +31,11 @@ The premium automated CI loop. It unifies the build, deploy, purge, and verify p
 
 Determine project requirements and retrieve legacy assets.
 
-- **[Discovery Doctor](./discovery_doctor/README.md)**: Zenith-level technical & SEO audit. The primary verification tool for all AI-Native markers.
+- **[Discovery Doctor](./discovery_doctor/README.md)**: Zenith discovery audit (**fail-closed**, exit `2` on FAIL). Sitemap-index OK; BreadcrumbList warn-only on homepage.
 - **[Sourcing Doctor](./sourcing_doctor/README.md)**: High-fidelity content extraction (WordPress/Wix REST API to JSON).
 - **[Site Readiness](./site_readiness/README.md)**: Run-all sandbox-aware readiness pass with next-step report for client projects.
+- **[Project Init](./project_init/README.md)**: Safe starter gaps (skill links, scaffolding); skill-link failures are fail-loud.
+- **[Package Updater](./package_updater/README.md)**: `@astrojs/upgrade` for Astro sites + dependency pin bumps; non-zero if upgrade/registry fails.
 - **[Instagram Clone](./instagram_clone/README.md)**: Public-profile clone → `feed.json` + local media (no Meta API). Set `INSTAGRAM_USERNAME` in the target project `.env`.
 - **[Privacy Check](./privacy_check/README.md)**: Scans for credentials and sensitive data before exporting or sharing the toolkit.
 
@@ -52,9 +56,10 @@ Prepare the workstation and target project for development.
 
 Automate high-fidelity branding and asset generation.
 
-- **[Brand Doctor](./brand_doctor/README.md)**: The "Luxe 6.0" branding automation engine. Generates signature headlines, favicons, and OG images via spec-driven visual tokens.
-- **[Image Pipeline](./image_pipeline/README.md)**: Rationalizes media assets, converting eligible raster images to lossless WebP and enforcing format discipline.
+- **[Brand Doctor](./brand_doctor/README.md)**: Branding automation (favicon/OG) + Brand Guide → `tokens.css` via `sync-tokens`. Agents still treat `BRAND_GUIDE.md` as identity source of truth.
+- **[Image Pipeline](./image_pipeline/README.md)**: Astro Image posture audit + gap-fill WebP/AVIF for leftover `public/` rasters (not the primary content-photo path).
 - **[Vectorize Pipeline](./vectorize_pipeline/README.md)**: Creates clean SVG wordmarks from licensed fonts or traces authorized raster artwork with VTracer.
+- **[Stylesheet Check](./stylesheet_check/README.md)**: Segregated CSS size/duplication/token hygiene + Astro `tokens.css` / `global.css` / Layout ownership checks.
 
 ---
 
@@ -65,8 +70,9 @@ Standardize the Cloudflare posture and ship the site.
 - **[Cloudflare Agent](./cloudflare-agent-toolkit/README.md)**: Audit and repair DNS, WAF rules, and deployment routes.
 - **Cloudflare Agent Performance Audit**: AI-agent-only JSON audit of speed-critical Cloudflare switches (`performance audit`).
 - **[Headers Deploy](./headers_deploy/README.md)**: `public/_headers` scaffold and deploy-time merge.
-- **[Cache Purge](./cache_purge/README.md)**: Targeted edge invalidation for Astro/Cloudflare sites.
-- **[Registrar](./registrar/README.md)**: Delegation automation (e.g., Porkbun -> Cloudflare).
+- **[Cache Purge](./cache_purge/README.md)**: Targeted edge invalidation + `warm` (dry-run lists URLs; `--apply` GETs).
+- **[Registrar](./registrar/README.md)**: Porkbun → Cloudflare NS/zone/redirect; MX gate on NS cutover.
+- **[Performance Fixes](./performance_fixes/README.md)**: Reads latest PSI JSON and suggests low-risk header/perf helpers.
 
 ---
 
@@ -113,7 +119,7 @@ node .\privacy_check\bin\privacy-check.mjs scan --root . --json
 ## Output and Input Standard
 
 - **Inputs**: site profile JSON + target project root `.env` + explicit CLI flags.
-- **Target-project reports**: `<projectRoot>/output/` for diagnostics tied to a specific website.
+- **Target-project reports**: `<projectRoot>/output/` for diagnostics tied to a specific website (intentional — do not relocate into toolkit `.runtime/`).
 - **Toolkit runtime reports**: `Web_Toolkit/.runtime/` for toolkit self-checks, exports, sessions, and Cloudflare-agent operational reports.
 - **Generated site assets**: written into the target project only when a command is explicitly applied, for example `--apply`.
 - **Exported toolkit copies**: created under `.runtime/exports/` by default and sanitized before sharing.

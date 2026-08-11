@@ -108,6 +108,14 @@ async function ensureManagedWafEntrypoint(token, zoneId) {
   return { ensured: true, changed: true, id: updated?.result?.id || entrypoint.id || null, message: 'Updated managed WAF entrypoint.' };
 }
 
+function parseRollbackHosts(flags, zoneName, allSmokeHosts) {
+  const explicit = String(flags['rollback-hosts'] || '').trim();
+  if (explicit) {
+    return parseHosts(explicit, zoneName);
+  }
+  return allSmokeHosts.filter((url) => !/:\/\/(?:dev|staging|preview)\./i.test(url));
+}
+
 async function smokeTest(hosts) {
   const results = [];
   for (const url of hosts) {
@@ -128,7 +136,7 @@ async function smokeTest(hosts) {
 }
 
 function needsSslRollback(results) {
-  return results.some((entry) => !entry.ok && [525, 526, 530, null].includes(entry.status));
+  return results.some((entry) => [525, 526, 530].includes(entry.status));
 }
 
 export async function runZoneHarden(flags = {}) {
@@ -213,12 +221,14 @@ export async function runZoneHarden(flags = {}) {
   }
 
   let smokeResults = await smokeTest(smokeHosts);
+  const rollbackHosts = parseRollbackHosts(flags, zoneName, smokeHosts);
+  const rollbackSmokeResults = smokeResults.filter((entry) => rollbackHosts.includes(entry.url));
   let rollback = { rolledBack: false, reason: null };
-  if (!dryRun && needsSslRollback(smokeResults)) {
+  if (!dryRun && needsSslRollback(rollbackSmokeResults)) {
     await setSetting(token, zone.id, 'ssl', 'full');
     rollback = {
       rolledBack: true,
-      reason: 'Detected strict SSL breakage (525/526/530/unreachable) during smoke test.'
+      reason: 'Detected strict SSL breakage (525/526/530) on production hosts during smoke test.'
     };
     smokeResults = await smokeTest(smokeHosts);
   }
@@ -231,6 +241,7 @@ export async function runZoneHarden(flags = {}) {
     waf,
     botManagement,
     rollback,
+    rollbackHosts,
     smoke: smokeResults
   };
 

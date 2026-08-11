@@ -1,5 +1,6 @@
 import type { AccessibilityRun, WritableLike } from './index.d.ts';
 
+export function renderDashboardReport(run: AccessibilityRun): string;
 export function renderHtmlReport(run: AccessibilityRun): string;
 export function renderJsonReport(run: AccessibilityRun, options?: { compact?: boolean }): string;
 export function renderJunitReport(run: AccessibilityRun): string;

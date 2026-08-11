@@ -1,0 +1,4 @@
+interface:
+  display_name: "WCAG Auditor"
+  short_description: "Toolkit accessibility evidence gate"
+  default_prompt: "Use $wcag-auditor against this toolkit-managed site with the site profile and Playwright Chromium ready."

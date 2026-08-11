@@ -1,9 +1,11 @@
 // ./Web_Toolkit/site_quality_smoke/src/commands/run.mjs
 /**
- * Runs SEO/performance/header smoke checks for production and development hosts.
+ * Runs SEO/performance/header smoke checks for production and development hosts,
+ * plus legal/privacy, cookies notice, on-page image format, and remote-font checks.
  */
 
 import fs from 'node:fs';
+import { analyzeCompliance, defaultPrivacyPaths, robotsBlocksAll } from '../lib/compliance.mjs';
 import { canonicalFromHtml, assetUrlsFromHtml, metaDescriptionFromHtml, titleFromHtml } from '../lib/extract.mjs';
 import { openGraphReport } from '../lib/opengraph.mjs';
 import { requestUrl } from '../lib/http.mjs';
@@ -59,7 +61,53 @@ async function sitemapReport(origin, candidates = []) {
   return checks;
 }
 
-async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSampleSize = 3, ogOptions = {}) {
+async function probeLegalPage(origin, compliance = {}) {
+  const linked = Array.isArray(compliance.legal?.hrefs) ? compliance.legal.hrefs : [];
+  const candidates = [
+    ...linked,
+    ...(compliance.legal?.candidatePaths || defaultPrivacyPaths()).map((path) => `${origin}${path}`)
+  ];
+  const seen = new Set();
+  let lastFailure = null;
+  for (const candidate of candidates) {
+    const hrefRaw = String(candidate || '').trim();
+    if (!hrefRaw || seen.has(hrefRaw)) continue;
+    seen.add(hrefRaw);
+    const href = hrefRaw.startsWith('http') ? hrefRaw : `${origin}${hrefRaw.startsWith('/') ? '' : '/'}${hrefRaw}`;
+    let pathname = href;
+    try {
+      pathname = new URL(href).pathname;
+    } catch {
+      // keep raw
+    }
+    const response = await requestUrl(href);
+    const ok = response.status >= 200 && response.status < 400;
+    const result = {
+      checked: true,
+      ok,
+      status: response.status,
+      href,
+      path: pathname,
+      durationMs: response.durationMs,
+      error: response.error || ''
+    };
+    if (ok) return result;
+    lastFailure = result;
+    if (seen.size >= 8) break;
+  }
+  return lastFailure || {
+    checked: false,
+    ok: false,
+    status: 0,
+    href: '',
+    path: '',
+    durationMs: 0,
+    error: 'No privacy/legal candidates.'
+  };
+}
+
+async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSampleSize = 3, options = {}) {
+  const { privacyPaths, ...ogOptions } = options;
   const normalizedHost = String(host || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
   const origin = `https://${normalizedHost}`;
   const root = await requestUrl(origin);
@@ -68,6 +116,9 @@ async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSa
   const sitemapChecks = await sitemapReport(origin, sitemapCandidates);
   const routeChecks = await routeReport(origin, routes);
   const httpRedirect = await requestUrl(`http://${normalizedHost}`, { followRedirects: false });
+  const complianceBase = analyzeCompliance(root.body, { origin, privacyPaths });
+  const legalPage = await probeLegalPage(origin, complianceBase);
+  const compliance = { ...complianceBase, legalPage };
   return {
     host: normalizedHost,
     origin,
@@ -90,11 +141,12 @@ async function hostRootReport(host, routes = [], sitemapCandidates = [], assetSa
     metaDescription: metaDescriptionFromHtml(root.body),
     canonical: canonicalFromHtml(root.body),
     openGraph: await openGraphReport(root.body, { origin, host: normalizedHost, requestUrl, ...ogOptions }),
+    compliance,
     robots: {
       ok: robots.status >= 200 && robots.status < 400,
       status: robots.status,
       durationMs: robots.durationMs,
-      blocksAll: /disallow:\s*\//i.test(robots.body),
+      blocksAll: robotsBlocksAll(robots.body),
       noindex: /noindex:/i.test(robots.body),
       body: robots.body.slice(0, 400)
     },
@@ -127,6 +179,9 @@ export async function runQualitySmoke(flags = {}) {
   const routes = Array.isArray(quality.routes) ? quality.routes : ['/'];
   const sitemapCandidates = Array.isArray(quality.sitemapCandidates) ? quality.sitemapCandidates : ['/sitemap-index.xml', '/sitemap.xml'];
   const assetSampleSize = Number(quality.assetSampleSize || 3);
+  const privacyPaths = Array.isArray(quality.privacyPaths) && quality.privacyPaths.length > 0
+    ? quality.privacyPaths.map(String)
+    : defaultPrivacyPaths();
   const thresholds = {
     maxRootDurationMs: Number(quality.maxRootDurationMs || 3000),
     maxRouteDurationMs: Number(quality.maxRouteDurationMs || 3000)
@@ -139,18 +194,23 @@ export async function runQualitySmoke(flags = {}) {
   }
 
   const skipDevelopment = shouldSkipDevelopmentHost(developmentHost, quality);
+  const hostOptions = { privacyPaths };
 
   const report = {
     checkedAt: new Date().toISOString(),
     profile: profile.siteId,
     projectRoot,
     thresholds,
-    production: await hostRootReport(productionHost, routes, sitemapCandidates, assetSampleSize),
+    privacyPaths,
+    production: await hostRootReport(productionHost, routes, sitemapCandidates, assetSampleSize, hostOptions),
     workerPreview: workerPreviewHost
-      ? await hostRootReport(workerPreviewHost, routes, sitemapCandidates, assetSampleSize, { allowCrossHostUrl: true })
+      ? await hostRootReport(workerPreviewHost, routes, sitemapCandidates, assetSampleSize, {
+        ...hostOptions,
+        allowCrossHostUrl: true
+      })
       : null,
     development: !skipDevelopment && developmentHost
-      ? await hostRootReport(developmentHost, routes, sitemapCandidates, assetSampleSize)
+      ? await hostRootReport(developmentHost, routes, sitemapCandidates, assetSampleSize, hostOptions)
       : null,
     skipped: {
       development: skipDevelopment

@@ -13,8 +13,10 @@
  */
 
 import { porkbunCheckDomainAccess } from './porkbun-api.mjs';
-import { resolveZoneByName, safeCloudflareRequest } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
+import { resolveZoneByName, safeCloudflareRequest, listAllDnsRecords } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
 import { resolveCloudflareCredential } from '../cloudflare-agent-toolkit/src/lib/auth.mjs';
+import { auditEmailDns } from '../cloudflare-agent-toolkit/src/lib/audit/email-dns.mjs';
+import { apexHasMx } from './mx-gate.mjs';
 
 // ── Helpers ──
 
@@ -110,10 +112,44 @@ function checkActivation(zoneData) {
         `Status: ${zoneData.status} — propagation in progress`, { gate: true });
 }
 
+async function checkEmailMx(cfToken, zoneData, spFlag = '<path>') {
+  if (!zoneData?.id) return step('email_mx', 'Email / MX on CF', 'skip', 'No zone');
+  try {
+    const records = await listAllDnsRecords(cfToken, zoneData.id);
+    const email = auditEmailDns(records, zoneData.name);
+    if (apexHasMx(records, zoneData.name) || email.hasMx) {
+      return step(
+        'email_mx',
+        'Email / MX on CF',
+        'pass',
+        `${email.mailProviderGuess} | MX yes | SPF ${email.hasSpf ? 'yes' : 'no'} | DMARC ${email.hasDmarc ? 'yes' : 'no'}`,
+        { email }
+      );
+    }
+    return step(
+      'email_mx',
+      'Email / MX on CF',
+      'fail',
+      'No apex MX on Cloudflare — fix before ns update --apply (or use --allow-missing-email)',
+      {
+        email,
+        nextCommand: `node cloudflare-agent-toolkit/bin/cf-agent.mjs email audit --site-profile ${spFlag}`
+      }
+    );
+  } catch (err) {
+    return step('email_mx', 'Email / MX on CF', 'fail', `Error: ${err.message}`);
+  }
+}
+
 async function checkDnsRecords(cfToken, zoneData, expectedRecords) {
   if (expectedRecords.length === 0) return step('dns_records', 'DNS records', 'skip', 'No expected records');
-  const res = await safeCloudflareRequest(cfToken, `/zones/${zoneData.id}/dns_records?per_page=200`);
-  const live = res.ok ? (res.payload?.result || []) : [];
+  let live = [];
+  try {
+    live = await listAllDnsRecords(cfToken, zoneData.id);
+  } catch {
+    const res = await safeCloudflareRequest(cfToken, `/zones/${zoneData.id}/dns_records?per_page=200`);
+    live = res.ok ? (res.payload?.result || []) : [];
+  }
   const found = expectedRecords.filter((exp) =>
     live.some((l) => l.name.toLowerCase() === exp.name.toLowerCase() && l.type === exp.type)
   );
@@ -214,6 +250,11 @@ export async function checkMigrationPipeline(opts) {
   steps.push(zoneStep);
   zoneData = zoneStep.zone || null;
   if (zoneStep.status === 'fail') { gated = true; gateReason = 'Zone must be created first'; }
+
+  // 2b. Email / MX on Cloudflare (before recommending ns update)
+  if (zoneData && cfToken) {
+    steps.push(await checkEmailMx(cfToken, zoneData, spFlag));
+  }
 
   // 3. NS delegation
   if (!gated) {

@@ -1,6 +1,6 @@
 export const TOOLKIT_NAME = 'WCAG Auditor';
 export const PACKAGE_NAME = 'portable-wcag-auditor';
-export const TOOLKIT_VERSION = '2.0.1';
+export const TOOLKIT_VERSION = '2.0.3';
 export const CONFIG_SCHEMA_VERSION = 1;
 export const RUN_SCHEMA_VERSION = '1.0.0';
 export const EVIDENCE_SCHEMA_VERSION = 1;
@@ -76,5 +76,6 @@ export const KNOWN_REPORTER_TYPES = Object.freeze([
   'sarif',
   'junit',
   'html',
-  'markdown'
+  'markdown',
+  'dashboard'
 ]);

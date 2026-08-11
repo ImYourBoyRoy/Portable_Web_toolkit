@@ -183,7 +183,8 @@ function Ensure-Elevation($Manifest, [string]$Command, [string[]]$RawArgs, [hash
     Write-Host "`n[Web Toolkit] Requesting administrator elevation before installs..." -ForegroundColor Yellow
     $relayArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath,$ElevationMarker) + $RawArgs
     $quoted = $relayArgs | % { if ($_ -match '\s|"') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }
-    $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $quoted -WorkingDirectory $Flags.workspace -PassThru -Wait
+    $elevatedShell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { (Get-Command pwsh).Source } else { 'powershell.exe' }
+    $process = Start-Process -FilePath $elevatedShell -Verb RunAs -ArgumentList $quoted -WorkingDirectory $Flags.workspace -PassThru -Wait
     exit $process.ExitCode
 }
 

@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.8`
+**Toolkit Release:** `v0.3.9`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.8` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.9` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -130,16 +130,23 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed �
 | [`skills/`](./docs/agent-skills/SKILL_PACK.md) | Versioned core and optional Agent Skills |
 | [`Web_Toolkit/`](./Web_Toolkit/README.md) | CLI tools (readiness, deploy, discovery, Cloudflare, etc.) |
 | [`site-starter/`](./site-starter/README.md) | Templates to bootstrap a new client site |
+| [`HOW_TO.md`](./HOW_TO.md) | Human operator prompts + healthy maintenance order |
 | [`START_HERE.md`](./START_HERE.md) | Short guide for AI agents (zero research) |
 
 ---
 
 ## Common tasks (for you or your agent)
 
+**Human operators:** copy-paste prompts and the healthy maintenance order live in
+[`HOW_TO.md`](./HOW_TO.md) (PageSpeed, Cloudflare audit/repair, upgrade→deploy→purge→warm→PSI, etc.).
+
 | Goal | What to ask or run |
 |------|-------------------|
 | Check a site before deploy | `site-readiness` on the client project |
-| New site from scratch | `site-starter` skill + copy templates |
+| New site from scratch | `site-starter` / `site-onboarding` + copy templates |
+| PageSpeed Insights | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `pagespeed-diagnostics` |
+| Cloudflare audit / repair | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `cf-agent` (dry-run before `--apply`) |
+| Full maintenance loop | Prompt in [`HOW_TO.md`](./HOW_TO.md) (upgrade → smoke → deploy → purge → warm → PSI) |
 | Accessibility evidence (sites) | Bundled `Web_Toolkit/wcag_auditor` only (no `AI/` resolution) |
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
 | Compare toolkit + skills | `toolkit-update` or `node scripts/update-toolkit.mjs` |
@@ -165,6 +172,7 @@ Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portab
 
 | Doc | For |
 |-----|-----|
+| [`HOW_TO.md`](./HOW_TO.md) | **Humans** — what to ask the agent; prompts + healthy ops order |
 | [`START_HERE.md`](./START_HERE.md) | AI agents |
 | [`docs/agent-skills/CROSS_PLATFORM.md`](./docs/agent-skills/CROSS_PLATFORM.md) | Windows / macOS / Linux notes |
 | [`Web_Toolkit/OPERATIONS.md`](./Web_Toolkit/OPERATIONS.md) | Build and deploy sequence |

@@ -5,6 +5,31 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-08-11
+
+### Added
+
+- **Glassmorphism / frost UI WCAG path** (`wcag_auditor` 2.0.3): `docs/GLASSMORPHISM.md`, starter `frost-glass-contrast` evidence, suppressions with `outcomes: ["cantTell"]`, frost-aware axe remediations.
+- **Brand Guide → tokens**: `brand-doctor sync-tokens` managed block in `src/styles/tokens.css`.
+- **Astro Image default posture**: site-starter `OptimizedPicture`, Workers `imageService: 'compile'`, image-pipeline / site-readiness posture checks.
+- **cache-purge warm**, discovery-doctor modular validate/report + tests, registrar MX gate, stylesheet-check architecture depth + README.
+- **package-updater Astro path**: runs `npx --yes @astrojs/upgrade` (dry-run unless `--apply`; `--skip-astro-upgrade` / `--astro-tag`).
+- Skills: `brand-doctor`, `discovery-doctor`, `image-pipeline`, `pagespeed-diagnostics`, `site-maintenance`, `wcag-auditor`.
+- Client `.node-version` in `site-starter` (synced from root pin).
+
+### Fixed
+
+- discovery-doctor fail-closed (exit `2` on fail); registrar await + profile `.env` precedence; CF pages/deploy/analytics/headers/fix-permissions dry-run until `--apply`.
+- DNS match by name+type with pagination; SSL rollback hosts scoped; site-quality-smoke exact `Disallow: /` + legal/cookie heuristics.
+- Fail-loud toolkit-report / package-updater / project-init / site-readiness / Setup_agent_environment (`pwsh`).
+- PSI single-fetch; privacy-check broader patterns.
+
+### Changed
+
+- Report path policy documented: client `output/` vs toolkit `.runtime/`.
+- Removed `Web_Toolkit/.node-version` — canonical pin is repo root `.node-version`.
+- HOW_TO honesty + module README / OPERATIONS / START_HERE alignment.
+
 ## [0.3.8] - 2026-08-11
 
 ### Fixed

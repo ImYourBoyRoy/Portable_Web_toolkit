@@ -29,8 +29,11 @@ mkdir -p "$SITE" && cd "$SITE"
 cp "$TOOLKIT/site-starter/workers.package.json" ./package.json
 cp "$TOOLKIT/site-starter/workers.wrangler.toml" ./wrangler.toml
 cp "$TOOLKIT/site-starter/astro.config.workers.example.mjs" ./astro.config.mjs
+cp "$TOOLKIT/site-starter/.node-version" ./.node-version
 cp "$TOOLKIT/site-starter/.env.example" ./.env.example
 cp -R "$TOOLKIT/site-starter/src/styles" ./src/styles
+mkdir -p ./src/components ./src/assets
+cp "$TOOLKIT/site-starter/src/components/OptimizedPicture.astro" ./src/components/OptimizedPicture.astro
 
 node "$TOOLKIT/scripts/link-web-toolkit.mjs" \
   --toolkit-path "$TOOLKIT/Web_Toolkit" \
@@ -79,15 +82,33 @@ No duplicate `scripts/` folder in the client project for these — the toolkit i
 
 ## Structural CSS only
 
-`src/styles/tokens.css` and `global.css` are **system tokens** (fonts, spacing) — not a visual theme. Each client gets its own Brand Guide and component styles.
+`src/styles/tokens.css` and `global.css` are **system tokens** (fonts, spacing) — not a visual theme. Each client gets its own Brand Guide; run `brand-doctor sync-tokens --apply` after colors exist in `BRAND_GUIDE.md`.
+
+## Images (Astro first)
+
+| Path | Role |
+|------|------|
+| `astro.config.*` `image` + Workers `imageService: 'compile'` | Build-time Sharp via Astro |
+| `src/components/OptimizedPicture.astro` | Default `Picture` with `formats={['avif','webp']}` |
+| `src/assets/` | Import masters here (not `public/`) |
+| `image-pipeline` | Gap-fill only for leftover `public/` JPG/PNG |
 
 ## Discovery layer
 
 Full copy list: [`Web_Toolkit/templates/discovery/README.md`](../Web_Toolkit/templates/discovery/README.md)
 
+## Report locations (intentional)
+
+| Kind | Location |
+|------|----------|
+| Client site diagnostics | `<project>/output/` |
+| Toolkit self-checks / exports | `Web_Toolkit/.runtime/` |
+
+Do not force client reports into `.runtime/`.
+
 ## Next steps
 
-1. `BRAND_GUIDE.md` + `*.site-profile.json`
+1. `BRAND_GUIDE.md` + `*.site-profile.json` → `brand-doctor sync-tokens --apply`
 2. Secrets in `.env` (never commit)
 3. `npm run build` → `npm run discovery:doctor`
 4. [`Web_Toolkit/OPERATIONS.md`](../Web_Toolkit/OPERATIONS.md)

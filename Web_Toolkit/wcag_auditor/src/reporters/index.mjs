@@ -3,6 +3,7 @@ import { atomicWriteFile, normalizePath } from '../core/filesystem.mjs';
 import { resolveOutputFile } from '../core/path-policy.mjs';
 import { ReporterError } from '../core/errors.mjs';
 import { writeConsoleReport } from './console.mjs';
+import { renderDashboardReport } from './dashboard.mjs';
 import { renderHtmlReport } from './html.mjs';
 import { renderJsonReport } from './json.mjs';
 import { renderJunitReport } from './junit.mjs';
@@ -10,6 +11,7 @@ import { renderMarkdownReport } from './markdown.mjs';
 import { renderSarifReport } from './sarif.mjs';
 
 const RENDERERS = Object.freeze({
+  dashboard: renderDashboardReport,
   html: renderHtmlReport,
   json: renderJsonReport,
   junit: renderJunitReport,
@@ -45,6 +47,7 @@ export async function runReporters(run, reporterConfigs, context = {}) {
 }
 
 export {
+  renderDashboardReport,
   renderHtmlReport,
   renderJsonReport,
   renderJunitReport,

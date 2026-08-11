@@ -4,6 +4,7 @@
  */
 
 import { hasStrongStaticAssetCache, isVersionedStaticAsset } from './cache.mjs';
+import { complianceIssues } from './compliance.mjs';
 import { summarizeOpenGraphIssues } from './opengraph.mjs';
 
 function isHttpsRedirect(check = {}) {
@@ -90,6 +91,11 @@ export function summarizeReport(report = {}) {
   pushIssue(issues, !production.canonical && !legacySkipped, 'Production canonical link is missing.');
   pushIssue(issues, production.canonical && !canonicalMatchesHost(production.canonical, production.host) && !legacySkipped, 'Production canonical host does not match the expected production host.');
   pushIssue(issues, !production.robots?.ok && !legacySkipped, 'Production robots.txt is missing or failing.');
+  pushIssue(
+    issues,
+    Boolean(production.robots?.ok && production.robots?.blocksAll),
+    'Production robots.txt contains exact Disallow: / (blocks all crawlers) — unexpected for a public site.'
+  );
   pushIssue(issues, !productionMetrics.sitemapOk && !legacySkipped, 'Production sitemap is missing or failing.');
   pushIssue(issues, !String(production.root?.csp || '').trim() && !String(report.workerPreview?.root?.csp || '').trim() && !legacySkipped, 'Production root is missing a Content-Security-Policy header.');
   pushIssue(issues, !String(production.root?.hsts || '').trim() && !String(report.workerPreview?.root?.hsts || '').trim(), 'Production root is missing a Strict-Transport-Security header.');
@@ -101,6 +107,15 @@ export function summarizeReport(report = {}) {
   pushIssue(issues, productionMetrics.assetLongCacheWarnings > 0, `Versioned production assets are not using long-lived immutable caching on ${productionMetrics.assetLongCacheWarnings} sampled assets.`);
   for (const issue of productionOpenGraphIssues(report)) {
     pushIssue(issues, true, issue);
+  }
+  if (!legacySkipped) {
+    for (const issue of complianceIssues(production.compliance, { label: 'Production' })) {
+      pushIssue(issues, true, issue);
+    }
+  } else if (report.workerPreview?.compliance) {
+    for (const issue of complianceIssues(report.workerPreview.compliance, { label: 'Worker preview' })) {
+      pushIssue(issues, true, issue);
+    }
   }
 
   if (hasDevelopment) {
@@ -144,6 +159,15 @@ function hostSnapshot(host = {}) {
       imageOk: Boolean(host.openGraph?.defaultImage?.ok),
       facebookImageOk: Boolean(host.openGraph?.facebookImage?.ok),
       warnings: host.openGraph?.warnings || []
+    },
+    compliance: {
+      legalLinked: Boolean(host.compliance?.legal?.linked),
+      legalPageOk: Boolean(host.compliance?.legalPage?.ok),
+      analytics: host.compliance?.analytics?.signals || [],
+      cookieNotice: Boolean(host.compliance?.cookieNotice?.detected),
+      legacyImages: (host.compliance?.images?.legacyRaster || []).length,
+      missingImageDimensions: (host.compliance?.images?.missingDimensions || []).length,
+      remoteFontHosts: host.compliance?.fonts?.remoteHosts || []
     },
     robotsOk: Boolean(host.robots?.ok),
     sitemap: (host.sitemap || []).map((entry) => ({ route: entry.route, status: entry.status, ok: entry.ok })),
@@ -215,6 +239,18 @@ export function renderMarkdown(report = {}, summary = summarizeReport(report)) {
   if (report.skipped?.development) {
     lines.push('', '## Skipped', '');
     lines.push(`- ${report.skipped.development}`);
+  }
+  lines.push('', '## Compliance (legal / cookies / images / fonts)', '');
+  const compliance = report.production?.compliance;
+  if (!compliance) {
+    lines.push('- Compliance checks were not run.');
+  } else {
+    lines.push(`- Legal linked: ${compliance.legal?.linked ? 'yes' : 'no'}`);
+    lines.push(`- Legal page probe: ${compliance.legalPage?.ok ? `ok (${compliance.legalPage.href || compliance.legalPage.path})` : `fail (${compliance.legalPage?.status || 'n/a'})`}`);
+    lines.push(`- Analytics: ${compliance.analytics?.detected ? (compliance.analytics.signals || []).join(', ') : 'none detected'}`);
+    lines.push(`- Cookie notice: ${compliance.cookieNotice?.detected ? 'detected' : 'not found'}`);
+    lines.push(`- On-page images: ${compliance.images?.total || 0} total, ${compliance.images?.modern || 0} modern, ${(compliance.images?.legacyRaster || []).length} legacy raster, ${(compliance.images?.missingDimensions || []).length} missing dimensions`);
+    lines.push(`- Remote font CDNs: ${(compliance.fonts?.remoteHosts || []).length ? compliance.fonts.remoteHosts.join(', ') : 'none'}`);
   }
   lines.push('', '## Sampled Assets', '');
   for (const asset of report.production?.assets || []) {

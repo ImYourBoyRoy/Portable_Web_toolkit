@@ -34,16 +34,19 @@ Add to `cloudflare.headers` in your site profile:
 ### CSP presets
 
 - **`astro-static`** — self-hosted fonts, Cloudflare Web Analytics, blob/data images (default)
-- **`astro-analytics`** — adds GA4 + PostHog + Google Fonts allowances (pairs with `cf-agent analytics scaffold`)
+- **`astro-analytics`** — adds GA4 + PostHog + Google Fonts allowances (pairs with `cf-agent analytics scaffold)
 
 ## Typical workflow
 
 ```powershell
+headers-deploy scaffold-public --site-profile <profile>
 headers-deploy scaffold-public --site-profile <profile> --apply
 npm run build
 headers-deploy write-deploy --site-profile <profile> --environment production
+headers-deploy write-deploy --site-profile <profile> --environment production --apply
 discovery-doctor ./dist
 cf-agent site harden --site-profile <profile>
+cf-agent site harden --site-profile <profile> --apply
 site-quality-smoke run --site-profile <profile>
 ```
 
@@ -55,3 +58,7 @@ Run `headers-deploy stack` for the full ordered checklist including zone hardeni
 - `cf-agent site harden` — zone-level HTTPS/TLS/HSTS/brotli/HTTP3 settings
 - `discovery-doctor` — build-time discovery + header verification
 - `site-quality-smoke` — live CSP/HSTS/route verification
+
+## Safety defaults
+
+Both `scaffold-public` and `write-deploy` are dry-run unless `--apply` is passed. Preview first, then apply.

@@ -31,14 +31,16 @@ function printHelp() {
       { name: '--headed', description: 'Launch Chromium headed instead of headless.' },
       { name: '--screenshots', description: 'Capture screenshots for each checked route.' },
       { name: '--lighthouse', description: 'Run an additional Lighthouse pass for the production root URL.' },
-      { name: '--lighthouse-preset <mobile|desktop>', description: 'Choose the Lighthouse preset. Defaults to mobile.' }
+      { name: '--lighthouse-preset <mobile|desktop>', description: 'Choose the Lighthouse preset. Defaults to mobile.' },
+      { name: '--skip-playwright-install', description: 'Do not soft-install Python Playwright/Chromium when missing.' }
     ],
     examples: [
       'browser-diagnostics run --site-profile ../site-profiles/example-workers.json',
       'browser-diagnostics run --site-profile ../site-profiles/example-workers.json --screenshots --lighthouse'
     ],
     notes: [
-      'Requires Python Playwright, which Setup_agent_environment can install automatically.',
+      'Uses Python Playwright. Soft-ensures the package + Chromium unless --skip-playwright-install.',
+      'Setup_agent_environment can also provision Playwright in the managed pyenv venv.',
       'This tool is non-mutating and designed to surface browser/runtime issues before publish or after live changes.'
     ],
     exitCodes: [

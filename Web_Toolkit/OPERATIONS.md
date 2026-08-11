@@ -18,18 +18,22 @@
 11. `Integration_Doctor run --site-profile <profile>` when env/live integration readiness matters
 12. `Site_Doctor run --site-profile <profile>` when broad triage is needed
 13. `Headers_Deploy scaffold-public --site-profile <profile> --apply` when public/_headers cache baseline is missing
-13a. `Performance_Fixes`, `Brand_Doctor`, or `Image_Pipeline` only after findings justify them
+13a. `Performance_Fixes`, `Brand_Doctor` (`sync-tokens` after Brand Guide), or `Image_Pipeline` (gap-fill only — Astro Image first) only after findings justify them
+13b. Confirm Astro Image posture: `OptimizedPicture` + Workers `imageService: 'compile'` (site-readiness `image-posture` step / `image-pipeline audit`)
 14. `npm run build` (from profile commands.build)
 14a. `Headers_Deploy write-deploy --site-profile <profile> --environment production|development` before wrangler deploy
-14b. `Headers_Deploy audit --site-profile <profile>` or `discovery-doctor ./dist` to verify built headers
+14b. `discovery-doctor ./dist` (**fail-closed**: exit `2` on any FAIL) or `Headers_Deploy audit --site-profile <profile>` to verify discovery + built headers
+14c. `Package_Updater` when dependency freshness is in scope (non-zero if registry fetch fails)
 15. `PageSpeed_Diagnostics run --site-profile <profile> --strategy both` when Google PSI data is desired
 15a. `PageSpeed_Diagnostics agent-batch --site-profile <profile> --routes core --strategy mobile` when an AI agent needs token-efficient PageSpeed state
 15b. `PageSpeed_Diagnostics agent-diff --site-profile <profile>` when an AI agent needs a regression check
+15c. `Cache_Purge warm --site-profile <profile>` (dry-run lists URLs) then `--apply` after production purge when warming matters
+15d. `Site_Quality_Smoke` covers media/legal/cookies heuristics (HTML-only; pair `Browser_Diagnostics` for JS banners)
 16. `Registrar_NS ping` when Porkbun credentials need verification
 17. `Registrar_NS domains` to list domains and API access status
 18. `Registrar_NS zone ensure --site-profile <profile> --apply` when the zone is not yet in Cloudflare
 19. `Registrar_NS ns audit --site-profile <profile>` to check nameserver delegation
-20. `Registrar_NS ns update --site-profile <profile> --apply` to delegate NS to Cloudflare
+20. `Registrar_NS ns update --site-profile <profile> --apply` to delegate NS to Cloudflare (**MX gate**: apex MX required unless `--allow-missing-email`)
 21. `cf-agent permissions audit --site-profile <profile>`
 22. `cf-agent site audit --site-profile <profile>`
 23. `cf-agent dns audit --site-profile <profile>`
@@ -39,7 +43,16 @@
 26. `cf-agent workers verify --site-profile <profile>`
 27. `cf-agent site harden --site-profile <profile>` dry-run first
 28. `Headers_Deploy stack` when you need the full Cloudflare enhancement checklist
-29. deploy dev before prod unless explicitly told otherwise
-30. rerun smoke after production-affecting changes
+29. deploy via `cf-agent deploy pages|workers` **dry-run first**, then `--apply` (staging before prod unless waived)
+30. rerun smoke after production-affecting changes; warm cache if purge was applied
 31. `Verify_Portable_Toolkit` when you want the toolkit to prove its own health
 32. `Purge_Portable_Toolkit --apply`, `Privacy_Check`, then export before sharing
+
+### Mutation policy
+
+All infrastructure/deploy mutations are **dry-run by default**. Pass `--apply` to mutate (Pages setup/add-domain, deploy pages|workers, analytics scaffold, headers write-deploy, registrar ns/zone/redirect, cache purge/warm).
+
+### Report locations
+
+- Client diagnostics: `<project>/output/`
+- Toolkit self-checks: `Web_Toolkit/.runtime/`

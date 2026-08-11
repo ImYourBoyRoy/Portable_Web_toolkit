@@ -9,6 +9,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { loadSiteProfileContext, resolvePortableRoot } from '../../shared/lib/context.mjs';
+import { runCacheWarm } from '../src/commands/warm.mjs';
 
 const portableRoot = resolvePortableRoot(import.meta.url, 2);
 
@@ -39,7 +40,11 @@ function printHelp() {
     summary: 'Targeted Astro/Cloudflare cache purge helper',
     usage: [
       'cache-purge --site-profile <profile> [--project-root <path>] [--environment production|development] [--mode url|hostname|prefix|everything]',
-      'cache-purge --site-profile <profile> --urls https://example.com/,https://example.com/app.js --apply'
+      'cache-purge --site-profile <profile> --urls https://example.com/,https://example.com/app.js --apply',
+      'cache-purge warm --site-profile <profile> [--project-root <path>] [--apply]'
+    ],
+    commands: [
+      { name: 'warm', description: 'GET-warm profile production/development hosts plus diagnostics.qualitySmoke.routes (dry-run by default).' },
     ],
     flags: [
       { name: '--site-profile <path>', description: 'Portable site profile JSON for the target site.' },
@@ -51,7 +56,9 @@ function printHelp() {
     ],
     examples: [
       'cache-purge --site-profile ../site-profiles/example-workers.json',
-      'cache-purge --site-profile ../site-profiles/example-workers.json --urls https://example.com/,https://example.com/_astro/app.js --apply'
+      'cache-purge --site-profile ../site-profiles/example-workers.json --urls https://example.com/,https://example.com/_astro/app.js --apply',
+      'cache-purge warm --site-profile ../site-profiles/example-workers.json',
+      'cache-purge warm --site-profile ../site-profiles/example-workers.json --apply'
     ],
     notes: [
       'Live Cloudflare credentials should come from the project root .env when possible.',
@@ -128,6 +135,10 @@ async function main() {
   if (['help', '--help', '-h'].includes(primary) || flags.help) {
     printHelp();
     return 0;
+  }
+  if (primary === 'warm') {
+    const site = loadSiteProfileContext({ portableRoot, flags });
+    return runCacheWarm({ site, flags });
   }
 
   const site = loadSiteProfileContext({ portableRoot, flags });

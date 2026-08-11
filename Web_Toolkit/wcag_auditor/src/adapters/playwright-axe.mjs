@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import { AdapterError } from '../core/errors.mjs';
 import { ensureDirectory, normalizePath } from '../core/filesystem.mjs';
 import { importOptional } from '../core/dependencies.mjs';
+import { axeRemediationWithFrostHint } from '../core/frost-ui.mjs';
 import { startManagedWebServer } from '../core/web-server.mjs';
 
 const DEFAULT_RUN_ONLY = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22a', 'wcag22aa'];
@@ -164,6 +165,9 @@ function mapAxeResults(results, target) {
 
 function mapAxeNode(rule, node, outcome, target) {
   const tags = [...new Set(rule.tags ?? [])].sort();
+  const frostTags = outcome === 'cantTell' && rule.id === 'color-contrast'
+    ? ['frost-ui-review', 'glassmorphism-friendly']
+    : [];
   return {
     ruleId: `axe/${rule.id}`,
     ruleVersion: 'axe-core',
@@ -189,9 +193,9 @@ function mapAxeNode(rule, node, outcome, target) {
       all: node.all,
       none: node.none
     },
-    remediation: rule.help ?? '',
+    remediation: axeRemediationWithFrostHint(rule, node, outcome),
     helpUrl: rule.helpUrl,
-    tags: ['axe-core', ...tags]
+    tags: ['axe-core', ...tags, ...frostTags]
   };
 }
 
@@ -242,6 +246,10 @@ async function runTargetSizeProbe(page, options, adapterName, scenarioName) {
   const targets = await page.evaluate(({ selector: query, minimum: min, ignoreSelector }) => {
     function cssPath(element) {
       if (element.id) return `#${CSS.escape(element.id)}`;
+      const classList = [...element.classList].filter(Boolean);
+      if (classList.length > 0) {
+        return `${element.localName}${classList.map((name) => `.${CSS.escape(name)}`).join('')}`;
+      }
       const parts = [];
       let current = element;
       while (current && current.nodeType === Node.ELEMENT_NODE && parts.length < 6) {
@@ -274,7 +282,8 @@ async function runTargetSizeProbe(page, options, adapterName, scenarioName) {
         width: Number(rect.width.toFixed(2)),
         height: Number(rect.height.toFixed(2)),
         belowMinimum: rect.width < min || rect.height < min,
-        text: (element.getAttribute('aria-label') || element.textContent || '').trim().slice(0, 120)
+        text: (element.getAttribute('aria-label') || element.textContent || '').trim().slice(0, 120),
+        html: String(element.outerHTML || '').slice(0, 500)
       }];
     });
   }, { selector, minimum, ignoreSelector: options.ignoreSelector ?? null });
@@ -342,7 +351,9 @@ async function runFocusIndicatorProbe(page, options, adapterName, scenarioName) 
         || (style.boxShadow !== 'none' && style.boxShadow !== '');
       const selector = element.id
         ? `#${CSS.escape(element.id)}`
-        : `${element.localName}${element.getAttribute('name') ? `[name="${CSS.escape(element.getAttribute('name'))}"]` : ''}`;
+        : (element.classList.length > 0
+          ? `${element.localName}${[...element.classList].map((name) => `.${CSS.escape(name)}`).join('')}`
+          : `${element.localName}${element.getAttribute('name') ? `[name="${CSS.escape(element.getAttribute('name'))}"]` : ''}`);
       return {
         selector,
         role: element.getAttribute('role') || element.localName,
@@ -353,7 +364,8 @@ async function runFocusIndicatorProbe(page, options, adapterName, scenarioName) 
         outlineWidth: style.outlineWidth,
         outlineColor: style.outlineColor,
         boxShadow: style.boxShadow,
-        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        html: String(element.outerHTML || '').slice(0, 500)
       };
     });
 

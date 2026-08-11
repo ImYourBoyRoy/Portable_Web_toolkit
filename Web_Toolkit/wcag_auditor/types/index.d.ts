@@ -20,6 +20,10 @@ export interface FindingTarget {
   file?: string;
   line?: number;
   column?: number;
+  /** Best-effort locator hint when file/line could not be resolved, or how a match was made. */
+  sourceHint?: string;
+  sourceMatch?: string;
+  sourceKind?: 'markup' | 'style' | string;
 }
 
 export interface RawFinding {
@@ -58,6 +62,8 @@ export interface Suppression {
   adapter?: string;
   routeOrScene?: string;
   state?: string;
+  /** Defaults to ['failed']. Include 'cantTell' for glass/frost axe incompletes after manual AA review. */
+  outcomes?: Array<'failed' | 'cantTell'>;
   justification: string;
   owner: string;
   ticket: string;
@@ -65,7 +71,7 @@ export interface Suppression {
   expiresAt: string;
 }
 
-export type AppliedSuppression = Pick<Suppression, 'justification' | 'owner' | 'ticket' | 'createdAt' | 'expiresAt'>;
+export type AppliedSuppression = Pick<Suppression, 'justification' | 'owner' | 'ticket' | 'createdAt' | 'expiresAt' | 'outcomes'>;
 
 export interface AdapterResult {
   findings: RawFinding[];
@@ -227,7 +233,7 @@ export interface ConsoleReporterConfig {
 }
 
 export interface FileReporterConfig {
-  type: 'json' | 'sarif' | 'junit' | 'html' | 'markdown';
+  type: 'json' | 'sarif' | 'junit' | 'html' | 'markdown' | 'dashboard';
   file: string;
   options?: Record<string, unknown>;
 }
@@ -359,6 +365,7 @@ export function validateSuppression(value: unknown, now?: Date): string | null;
 export function getBuiltinAdapters(): Record<string, AdapterRunner>;
 export function getBuiltinRules(): Array<Record<string, unknown>>;
 export function findBuiltinRule(ruleId: string): Record<string, unknown> | null;
+export function renderDashboardReport(run: AccessibilityRun): string;
 export function renderHtmlReport(run: AccessibilityRun): string;
 export function renderJsonReport(run: AccessibilityRun, options?: { compact?: boolean }): string;
 export function renderJunitReport(run: AccessibilityRun): string;

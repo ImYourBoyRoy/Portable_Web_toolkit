@@ -14,6 +14,7 @@ import { pathExists, readJsonFile } from './filesystem.mjs';
 import { toJsonSafe, validateJsonSafe } from './json.mjs';
 import { validateRelativeOutputFile } from './path-policy.mjs';
 import { validateSuppression } from './suppressions.mjs';
+import { frostGlassContrastCheck } from './frost-ui.mjs';
 
 const CONFIG_NAMES = ['wcag-auditor.config.mjs', 'wcag-auditor.config.js', 'wcag-auditor.config.json'];
 
@@ -547,7 +548,8 @@ function starterConfig() {
     { type: 'json', file: 'wcag-audit.json' },
     { type: 'sarif', file: 'wcag-audit.sarif' },
     { type: 'junit', file: 'wcag-audit.junit.xml' },
-    { type: 'html', file: 'wcag-audit.html' }
+    { type: 'html', file: 'wcag-audit.html' },
+    { type: 'dashboard', file: 'wcag-audit-dashboard.html' }
   ],
   suppressions: []
 };
@@ -592,7 +594,8 @@ function starterEvidence() {
         evidence: '',
         notes: '',
         remediation: 'Verify names, roles, states, values, reading order, announcements, and focus behavior.'
-      }
+      },
+      frostGlassContrastCheck()
     ]
   };
 }

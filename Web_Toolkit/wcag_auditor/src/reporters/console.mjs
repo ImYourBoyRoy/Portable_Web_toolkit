@@ -31,6 +31,11 @@ export function renderConsoleReport(run, options = {}) {
   if (run.reportFiles?.length) {
     lines.push('');
     lines.push(`Reports: ${run.reportFiles.join(', ')}`);
+    const dashboard = run.reportFiles.find((file) => String(file).includes('wcag-audit-dashboard.html'));
+    if (dashboard) {
+      lines.push('');
+      lines.push(paint.bold(`Stakeholder dashboard (share this): ${dashboard}`));
+    }
   }
   return `${lines.join('\n')}\n`;
 }
@@ -61,10 +66,15 @@ function outcomeLabel(outcome, paint) {
 }
 
 function formatLocation(target) {
-  const location = target.file ?? target.routeOrScene ?? target.state ?? '';
-  const position = target.line ? `:${target.line}${target.column ? `:${target.column}` : ''}` : '';
+  if (target?.file) {
+    const position = target.line ? `:${target.line}${target.column ? `:${target.column}` : ''}` : '';
+    const selector = target.selectorOrNode ? ` (${target.selectorOrNode})` : '';
+    return `${target.file}${position}${selector}`;
+  }
+  const location = target.routeOrScene ?? target.state ?? '';
   const selector = target.selectorOrNode ? ` (${target.selectorOrNode})` : '';
-  return `${location}${position}${selector}`;
+  const hint = target.sourceHint ? ` [${target.sourceHint}]` : '';
+  return `${location}${selector}${hint}`;
 }
 
 function singleLine(value) {

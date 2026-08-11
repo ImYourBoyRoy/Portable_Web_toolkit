@@ -33,7 +33,7 @@ export function buildConfig(flags, env) {
     ga4Id,
     posthogKey,
     posthogHost: posthogHost || 'https://us.i.posthog.com',
-    dryRun: toBool(flags['dry-run'], false),
+    dryRun: !toBool(flags.apply, false),
     force: toBool(flags.force, false),
     writeEnv: toBool(flags['write-env'], true),
     patchLayout: toBool(flags['patch-layout'], true),

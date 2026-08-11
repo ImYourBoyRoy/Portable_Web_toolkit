@@ -18,7 +18,7 @@ function printHelp() {
     usage: [
       'agent-env-setup doctor --workspace <path> [--json]',
       'agent-env-setup verify --workspace <path>',
-      'powershell -NoProfile -ExecutionPolicy Bypass -File ./Web_Toolkit/scripts/bootstrap.ps1 prepare-host --workspace <path>',
+      'pwsh -NoProfile -ExecutionPolicy Bypass -File ./Web_Toolkit/scripts/bootstrap.ps1 prepare-host --workspace <path>',
       'bash ./Web_Toolkit/scripts/bootstrap.sh prepare-host --workspace <path>'
     ],
     commands: [
@@ -37,8 +37,8 @@ function printHelp() {
     ],
     examples: [
       'agent-env-setup doctor --workspace C:/sites/client-app',
-      'agent-env-setup fix --workspace C:/sites/client-app',
-      'agent-env-setup prepare-host --workspace C:/sites/client-app'
+      'agent-env-setup verify --workspace C:/sites/client-app --json',
+      'pwsh -NoProfile -ExecutionPolicy Bypass -File ./Web_Toolkit/scripts/bootstrap.ps1 prepare-host --workspace C:/sites/client-app'
     ],
     notes: [
       'Native bootstrap wrappers are now the only supported install/repair path.',

@@ -20,7 +20,12 @@ export function renderMarkdownReport(run) {
 }
 
 function location(finding) {
-  return finding.target.file ?? finding.target.routeOrScene ?? finding.target.selectorOrNode ?? '—';
+  const file = finding.target.file;
+  if (file) {
+    const line = finding.target.line ? `:${finding.target.line}` : '';
+    return `${file}${line}`;
+  }
+  return finding.target.routeOrScene ?? finding.target.selectorOrNode ?? '—';
 }
 
 function escapeMarkdown(value) {

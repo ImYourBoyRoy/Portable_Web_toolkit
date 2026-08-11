@@ -39,7 +39,7 @@ export default {
     failOnSeverities: ['critical', 'serious', 'moderate', 'minor'],
     failOnOutcomes: ['failed'],
     unresolvedOutcomes: ['cantTell', 'untested'],
-    unresolvedEvidence: 'warn',
+    unresolvedEvidence: 'error',
     executionErrors: 'error',
     requireApplicableSurface: true
   },
@@ -48,8 +48,11 @@ export default {
     { type: 'json', file: 'wcag-audit.json' },
     { type: 'sarif', file: 'wcag-audit.sarif' },
     { type: 'html', file: 'wcag-audit.html' },
+    { type: 'dashboard', file: 'wcag-audit-dashboard.html' },
     { type: 'markdown', file: 'wcag-audit.md' }
   ],
+  // After frost-glass-contrast manual AA pass, add cantTell suppressions for axe/color-contrast.
+  // See docs/GLASSMORPHISM.md and examples/astro/frost-canttell-suppression.example.mjs
   suppressions: [],
   metadata: {
     portableToolkit: true,

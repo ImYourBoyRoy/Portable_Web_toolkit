@@ -38,22 +38,20 @@ From `site-starter` projects: `npm run readiness` (after copying scripts).
 ## Phases (default `run`)
 
 1. Capability probe
-2. Toolkit link (`Web_Toolkit` / `web_toolkit`)
-3. Project starter files (README, MEMORY, package, wrangler, scripts)
-4. Site profile completeness
-5. Astro env doctor (if `package.json` exists)
-6. Stylesheet check (if `src/` exists)
-7. Discovery doctor (if `dist/` exists)
-8. Instagram audit (if `feed.json` exists)
-9. Integration doctor (full mode only)
-10. `npm run build` (only with `--build`)
+2. Optional **apply-safe-fixes** (`project-init apply-safe`; failures exit non-zero)
+3. Toolkit link (`Web_Toolkit` / `web_toolkit`)
+4. Project starter files (README, MEMORY, package, wrangler, scripts)
+5. Site profile completeness
+6. **Skill architecture** — internal `.agents/skills/` symlinks, global router skill, legacy global skill purge warnings
+7. Astro env doctor (if `package.json` exists)
+8. **Image posture** — Astro Image/`Picture` defaults + `public/` gap-fill hints (`image-pipeline audit`)
+9. Stylesheet check (if `src/` exists) — includes `tokens.css` / `global.css` / Layout ownership
+10. Discovery doctor (if `dist/` exists)
+11. Instagram audit (if `feed.json` exists)
+12. Integration doctor (full mode only)
+13. `npm run build` (only with `--build`)
 
-## Outputs
-
-- `output/site-readiness-<timestamp>.json` — machine-readable for agents
-- `output/site-readiness-<timestamp>.md` — human-readable summary
-- Console summary with PASS / WARN / FAIL / SKIP per step
-
+Reports land under **`<project>/output/`** (client diagnostics). Toolkit self-checks stay in `Web_Toolkit/.runtime/`.
 ## Auto-fixes
 
 `--apply-safe-fixes` runs **project-init apply-safe** only (never overwrites existing files).

@@ -39,6 +39,8 @@ function stripRange(v = '') {
 function buildBlock() {
   const version = readTrim('VERSION');
   const nodePin = readTrim('.node-version');
+  // Keep site-starter pin identical to repo root (client projects copy this file)
+  fs.writeFileSync(path.join(ROOT, 'site-starter', '.node-version'), `${nodePin}\n`, 'utf8');
   const rootPkg = readJson('package.json');
   const toolkitPkg = readJson('Web_Toolkit/package.json');
   const starter = readJson('site-starter/workers.package.json');

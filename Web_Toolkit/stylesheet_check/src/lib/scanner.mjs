@@ -138,6 +138,109 @@ function pushFinding(findings, entry) {
   findings.push(entry);
 }
 
+function checkAstroStyleArchitecture(root, findings) {
+  const stylesDir = path.join(root, 'src', 'styles');
+  if (!fs.existsSync(stylesDir)) return;
+
+  const tokensPath = path.join(stylesDir, 'tokens.css');
+  const globalPath = path.join(stylesDir, 'global.css');
+  const hasTokens = fs.existsSync(tokensPath);
+  const hasGlobal = fs.existsSync(globalPath);
+
+  if (!hasTokens) {
+    pushFinding(findings, {
+      category: 'architecture',
+      severity: 'error',
+      file: 'src/styles/',
+      line: 1,
+      label: 'Missing tokens.css',
+      excerpt: 'Create src/styles/tokens.css as the single custom-property source (Brand Guide → brand-doctor sync-tokens).'
+    });
+  }
+  if (!hasGlobal) {
+    pushFinding(findings, {
+      category: 'architecture',
+      severity: 'warn',
+      file: 'src/styles/',
+      line: 1,
+      label: 'Missing global.css entry',
+      excerpt: 'Prefer src/styles/global.css that @imports tokens then base/shared layers; import once from Layout.'
+    });
+  } else {
+    const globalText = fs.readFileSync(globalPath, 'utf8');
+    if (hasTokens && !/@import\s+['"].*tokens\.css['"]/.test(globalText) && !/@import\s+url\([^)]*tokens\.css/.test(globalText)) {
+      pushFinding(findings, {
+        category: 'architecture',
+        severity: 'warn',
+        file: 'src/styles/global.css',
+        line: 1,
+        label: 'global.css does not import tokens.css',
+        excerpt: 'Add `@import \"./tokens.css\";` (or equivalent) at the top of global.css.'
+      });
+    }
+  }
+
+  // Layout should import global.css once
+  const layoutCandidates = [
+    'src/layouts/Layout.astro',
+    'src/layouts/BaseLayout.astro',
+    'src/layouts/RootLayout.astro',
+    'src/components/Layout.astro'
+  ];
+  let layoutImportsGlobal = false;
+  let layoutFound = '';
+  for (const relative of layoutCandidates) {
+    const full = path.join(root, relative);
+    if (!fs.existsSync(full)) continue;
+    layoutFound = relative;
+    const text = fs.readFileSync(full, 'utf8');
+    if (/styles\/global\.css|['"]\.\.\/styles\/global\.css['"]|['"]@\/styles\/global\.css['"]/.test(text)) {
+      layoutImportsGlobal = true;
+      break;
+    }
+  }
+  if (hasGlobal && layoutFound && !layoutImportsGlobal) {
+    pushFinding(findings, {
+      category: 'architecture',
+      severity: 'warn',
+      file: layoutFound,
+      line: 1,
+      label: 'Layout does not import global.css',
+      excerpt: 'Import src/styles/global.css once from the root Layout (not from every page).'
+    });
+  } else if (hasGlobal && !layoutFound) {
+    // soft: pages may import; warn only if no layout folder
+    const layoutsDir = path.join(root, 'src', 'layouts');
+    if (!fs.existsSync(layoutsDir)) {
+      pushFinding(findings, {
+        category: 'architecture',
+        severity: 'warn',
+        file: 'src/layouts/',
+        line: 1,
+        label: 'No Layout.astro found',
+        excerpt: 'Add a root Layout that imports global.css once for stylesheet ownership.'
+      });
+    }
+  }
+
+  // Prefer segregated folders when styles grow
+  const styleFiles = walkFiles(stylesDir, (filePath) => STYLESHEET_EXTENSIONS.has(path.extname(filePath).toLowerCase()));
+  if (styleFiles.length >= 6) {
+    const hasComponents = fs.existsSync(path.join(stylesDir, 'components'));
+    const hasLayout = fs.existsSync(path.join(stylesDir, 'layout'));
+    if (!hasComponents && !hasLayout) {
+      pushFinding(findings, {
+        category: 'architecture',
+        severity: 'warn',
+        file: 'src/styles/',
+        line: 1,
+        label: 'Flat styles tree is growing',
+        excerpt: `${styleFiles.length} stylesheets under src/styles/ — prefer layout/ + components/ + pages/ segregation.`
+      });
+    }
+  }
+}
+
 export function scanStylesheets(rootPath, options = {}) {
   const root = path.resolve(String(rootPath || process.cwd()));
   const maxInlineLines = Number(options.maxInlineLines ?? 15);
@@ -148,6 +251,7 @@ export function scanStylesheets(rootPath, options = {}) {
   const tokenDefinitions = new Map();
   const ruleFingerprints = new Map();
 
+  checkAstroStyleArchitecture(root, findings);
   const componentFiles = walkFiles(root, (filePath) =>
     COMPONENT_EXTENSIONS.has(path.extname(filePath).toLowerCase())
   );
@@ -292,7 +396,8 @@ export function scanStylesheets(rootPath, options = {}) {
       fileSize: findings.filter((entry) => entry.category === 'file-size').length,
       tokenPlacement: findings.filter((entry) => entry.category === 'token-placement').length,
       duplicateToken: findings.filter((entry) => entry.category === 'duplicate-token').length,
-      duplicateRule: findings.filter((entry) => entry.category === 'duplicate-rule').length
+      duplicateRule: findings.filter((entry) => entry.category === 'duplicate-rule').length,
+      architecture: findings.filter((entry) => entry.category === 'architecture').length
     }
   };
 }

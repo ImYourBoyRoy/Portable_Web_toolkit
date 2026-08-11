@@ -6,7 +6,7 @@
  * Inputs: CLI flags and optional env defaults (ANALYTICS_* keys in toolkit .env).
  * Outputs: Creates/updates analytics component files, middleware CSP, and env typing/config entries.
  * Side effects: Writes files in the target Astro project; no network calls are performed.
- * Notes: Idempotent by default; use `--dry-run` to preview and `--force` to overwrite generated components.
+ * Notes: Idempotent by default; dry-run unless --apply; use --force to overwrite generated components.
  */
 
 import fs from 'node:fs';
@@ -100,7 +100,7 @@ export async function runAstroAnalyticsScaffold(flags = {}) {
 
   console.log('\ncf-agent scaffold astro-analytics');
   console.log(`- Target project: ${projectRoot}`);
-  console.log(`- Dry run: ${config.dryRun ? 'yes' : 'no'}`);
+  console.log(`- Apply: ${config.dryRun ? 'no (dry-run)' : 'yes'}`);
   console.log('- File operations:');
   operations.forEach(printOperation);
 
@@ -110,7 +110,7 @@ export async function runAstroAnalyticsScaffold(flags = {}) {
   if (!config.posthogKey) {
     console.log('- Note: PostHog API key not provided; PUBLIC_POSTHOG_API_KEY remains blank.');
   }
-  console.log(config.dryRun ? '- No files were changed (dry run).' : '- Scaffold complete. Restart your dev server to pick up env changes.');
+  console.log(config.dryRun ? '- No files were changed (dry run). Re-run with --apply to write files.' : '- Scaffold complete. Restart your dev server to pick up env changes.');
 
   return hasBlockingIssues(operations) ? 2 : 0;
 }

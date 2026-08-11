@@ -31,12 +31,13 @@ function printHelp() {
       { name: '--site-profile <path>', description: 'Portable site profile JSON for the target site.' },
       { name: '--project-root <path>', description: 'Override the project root from the site profile.' },
       { name: '--environment <name>', description: 'production or development (controls dev noindex headers).' },
-      { name: '--apply', description: 'Write changes. scaffold-public defaults to dry-run; write-deploy defaults to apply.' },
+      { name: '--apply', description: 'Write changes. Both scaffold-public and write-deploy default to dry-run.' },
     ],
     examples: [
       'headers-deploy stack',
       'headers-deploy scaffold-public --project-root C:/sites/client --apply',
       'headers-deploy write-deploy --site-profile ./site-profiles/example-workers.json --environment production',
+      'headers-deploy write-deploy --site-profile ./site-profiles/example-workers.json --environment production --apply',
       'headers-deploy audit --project-root C:/sites/client',
     ],
     notes: [

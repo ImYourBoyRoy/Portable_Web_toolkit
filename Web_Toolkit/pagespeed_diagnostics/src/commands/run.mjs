@@ -8,7 +8,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PORTABLE_ROOT, loadEnv, outputPaths, resolveProfile, resolveProjectRoot } from '../lib/paths.mjs';
-import { runRawPageSpeed } from './raw-psi.mjs';
 
 export function strategies(flagValue = '') {
   const value = String(flagValue || 'both').toLowerCase();
@@ -224,7 +223,6 @@ export function summarizeOne(strategy, payload) {
     networkRequestItems: networkRequestsMetrics(payload),
     recommendations: recs,
     failures,
-    payload // Keep for raw dump access
   };
 }
 
@@ -247,11 +245,22 @@ export async function runPageSpeed(flags = {}) {
   const portableEnv = loadEnv(path.join(PORTABLE_ROOT, '.env'));
   const apiKey = String(flags['api-key'] || projectEnv.GOOGLE_PAGESPEED_API_KEY || projectEnv.PAGESPEED_API_KEY || portableEnv.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_PAGESPEED_API_KEY || '').trim();
   const url = String(flags.url || `https://${resolved.profile.hosts.production[0]}`);
+  const paths = outputPaths(projectRoot, resolved.profile.siteId);
+  const stamp = path.basename(paths.jsonPath)
+    .replace(`pagespeed-diagnostics-${resolved.profile.siteId}-`, '')
+    .replace(/\.json$/, '');
   const results = [];
+  const rawPaths = [];
 
   for (const strategy of strategies(flags.strategy)) {
     const payload = await requestPageSpeed(url, strategy, apiKey);
-    results.push(summarizeOne(strategy, payload));
+    const summary = summarizeOne(strategy, payload);
+    results.push(summary);
+
+    const rawPath = path.join(paths.outputDir, `pagespeed-raw-${resolved.profile.siteId}-${strategy}-${stamp}.json`);
+    fs.mkdirSync(paths.outputDir, { recursive: true });
+    fs.writeFileSync(rawPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    rawPaths.push({ strategy, rawPath });
   }
 
   const report = {
@@ -260,9 +269,9 @@ export async function runPageSpeed(flags = {}) {
     projectRoot,
     url,
     usedApiKey: Boolean(apiKey),
-    results
+    results,
+    rawPaths: rawPaths.map((entry) => ({ strategy: entry.strategy, path: entry.rawPath })),
   };
-  const paths = outputPaths(projectRoot, resolved.profile.siteId);
   fs.mkdirSync(paths.outputDir, { recursive: true });
   fs.writeFileSync(paths.jsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   const lines = ['# PageSpeed Diagnostics', '', `- Checked at: ${report.checkedAt}`, `- URL: ${url}`, `- API key used: ${report.usedApiKey}`, ''];
@@ -357,10 +366,11 @@ export async function runPageSpeed(flags = {}) {
       }
     }
     
-    // Linked Raw JSON (Generating it here if requested)
-    const rawPath = await runRawPageSpeed({ ...flags, strategy: result.strategy });
-    const rawFilename = path.basename(rawPath);
-    lines.push('', `> [Raw Audit Data Available: ${rawFilename}](./${rawFilename})`);
+    const rawEntry = rawPaths.find((entry) => entry.strategy === result.strategy);
+    if (rawEntry) {
+      const rawFilename = path.basename(rawEntry.rawPath);
+      lines.push('', `> [Raw Audit Data Available: ${rawFilename}](./${rawFilename})`);
+    }
 
     lines.push('');
 

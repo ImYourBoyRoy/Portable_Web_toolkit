@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { toBool } from '../format.mjs';
 import {
   loadDeployContext,
   readJson,
@@ -53,6 +54,8 @@ export function deployWorkerToCloudflare({ projectRoot, workerName, deployEnv })
 export function runDeployWorkers(flags = {}) {
   const { profilePath, profile, projectRoot, deployEnv } = loadDeployContext(flags);
   const workerName = resolveWorkerName(flags, profile, projectRoot);
+  const apply = toBool(flags.apply, false);
+  const wranglerJsonPath = path.join(projectRoot, 'dist', 'server', 'wrangler.json');
   const configuredSubdomain = String(
     profile?.cloudflare?.workersDevSubdomain || process.env.CF_WORKERS_DEV_SUBDOMAIN || '',
   ).trim();
@@ -61,12 +64,23 @@ export function runDeployWorkers(flags = {}) {
   console.log(`- Project root: ${projectRoot}`);
   console.log(`- Site profile: ${profilePath || '(none)'}`);
   console.log(`- Worker name: ${workerName}`);
+  console.log(`- Apply: ${apply ? 'yes' : 'no (dry-run)'}`);
   if (configuredSubdomain) {
     console.log(`- Profile workers.dev URL: ${workersDevUrl(workerName, configuredSubdomain)}`);
   }
   console.log(
     '- workers.dev uses {worker}.{account-subdomain}.workers.dev — change the account subdomain in Cloudflare dashboard if DNS fails.',
   );
+
+  if (!fs.existsSync(wranglerJsonPath)) {
+    throw new Error('Missing dist/server/wrangler.json — run npm run build first.');
+  }
+
+  if (!apply) {
+    console.log(`- Wrangler config: ${wranglerJsonPath}`);
+    console.log('- Dry-run only. Re-run with --apply to deploy.');
+    return 0;
+  }
 
   const result = deployWorkerToCloudflare({ projectRoot, workerName, deployEnv });
   return typeof result.status === 'number' ? result.status : 1;

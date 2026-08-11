@@ -6,6 +6,7 @@ Portable, deterministic design-automation toolkit for auditing branding requirem
 
 - **AI-Engineered**: Optimized for agentic models to "paint" site assets via declarative JSON.
 - **Spec-First**: 100% of artistic parameters (glow, offsets, blur) are exposed via schema.
+- **Brand Guide aware**: Reads `BRAND_GUIDE.md` on audit; `sync-tokens` writes guide hexes into `src/styles/tokens.css` (managed block) and can patch profile `branding.colors`. Soft-fills OG colors from the guide when profile branding is incomplete. Guide wins on identity; profile remains the execution layer.
 - **Luxe 6.0 Engine**: Ported high-fidelity "Signature" logic with multi-pass rendering.
 - **SVG-First**: Native support for SVG master assets via CairoSVG.
 
@@ -17,6 +18,9 @@ node ./bin/brand-doctor.mjs setup-env
 
 # 2. Run a design & compliance audit
 node ./bin/brand-doctor.mjs audit --project-root .
+
+# 2b. Sync Brand Guide hexes into tokens.css
+node ./bin/brand-doctor.mjs sync-tokens --project-root . --apply
 
 # 3. Generate OG image with AI-override
 node ./bin/brand-doctor.mjs generate-og --apply --signatureOffset 2 --glowPasses 8
@@ -50,7 +54,8 @@ Refer to `Web_Toolkit/site-profile.schema.json` for the full machine-readable sp
 ## Commands
 
 - **`setup-env`**: Resolves the best Python interpreter and installs dependencies.
-- **`audit`**: Deep scan of head tags, manifests, and branding assets.
+- **`audit`**: Deep scan of head tags, manifests, Brand Guide, and branding assets.
+- **`sync-tokens`**: Map Brand Guide hex colors → `src/styles/tokens.css` (+ optional profile). Dry-run unless `--apply`.
 - **`generate-og`**: Generates a high-fidelity OG image (1200x630).
   - `--apply`: Commit changes to disk.
   - `--signatureOffset <int>`, `--glowPasses <int>`, `--delimiter <char>`: Direct CLI overrides.

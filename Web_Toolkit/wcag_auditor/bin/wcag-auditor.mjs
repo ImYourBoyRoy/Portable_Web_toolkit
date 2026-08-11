@@ -94,7 +94,8 @@ async function runToolkitMode(argv) {
         { name: '--config <file>', description: 'Explicit wcag-auditor config path (relative to project root).' },
         { name: '--from-profile', description: 'Build an ephemeral config from site-profile routes/hosts.' },
         { name: '--manage-server', description: 'Start profile commands.preview for profile-built configs.' },
-        { name: '--base-url <url>', description: 'Override adapter baseURL (local preview).' },
+        { name: '--base-url <url>', description: 'Override adapter baseURL (local preview or live URL).' },
+        { name: '--skip-playwright-install', description: 'Do not auto-install Playwright peers/Chromium when missing.' },
         { name: '--force', description: 'Overwrite starter files during init.' },
         { name: '--quiet', description: 'Reduce console reporter noise.' },
         { name: '--no-color', description: 'Disable ANSI color in console output.' }
@@ -106,6 +107,9 @@ async function runToolkitMode(argv) {
         'wcag-auditor core-path'
       ],
       notes: [
+        'Prefer a checked-in wcag-auditor.config.mjs; with --site-profile and no config, --from-profile is implied.',
+        'Playwright peers install in the client project; Chromium is auto-installed unless --skip-playwright-install.',
+        'After run, share wcag-audit-dashboard.html (file:line when mapped) with the user.',
         'Engine is self-contained in Web_Toolkit/wcag_auditor (no AI/ resolution).',
         coreRoot ? `Bundled core: ${coreRoot}` : 'Run `wcag-auditor core-path` to confirm the toolkit module path.',
         'Evidence gate only — does not certify WCAG conformance.'
@@ -126,8 +130,18 @@ async function runToolkitMode(argv) {
     const siteId = profile.siteId || path.basename(projectRoot);
     const paths = outputPaths(projectRoot, siteId);
 
+    let useFromProfile = toBool(flags['from-profile'], false);
     let configPath = null;
-    if (toBool(flags['from-profile'], false)) {
+    if (!useFromProfile) {
+      configPath = await resolveConfigPath(projectRoot, flags, profile);
+      if (!configPath && (flags['site-profile'] || flags.profile)) {
+        // Site profile present but no checked-in config — ephemeral from profile.
+        useFromProfile = true;
+        console.log('[wcag-auditor] no wcag-auditor.config.mjs found; using --from-profile ephemeral config');
+      }
+    }
+
+    if (useFromProfile) {
       fs.mkdirSync(paths.outputDir, { recursive: true });
       const configObject = buildAstroConfigObject({
         profile,
@@ -138,17 +152,28 @@ async function runToolkitMode(argv) {
       });
       configPath = writeEphemeralConfig(paths.ephemeralConfigPath, configObject);
       console.log(`[wcag-auditor] ephemeral config → ${configPath}`);
-    } else {
-      configPath = await resolveConfigPath(projectRoot, flags, profile);
-      if (!configPath) {
-        throw new Error(
-          `No wcag-auditor.config.mjs found under ${projectRoot}. Run \`wcag-auditor init --site-profile <profile>\` or pass --from-profile.`
-        );
-      }
+    } else if (!configPath) {
+      throw new Error(
+        `No wcag-auditor.config.mjs found under ${projectRoot}. Run \`wcag-auditor init --site-profile <profile>\` or pass --from-profile.`
+      );
+    }
+
+    const { ensurePlaywrightReady } = await import('../src/toolkit/ensure-playwright.mjs');
+    const playwrightReady = await ensurePlaywrightReady({
+      projectRoot,
+      browser: 'chromium',
+      autoInstall: !toBool(flags['skip-playwright-install'], false)
+    });
+    if (!playwrightReady.ok) {
+      for (const warning of playwrightReady.warnings) console.error(`[wcag-auditor] ${warning}`);
+      throw new Error('Playwright is not ready for the WCAG auditor run.');
+    }
+    if (playwrightReady.actions.length > 0) {
+      console.log(`[wcag-auditor] Playwright prep: ${playwrightReady.actions.join('; ')}`);
     }
 
     const config = await api.loadConfig(configPath, { cwd: projectRoot });
-    if (toBool(flags['from-profile'], false) || flags['site-profile'] || flags.profile) {
+    if (useFromProfile || flags['site-profile'] || flags.profile) {
       config.outputDirectory = paths.outputDir;
       fs.mkdirSync(paths.outputDir, { recursive: true });
     }
@@ -162,7 +187,18 @@ async function runToolkitMode(argv) {
 
     console.log(`[wcag-auditor] core → ${resolveCoreRoot()}`);
     console.log(`[wcag-auditor] reports → ${config.outputDirectory}`);
-    console.log(`[wcag-auditor] gate exit → ${run.gate.exitCode} (${run.gate.status})`);
+    const dashboardRel = (run.reportFiles || []).find((file) => String(file).includes('wcag-audit-dashboard.html'));
+    const dashboardCandidates = [
+      dashboardRel
+        ? (path.isAbsolute(dashboardRel) ? dashboardRel : path.resolve(run.project.root, dashboardRel))
+        : null,
+      path.join(config.outputDirectory, 'wcag-audit-dashboard.html')
+    ].filter(Boolean);
+    const dashboardAbs = dashboardCandidates.find((candidate) => fs.existsSync(candidate)) || dashboardCandidates[0];
+    if (dashboardAbs) {
+      console.log(`[wcag-auditor] stakeholder dashboard (share with user) → ${dashboardAbs}`);
+    }
+    console.log(`[wcag-auditor] gate exit → ${run.gate.exitCode} (${run.gate.reason})`);
     return run.gate.exitCode;
   }
 

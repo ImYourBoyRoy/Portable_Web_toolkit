@@ -14,7 +14,9 @@ import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { resolvePortableRoot, resolveRuntimePath, loadSiteProfileContext } from '../../shared/lib/context.mjs';
 
 const PORTABLE_ROOT = resolvePortableRoot(import.meta.url, 2);
+const REPO_ROOT = path.resolve(PORTABLE_ROOT, '..');
 const CANONICAL_DOCS = ['README.md', 'AGENTS.md', 'OPERATIONS.md', 'ARCHITECTURE.md', 'RUNBOOKS.md', 'CHECKLIST.md', 'MEMORY.md'];
+const REPO_ROOT_DOCS = new Set(['MEMORY.md']);
 const CORE_TOOLS = ['Setup_agent_environment', 'Setup_astro_environment', 'cloudflare-agent-toolkit', 'site_doctor', 'site_quality_smoke', 'browser_diagnostics', 'integration_doctor', 'cache_purge', 'toolkit_purge', 'toolkit_verify'];
 
 function parseArgs(argv) {
@@ -89,16 +91,25 @@ function detectPackageManager(projectRoot) {
   return 'npm';
 }
 
-function runNode(args = []) {
-  return spawnSync('node', args, { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' });
+function resolveToolkitScript(relativeScriptPath) {
+  return path.join(PORTABLE_ROOT, relativeScriptPath);
+}
+
+function runToolkitScript(relativeScriptPath, args = []) {
+  const scriptPath = resolveToolkitScript(relativeScriptPath);
+  return spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
 }
 
 function parseJsonOutput(result) {
-  if (result.status !== 0) return null;
+  if (result.status !== 0) return { ok: false, status: result.status ?? 1, data: null, stderr: result.stderr || '', stdout: result.stdout || '' };
   try {
-    return JSON.parse(result.stdout || '{}');
+    return { ok: true, status: 0, data: JSON.parse(result.stdout || '{}'), stderr: result.stderr || '', stdout: result.stdout || '' };
   } catch {
-    return null;
+    return { ok: false, status: result.status ?? 1, data: null, stderr: result.stderr || '', stdout: result.stdout || '' };
   }
 }
 
@@ -106,8 +117,13 @@ function boolFlag(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase());
 }
 
+function canonicalDocPath(name) {
+  const root = REPO_ROOT_DOCS.has(name) ? REPO_ROOT : PORTABLE_ROOT;
+  return path.join(root, name);
+}
+
 function canonicalDocState() {
-  return CANONICAL_DOCS.map((name) => ({ name, present: fileExists(path.join(PORTABLE_ROOT, name)) }));
+  return CANONICAL_DOCS.map((name) => ({ name, present: fileExists(canonicalDocPath(name)), root: REPO_ROOT_DOCS.has(name) ? 'repo' : 'toolkit' }));
 }
 
 function toolState() {
@@ -204,12 +220,21 @@ async function main() {
   const project = resolveProject(flags);
   const projectRoot = project.projectRoot;
   const packageJson = readJsonIfExists(path.join(projectRoot, 'package.json'));
-  const agentDoctorArgs = ['Web_Toolkit/Setup_agent_environment/bin/agent-env-setup.mjs', 'doctor', '--workspace', projectRoot, '--json'];
-  const astroDoctorArgs = ['Web_Toolkit/Setup_astro_environment/bin/astro-env-setup.mjs', 'doctor', '--project-root', projectRoot, '--json'];
+  const agentDoctorArgs = ['doctor', '--workspace', projectRoot, '--json'];
+  const astroDoctorArgs = ['doctor', '--project-root', projectRoot, '--json'];
   if (project.profilePath) astroDoctorArgs.push('--site-profile', project.profilePath);
 
-  const agentDoctor = parseJsonOutput(runNode(agentDoctorArgs));
-  const astroDoctor = parseJsonOutput(runNode(astroDoctorArgs));
+  const agentDoctorResult = parseJsonOutput(runToolkitScript('Setup_agent_environment/bin/agent-env-setup.mjs', agentDoctorArgs));
+  const astroDoctorResult = parseJsonOutput(runToolkitScript('Setup_astro_environment/bin/astro-env-setup.mjs', astroDoctorArgs));
+  const doctorFailures = [];
+  if (!agentDoctorResult.ok) {
+    doctorFailures.push(`agent-env-setup doctor failed (exit ${agentDoctorResult.status})`);
+    if (agentDoctorResult.stderr) console.error(agentDoctorResult.stderr.trim());
+  }
+  if (!astroDoctorResult.ok) {
+    doctorFailures.push(`astro-env-setup doctor failed (exit ${astroDoctorResult.status})`);
+    if (astroDoctorResult.stderr) console.error(astroDoctorResult.stderr.trim());
+  }
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -245,8 +270,9 @@ async function main() {
       workerNamesPresent: Boolean(project.profile?.cloudflare?.workerNames?.production && project.profile?.cloudflare?.workerNames?.development)
     },
     doctors: {
-      agent: agentDoctor,
-      astro: astroDoctor
+      agent: agentDoctorResult.data,
+      astro: astroDoctorResult.data,
+      failures: doctorFailures,
     },
     cloudflare: {
       enabled: boolFlag(flags.cloudflare),
@@ -262,7 +288,9 @@ async function main() {
       { name: 'workers verify', args: ['Web_Toolkit/cloudflare-agent-toolkit/bin/cf-agent.mjs', 'workers', 'verify', '--site-profile', project.profilePath, '--project-root', projectRoot] }
     ];
     for (const commandDef of cfCommands) {
-      const result = runNode(commandDef.args);
+      const [relativeScript, ...args] = commandDef.args;
+      const normalizedScript = relativeScript.replace(/^Web_Toolkit\//, '');
+      const result = runToolkitScript(normalizedScript, args);
       report.cloudflare.results.push({ name: commandDef.name, status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' });
     }
     report.cloudflare.allPassed = report.cloudflare.results.every((entry) => entry.status === 0);
@@ -284,6 +312,12 @@ async function main() {
   console.log(`- Next steps: ${report.nextSteps.length}`);
   console.log(`- JSON: ${jsonPath}`);
   console.log(`- Markdown: ${mdPath}`);
+  if (doctorFailures.length > 0) {
+    console.error('\n[toolkit-report] doctor checks failed:');
+    for (const failure of doctorFailures) console.error(`- ${failure}`);
+    return 1;
+  }
+  if (report.cloudflare.enabled && !report.cloudflare.allPassed) return 1;
   return 0;
 }
 

@@ -166,7 +166,8 @@
             "sarif",
             "junit",
             "html",
-            "markdown"
+            "markdown",
+            "dashboard"
           ]
         },
         "file": {
@@ -257,6 +258,18 @@
         },
         "state": {
           "type": "string"
+        },
+        "outcomes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "failed",
+              "cantTell"
+            ]
+          },
+          "description": "Which finding outcomes this suppression may cover. Defaults to [\"failed\"]. Use [\"cantTell\"] for axe incomplete contrast on glassmorphism/frost UI after manual AA verification."
         },
         "justification": {
           "type": "string",

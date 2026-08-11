@@ -117,12 +117,15 @@ test('Playwright adapter maps axe violations, incomplete checks, and runtime pro
     async evaluate(fn) {
       const source = fn.toString();
       if (source.includes('document.querySelectorAll')) {
-        return [{ selector: '#small', width: 20, height: 20, belowMinimum: true, text: 'Small' }];
+        return [{ selector: '#small', width: 20, height: 20, belowMinimum: true, text: 'Small', html: '<button id="small">Small</button>' }];
       }
-      focusCalls += 1;
-      return focusCalls === 1
-        ? { selector: '#button', role: 'button', name: 'Button', visible: true, obviousIndicator: false, outlineStyle: 'none', outlineWidth: '0px', outlineColor: 'transparent', boxShadow: 'none', rect: { x: 0, y: 0, width: 44, height: 44 } }
-        : null;
+      if (source.includes('obviousIndicator') || source.includes('outlineWidth')) {
+        focusCalls += 1;
+        return focusCalls === 1
+          ? { selector: '#button', role: 'button', name: 'Button', visible: true, obviousIndicator: false, outlineStyle: 'none', outlineWidth: '0px', outlineColor: 'transparent', boxShadow: 'none', rect: { x: 0, y: 0, width: 44, height: 44 }, html: '<button id="button">Button</button>' }
+          : null;
+      }
+      return undefined;
     }
   };
   const fakeContext = { newPage: async () => fakePage, close: async () => {} };
@@ -149,7 +152,10 @@ test('Playwright adapter maps axe violations, incomplete checks, and runtime pro
           impact: 'serious',
           help: 'Contrast needs review',
           tags: ['wcag143'],
-          nodes: [{ target: ['#text'], html: '<p>Text</p>' }]
+          nodes: [{
+            target: ['#text'],
+            html: '<p class="frost-panel" style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.2)">Text</p>'
+          }]
         }],
         passes: [{ id: 'html-has-lang', nodes: [{ target: ['html'] }] }],
         inapplicable: []
@@ -165,7 +171,10 @@ test('Playwright adapter maps axe violations, incomplete checks, and runtime pro
     }
   }, context('/tmp', { modules: { playwright, axePlaywright: { AxeBuilder } } }));
   assert.ok(result.findings.some((finding) => finding.ruleId === 'axe/button-name' && finding.outcome === 'failed'));
-  assert.ok(result.findings.some((finding) => finding.ruleId === 'axe/color-contrast' && finding.outcome === 'cantTell'));
+  const contrast = result.findings.find((finding) => finding.ruleId === 'axe/color-contrast' && finding.outcome === 'cantTell');
+  assert.ok(contrast);
+  assert.match(contrast.remediation, /Frosted\/glass|glassmorphism|cantTell/i);
+  assert.ok(contrast.tags.includes('frost-ui-review'));
   assert.ok(result.findings.some((finding) => finding.ruleId === 'wcag-auditor/runtime/target-size-enhanced'));
   assert.ok(result.findings.some((finding) => finding.ruleId === 'wcag-auditor/runtime/focus-indicator-review'));
   assert.ok(result.surfaceCount >= 4);

@@ -44,3 +44,22 @@ export function convertToWebp(inputPath, outputPath, cwd) {
   return JSON.parse(result.stdout);
 }
 
+/**
+ * Optional AVIF conversion. Requires Pillow with AVIF support (or pillow-avif-plugin).
+ * @param {string} inputPath
+ * @param {string} outputPath
+ * @param {string} cwd
+ * @param {{ quality?: number }} [options]
+ */
+export function convertToAvif(inputPath, outputPath, cwd, options = {}) {
+  const quality = Number(options.quality || 55);
+  const result = runPython(
+    ['convert-avif', '--input', inputPath, '--output', outputPath, '--quality', String(quality)],
+    cwd
+  );
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || result.stdout.trim() || `Failed to convert ${inputPath} to AVIF`);
+  }
+  return JSON.parse(result.stdout);
+}
+

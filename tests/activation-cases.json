@@ -1,6 +1,33 @@
 {
   "schema": 1,
   "skills": {
+    "brand-doctor": {
+      "positive": [
+        "Audit and repair favicons and Open Graph images for this toolkit-managed site using brand-doctor."
+      ],
+      "near_miss": [
+        "Change the homepage headline copy only.",
+        "Run PageSpeed Insights on production."
+      ]
+    },
+    "discovery-doctor": {
+      "positive": [
+        "Run discovery-doctor on this site’s dist output and fix robots/sitemap/llms failures before deploy."
+      ],
+      "near_miss": [
+        "Add a marketing blog post draft.",
+        "Purge the Cloudflare cache only."
+      ]
+    },
+    "image-pipeline": {
+      "positive": [
+        "Convert this site’s photographic assets to WebP with the toolkit image-pipeline."
+      ],
+      "near_miss": [
+        "Trace a logo font to SVG outlines.",
+        "Edit only CSS spacing tokens."
+      ]
+    },
     "instagram-clone": {
       "positive": [
         "Clone the public posts from this Instagram profile into a local feed and media directory."
@@ -8,6 +35,15 @@
       "near_miss": [
         "Add an Instagram link to the footer.",
         "Keep the existing static gallery architecture and change only its CSS grid."
+      ]
+    },
+    "pagespeed-diagnostics": {
+      "positive": [
+        "Run Google PageSpeed Insights for this toolkit-managed site with pagespeed-diagnostics mobile and desktop."
+      ],
+      "near_miss": [
+        "Run the WCAG auditor evidence gate.",
+        "Update npm packages without measuring performance."
       ]
     },
     "portable-web-toolkit": {
@@ -27,6 +63,15 @@
       "near_miss": [
         "Configure network routing on a Linux router server.",
         "Install global system packages on the host operating system."
+      ]
+    },
+    "site-maintenance": {
+      "positive": [
+        "Run the full toolkit maintenance loop: package refresh, smoke, deploy, cache purge, warm, and PageSpeed with checkpoints."
+      ],
+      "near_miss": [
+        "Only scaffold a new empty site.",
+        "Only compare toolkit versions without touching the client site."
       ]
     },
     "site-onboarding": {
@@ -73,6 +118,15 @@
       "near_miss": [
         "Generate a photorealistic hero image.",
         "Compress this existing raster photo to WebP without tracing it."
+      ]
+    },
+    "wcag-auditor": {
+      "positive": [
+        "Run the toolkit WCAG auditor evidence gate on this site profile with Playwright Chromium against the live URL."
+      ],
+      "near_miss": [
+        "Check contrast by eye only without toolkit tooling.",
+        "Open AI/wcag-auditor instead of the toolkit module."
       ]
     }
   }

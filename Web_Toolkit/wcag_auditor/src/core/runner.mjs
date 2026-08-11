@@ -12,6 +12,7 @@ import { evaluateGate } from './gate.mjs';
 import { createRunId } from './hash.mjs';
 import { toJsonSafe } from './json.mjs';
 import { normalizeFinding, summarizeFindings } from './result.mjs';
+import { enrichFindingsWithSourceLocations } from './source-locate.mjs';
 import { applySuppressions } from './suppressions.mjs';
 
 export async function runAccessibility(inputConfig, options = {}) {
@@ -78,6 +79,9 @@ export async function runAccessibility(inputConfig, options = {}) {
   let findings = normalizeAll(rawFindings, {
     runId,
     projectName: config.project.name
+  });
+  findings = enrichFindingsWithSourceLocations(findings, {
+    projectRoot: config.project.root
   });
 
   const suppressionResult = applySuppressions(findings, config.suppressions, now);

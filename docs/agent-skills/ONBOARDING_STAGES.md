@@ -95,7 +95,7 @@ Do **not** install system / winget / Homebrew Python for toolkit work.
 
 ```bash
 node <toolkit>/scripts/manage-project-skills.mjs link --project <project> \
-  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,toolkit-update
+  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,site-maintenance,wcag-auditor,pagespeed-diagnostics,discovery-doctor,toolkit-update
 ```
 
 Bare `link` without `--skills` installs **only** the router (by design).

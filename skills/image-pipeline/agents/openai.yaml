@@ -1,0 +1,4 @@
+interface:
+  display_name: "Image Pipeline"
+  short_description: "WebP and media rationalization"
+  default_prompt: "Use $image-pipeline to rationalize raster assets to WebP for this toolkit-managed site."

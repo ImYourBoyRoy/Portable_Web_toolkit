@@ -206,6 +206,13 @@
             "maxRouteDurationMs": {
               "type": "integer",
               "minimum": 1
+            },
+            "privacyPaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Legal/privacy URL paths to probe (e.g. /privacy, /legal)."
             }
           },
           "additionalProperties": true

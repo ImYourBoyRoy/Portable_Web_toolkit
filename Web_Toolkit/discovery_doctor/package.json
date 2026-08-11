@@ -1,0 +1,16 @@
+{
+  "name": "@portable-web-toolkit/discovery-doctor",
+  "version": "1.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "discovery-doctor": "./bin/discovery-doctor.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

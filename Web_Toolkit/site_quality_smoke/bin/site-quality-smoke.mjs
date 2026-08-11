@@ -12,13 +12,13 @@ import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 function help() {
   return printStandardHelp({
     name: 'site-quality-smoke',
-    summary: 'SEO/performance/header smoke tests',
+    summary: 'SEO/performance/header smoke tests plus legal, cookies, image-format, and font checks',
     usage: [
       'site-quality-smoke run --site-profile <profile> [--project-root <path>]',
       'site-quality-smoke diff --site-profile <profile> [--project-root <path>]'
     ],
     commands: [
-      { name: 'run', description: 'Check redirects, security headers, robots, sitemap, route timings, and sampled asset cache/compression posture.' },
+      { name: 'run', description: 'Check redirects, headers, robots/sitemap, timings, OG, legal/privacy, cookies notice, on-page image formats, and remote fonts.' },
       { name: 'diff', description: 'Compare the two latest quality-smoke reports for the same project root.' }
     ],
     flags: [
@@ -31,7 +31,9 @@ function help() {
     ],
     notes: [
       'This tool is non-mutating and live-host focused.',
-      'It is a strong signal for caching and crawl posture, but it is not a full Lighthouse replacement.'
+      'Compliance checks parse root HTML (best-effort); JS-only cookie banners may need browser-diagnostics.',
+      'Prefer WebP/AVIF/SVG on-page; OG social images may still be PNG/JPEG.',
+      'It is a strong smoke signal, not a full Lighthouse replacement.'
     ],
     exitCodes: [
       { name: '0', description: 'No issues detected.' },

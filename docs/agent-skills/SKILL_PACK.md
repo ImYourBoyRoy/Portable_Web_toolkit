@@ -1,24 +1,44 @@
-# Agent skills index
+# Agent skills pack overview
 
-The root `skill-pack.json` is the authoritative inventory, version, tier, and
-installation policy for this skill pack. Governance files stay outside
-`skills/` so native plugin scanners see only actual skills.
+> **Canonical index:** [`SKILL_INDEX.md`](./SKILL_INDEX.md)  
+> **Authoritative inventory:** root [`skill-pack.json`](../../skill-pack.json)
 
-## Core
+This file is a short overview. Prefer `SKILL_INDEX.md` for selection criteria and symlink recipes.
+
+## Core (project-scoped unless noted)
 
 | Skill | Purpose |
 |---|---|
-| `portable-web-toolkit` | Route toolkit-managed Astro and Cloudflare work |
-| `site-readiness` | Establish readiness evidence and next actions |
-| `site-starter` | Start a toolkit-managed site from approved templates |
-| `toolkit-update` | Compare and reconcile toolkit or skill versions |
+| `portable-web-toolkit-router` | Global default: inspect needs and link project skills |
+| `portable-web-toolkit` | Route toolkit-managed Astro + Cloudflare work |
+| `site-onboarding` | Staged hand-holding S0–S9 |
+| `site-starter` | Scaffold from approved templates |
+| `site-readiness` | Readiness evidence and next actions |
+| `site-maintenance` | Healthy ops loop (`HOW_TO.md`) |
+| `wcag-auditor` | A11y evidence via bundled `Web_Toolkit/wcag_auditor` |
+| `pagespeed-diagnostics` | Google PSI via toolkit CLI |
+| `discovery-doctor` | Discovery layer on `dist` or live URL (fail-closed) |
+| `toolkit-update` | Compare and reconcile toolkit/skill versions |
 
 ## Optional
 
 | Skill | Purpose |
 |---|---|
-| `instagram-clone` | Prepare a public-profile static gallery fallback |
-| `vectorize-pipeline` | Prepare authorized font or raster SVG candidates |
+| `brand-doctor` | Brand / favicon / OG assets |
+| `image-pipeline` | Raster → WebP rationalization |
+| `instagram-clone` | Public-profile static gallery fallback |
+| `vectorize-pipeline` | SVG candidates from fonts/rasters |
+
+## Typical project link recipes
+
+```bash
+# Default = light router only (install_by_default)
+node ./scripts/manage-project-skills.mjs link --project <client-site-dir>
+
+# Active website / maintenance work
+node ./scripts/manage-project-skills.mjs link --project <client-site-dir> \
+  --skills site-onboarding,portable-web-toolkit,site-readiness,site-starter,site-maintenance,wcag-auditor,pagespeed-diagnostics,discovery-doctor,toolkit-update
+```
 
 ## Inspect and validate
 
@@ -27,9 +47,4 @@ node ./scripts/validate-skills.mjs
 node ./scripts/check-agent-skills.mjs --agent cursor --scope user
 ```
 
-The status helper never installs. Agents should follow
-[`INSTALL_PROTOCOL.md`](./INSTALL_PROTOCOL.md), preserve conflicts, and install
-only the selected client, scope, and skills.
-
-Cross-platform command conventions are documented in
-[`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md).
+Cross-platform notes: [`CROSS_PLATFORM.md`](./CROSS_PLATFORM.md). Install protocol: [`INSTALL_PROTOCOL.md`](./INSTALL_PROTOCOL.md).

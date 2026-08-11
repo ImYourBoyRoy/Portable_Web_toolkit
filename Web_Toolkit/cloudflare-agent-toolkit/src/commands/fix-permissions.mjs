@@ -6,8 +6,8 @@
  * Cloudflare permission groups, map required permissions by name, and
  * update the token's policies so all required permissions are granted.
  *
- * Usage: cf-agent auth fix-permissions [--zone <name>] [--dry-run]
- * Inputs: zone name (flag or CF_ZONE_NAME env), optional --dry-run flag.
+ * Usage: cf-agent auth fix-permissions [--zone <name>] [--apply]
+ * Inputs: zone name (flag or CF_ZONE_NAME env), optional --apply flag.
  * Outputs: Console summary of added permissions, JSON report in CF_OUTPUT_DIR.
  * Notes: Requires the token to already have API Tokens Write. This is a
  *        write operation that modifies the token's own permission set.
@@ -202,7 +202,7 @@ export async function runFixPermissions(flags = {}) {
     const env = site ? mergedEnv([path.join(site.projectRoot, '.env')]) : mergedEnv();
   const token = resolveCloudflareCredential(env, { requireApiToken: true }).token;
     const zoneName = String(flags.zone || envValue(env, 'CF_ZONE_NAME', '')).trim();
-    const dryRun = toBool(flags['dry-run'], false);
+    const dryRun = !toBool(flags.apply, false);
     const outputDir = String(flags['output-dir'] || envValue(env, 'CF_OUTPUT_DIR', DEFAULT_OUTPUT_DIR));
 
     console.log('\nCloudflare token permission repair');
@@ -290,7 +290,7 @@ export async function runFixPermissions(flags = {}) {
 
     if (dryRun) {
         console.log('\n  Dry-run: would update token with the above permissions.');
-        console.log('  Re-run without --dry-run to apply.');
+        console.log('  Re-run with --apply to update the token.');
     } else {
         console.log('\n  Updating token...');
         await cloudflareRequest(token, `/user/tokens/${tokenId}`, {

@@ -17,6 +17,7 @@ export async function runSiteHarden(flags = {}) {
     ...flags,
     zone: site.zoneName,
     hosts: [...site.productionHosts, ...site.developmentHosts].join(','),
+    'rollback-hosts': site.productionHosts.join(','),
     'dry-run': !apply
   });
 }

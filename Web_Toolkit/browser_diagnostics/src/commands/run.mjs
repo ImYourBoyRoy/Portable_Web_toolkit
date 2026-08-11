@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runLighthouse, runPythonDiagnostics } from '../lib/exec.mjs';
+import { ensurePythonPlaywrightReady } from '../lib/ensure-playwright.mjs';
 import { outputPaths, resolveProfile, resolveProjectRoot } from '../lib/paths.mjs';
 import { renderMarkdown, summarizeReport } from '../lib/summary.mjs';
 
@@ -71,6 +72,18 @@ export async function runBrowserDiagnostics(flags = {}) {
   const projectRoot = resolveProjectRoot(flags, resolved);
   const paths = outputPaths(projectRoot, profile.siteId);
   fs.mkdirSync(paths.outputDir, { recursive: true });
+
+  const skipPlaywrightInstall = toBool(flags['skip-playwright-install'], false);
+  const playwrightReady = ensurePythonPlaywrightReady({
+    projectRoot,
+    autoInstall: !skipPlaywrightInstall
+  });
+  if (!playwrightReady.ok) {
+    console.warn('[browser-diagnostics] Playwright soft-ensure did not succeed:');
+    for (const warning of playwrightReady.warnings) console.warn(`  • ${warning}`);
+  } else if (playwrightReady.actions.length) {
+    console.log(`[browser-diagnostics] Playwright ready (${playwrightReady.actions.join('; ')})`);
+  }
 
   const config = browserConfig(profile, paths, flags);
   fs.writeFileSync(paths.tempConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');

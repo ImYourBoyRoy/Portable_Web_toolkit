@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brand Doctor"
+  short_description: "Brand assets, favicons, OG images"
+  default_prompt: "Use $brand-doctor against this toolkit-managed site profile to audit or repair brand/meta assets."

@@ -21,23 +21,55 @@ Use `cf-agent` to:
 
 ## Core commands
 
+Read-only audits:
+
 ```bash
 node ./bin/cf-agent.mjs permissions audit --site-profile ../site-profiles/example-workers.json
-node ./bin/cf-agent.mjs permissions repair --site-profile ../site-profiles/example-workers.json --apply
 node ./bin/cf-agent.mjs site audit --site-profile ../site-profiles/example-workers.json
-node ./bin/cf-agent.mjs site harden --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs dns audit --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs dns public --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs rules audit --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs performance audit --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs email audit --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs robots audit --site-profile ../site-profiles/example-workers.json
-node ./bin/cf-agent.mjs robots fix --site-profile ../site-profiles/example-workers.json --apply
-node ./bin/cf-agent.mjs dns fix --site-profile ../site-profiles/example-workers.json
-node ./bin/cf-agent.mjs deploy dev --site-profile ../site-profiles/example-workers.json
-node ./bin/cf-agent.mjs deploy prod --site-profile ../site-profiles/example-workers.json
 node ./bin/cf-agent.mjs workers verify --site-profile ../site-profiles/example-workers.json
+```
+
+Mutations (dry-run first, then `--apply`):
+
+```bash
+node ./bin/cf-agent.mjs permissions repair --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs permissions repair --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs site harden --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs site harden --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs dns fix --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs dns fix --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs robots fix --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs robots fix --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs deploy dev --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs deploy dev --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs deploy prod --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs deploy prod --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs deploy pages --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs deploy pages --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs deploy workers --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs deploy workers --site-profile ../site-profiles/example-workers.json --apply
+
 node ./bin/cf-agent.mjs cache purge --site-profile ../site-profiles/example-workers.json
+node ./bin/cf-agent.mjs cache purge --site-profile ../site-profiles/example-workers.json --apply
+
+node ./bin/cf-agent.mjs pages setup --domains www.example.com,example.com --project my-site
+node ./bin/cf-agent.mjs pages setup --domains www.example.com,example.com --project my-site --apply
+
+node ./bin/cf-agent.mjs scaffold astro-analytics --project-root ../site-starter --ga4-id G-XXXX
+node ./bin/cf-agent.mjs scaffold astro-analytics --project-root ../site-starter --ga4-id G-XXXX --apply
 ```
 
 ## Shared configuration
@@ -94,9 +126,10 @@ Full staged walkthrough: [`docs/agent-skills/ONBOARDING_STAGES.md`](../../docs/a
 ## Safety defaults
 
 - Mutations are dry-run first unless `--apply` is passed.
-- `dns fix` only adjusts low-risk proxied-state mismatches on existing records.
-- `site harden` uses smoke checks and keeps Auto Minify out of the recommended baseline.
-- `deploy dev|prod` expects project validation to happen first.
+- `dns fix` only adjusts low-risk proxied-state mismatches on existing records (matched by name **and** type).
+- `site harden` uses smoke checks; SSL rollback triggers only on production hosts with HTTP 525/526/530 (not network failures).
+- `site harden` keeps Auto Minify out of the recommended baseline.
+- `deploy dev|prod|pages|workers` expect project validation to happen first.
 - `dns public` is read-only and useful after registrar/DNS changes while propagation settles.
 - `email audit` is advisory only; it does not change mailbox records.
 
