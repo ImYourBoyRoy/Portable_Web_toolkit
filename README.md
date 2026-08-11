@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.7`
+**Toolkit Release:** `v0.3.8`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.7` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.8` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |

@@ -4,7 +4,8 @@
  * CLI entrypoint for site profile creation and requirements guidance.
  *
  * Run `node ./bin/init-site-profile.mjs requirements` to see what the AI
- * should ask for, or `create` with flags to write a new profile JSON file.
+ * should ask for, or `create` with flags to write a new profile JSON file
+ * into the **client project** by default.
  */
 
 import { parseCliArgs } from '../src/lib/cli.mjs';
@@ -14,35 +15,51 @@ import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 function printHelp() {
   return printStandardHelp({
     name: 'init-site-profile',
-    summary: 'Create portable site profiles',
+    summary: 'Create portable site profiles in the client project (agent intake helper)',
     usage: [
-      'init-site-profile requirements',
-      'init-site-profile create --site-id <id> --project-root <path> --deploy-target workers|pages --zone <name> --prod-hosts a.com,www.a.com [--dev-hosts dev.a.com] [--output <path>]'
+      'init-site-profile requirements [--json]',
+      'init-site-profile create --site-id <id> --project-root <path> --deploy-target workers|pages --zone <name> --prod-hosts a.com,www.a.com [options]'
     ],
     commands: [
-      { name: 'requirements', description: 'Print the information an AI should gather from the user before it can generate a complete site profile.' },
-      { name: 'create', description: 'Write a new profile JSON from supplied business, host, deploy, and Cloudflare details.' }
+      { name: 'requirements', description: 'Print the agent intake checklist (use --json for structured output).' },
+      { name: 'create', description: 'Write <project-root>/<site-id>.site-profile.json from supplied flags.' }
     ],
     flags: [
-      { name: '--site-id <id>', description: 'Stable short identifier used in reports and profile filenames.' },
-      { name: '--project-root <path>', description: 'Target project root.' },
-      { name: '--deploy-target <workers|pages>', description: 'Primary Cloudflare deploy style.' },
-      { name: '--zone <name>', description: 'Cloudflare zone name, usually the production domain.' },
-      { name: '--prod-hosts <csv>', description: 'Production hosts such as apex and www.' },
-      { name: '--dev-hosts <csv>', description: 'Optional development/staging hosts such as dev.example.com.' },
-      { name: '--output <path>', description: 'Optional explicit output path for the created profile JSON.' }
+      { name: '--site-id <id>', description: 'Required. Stable short identifier used in reports and profile filenames.' },
+      { name: '--project-root <path>', description: 'Required. Client project root. Default output is written here.' },
+      { name: '--deploy-target <workers|pages>', description: 'Required. Primary Cloudflare deploy style.' },
+      { name: '--zone <name>', description: 'Required. Cloudflare zone name (usually the production domain).' },
+      { name: '--prod-hosts <csv>', description: 'Required. Production hosts such as apex and www.' },
+      { name: '--dev-hosts <csv>', description: 'Optional development/staging hosts.' },
+      { name: '--registrar <name>', description: 'Current registrar (any provider; Porkbun is one optional toolkit example).' },
+      { name: '--dns-provider <name>', description: 'Current DNS provider (default metadata: cloudflare).' },
+      { name: '--email-enabled <true|false>', description: 'Whether the domain receives email.' },
+      { name: '--email-provider <name>', description: 'Mailbox provider when email is active.' },
+      { name: '--account-id <id>', description: 'Cloudflare account id (agent may look up after API token).' },
+      { name: '--account-name <name>', description: 'Cloudflare account display name.' },
+      { name: '--worker-prod <name>', description: 'Workers production name (default: <siteId>-app).' },
+      { name: '--worker-dev <name>', description: 'Workers development name (default: <siteId>-app-dev).' },
+      { name: '--pages-project <name>', description: 'Pages project name (default: <siteId>).' },
+      { name: '--deploy-dev <cmd>', description: 'Override staging deploy command.' },
+      { name: '--deploy-prod <cmd>', description: 'Override production deploy command.' },
+      { name: '--output <path>', description: 'Optional explicit output path. Default: <project-root>/<site-id>.site-profile.json' },
+      { name: '--json', description: 'With requirements: print structured JSON for agents.' }
     ],
     examples: [
       'init-site-profile requirements',
-      'init-site-profile create --site-id bakery --project-root C:/sites/bakery --deploy-target workers --zone bakery.com --prod-hosts bakery.com,www.bakery.com --dev-hosts dev.bakery.com'
+      'init-site-profile requirements --json',
+      'init-site-profile create --site-id bakery --project-root /sites/bakery --deploy-target workers --zone bakery.com --prod-hosts bakery.com,www.bakery.com --dev-hosts staging.bakery.com --worker-prod bakery-web'
     ],
     notes: [
-      'The AI model should act as the intake wizard and ask only for missing details.',
+      'Default write location is the CLIENT project, not Web_Toolkit/site-profiles/.',
+      'Toolkit site-profiles/ is for public examples only — use --output only when intentionally adding an example.',
+      'The AI model should act as the intake wizard: propose names, challenge vague answers, ask only for missing details.',
       'Site-specific secrets belong in the project root .env, not in the profile JSON.'
     ],
     exitCodes: [
       { name: '0', description: 'Profile created or requirements printed successfully.' },
-      { name: '1', description: 'Unhandled failure.' }
+      { name: '1', description: 'Unhandled failure.' },
+      { name: '2', description: 'Missing/invalid create flags.' }
     ]
   });
 }
@@ -66,4 +83,3 @@ main().then((code) => { process.exitCode = code; }).catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 });
-

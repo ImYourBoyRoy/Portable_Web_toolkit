@@ -5,6 +5,18 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-08-11
+
+### Fixed
+
+- **`init-site-profile create`** now writes `<project-root>/<site-id>.site-profile.json` by default (client project) instead of toolkit `Web_Toolkit/site-profiles/`.
+- Schema `$schema` prefers `./Web_Toolkit/site-profile.schema.json` for client profiles; deploy command defaults match site-starter scripts.
+
+### Changed
+
+- Expanded `init_site_profile` README/help with full flags, agent protocol, and `requirements --json`.
+- Root `.env.example` is a **pointer only**; canonical client template remains `site-starter/.env.example` (optional operator defaults in `Web_Toolkit/.env.example`).
+
 ## [0.3.7] - 2026-08-11
 
 ### Changed

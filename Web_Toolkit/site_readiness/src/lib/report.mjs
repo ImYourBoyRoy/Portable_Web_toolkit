@@ -79,7 +79,7 @@ export function buildRecommendedFixes({ steps = [], capabilities = {}, flags = {
   if (capabilities.mode !== 'sandbox' && stepMap['site-profile']?.status !== 'pass') {
     fixes.push({
       id: 'site-profile',
-      command: 'node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs',
+      command: 'node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs create --site-id <id> --project-root . --deploy-target workers|pages --zone <domain> --prod-hosts <hosts>',
       description: 'Create or complete the site profile for deploy and diagnostics.',
       auto: false,
     });

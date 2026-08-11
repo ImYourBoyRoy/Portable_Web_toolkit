@@ -257,7 +257,21 @@ node <toolkit>/scripts/link-web-toolkit.mjs \
 3. After the Cloudflare token exists, look up `CLOUDFLARE_ACCOUNT_ID` via API when possible; confirm with the user.
 4. For **C**, restate the S5 why: PostHog for product/UX truth; GA4 for Google-ecosystem reporting. If they decline, record the decision in project `MEMORY.md` — do not silently skip the conversation.
 5. For **D**, only open slots the interview selected. Registrar keys are optional; if they use Porkbun *and* want toolkit NS automation, then collect Porkbun keys — otherwise leave blank.
-6. `init-site-profile` with `deployTarget` = `workers` or `pages`.
+6. Create the site profile **in the client project** (not under toolkit `site-profiles/`):
+
+```bash
+node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs requirements --json
+node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs create \
+  --site-id <id> \
+  --project-root . \
+  --deploy-target workers|pages \
+  --zone <domain> \
+  --prod-hosts <domain>,www.<domain> \
+  [--dev-hosts staging.<domain>] \
+  [--worker-prod <name> | --pages-project <name>]
+```
+
+Default output: `./<site-id>.site-profile.json`. See `Web_Toolkit/init_site_profile/README.md`.
 7. Create or update project `BRAND_GUIDE.md`.
 
 **Checkpoint:** List which **A** secrets are still empty, which **B** values the agent proposed, and whether **C** analytics keys are present or explicitly declined.

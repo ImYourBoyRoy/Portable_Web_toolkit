@@ -2,8 +2,8 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.2.0",
-  "toolkit_version": "0.3.7",
-  "source_base_commit": "e584ce0d62bad76903c100ce3ecec2311c16c019",
+  "toolkit_version": "0.3.8",
+  "source_base_commit": "fffa17c8f95e3613b0b1530107e06e010fe16675",
   "skills": [
     {
       "name": "instagram-clone",
@@ -39,7 +39,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-onboarding",
-      "content_sha256": "d8fdf59ee90fdda0ada643b837e030f727f380a241980ee006541c0fc4500d29"
+      "content_sha256": "4e8ec359e5c6c1ff4c616a92f6216b2ddee9e3f62557c7490282bbeb002ac290"
     },
     {
       "name": "site-readiness",

@@ -40,7 +40,14 @@ node "$TOOLKIT/scripts/link-web-toolkit.mjs" \
 # Edit src/lib/site-config.ts, astro.config site URL, package.json placeholders
 
 npm install
-node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs
+node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs requirements
+node ./Web_Toolkit/init_site_profile/bin/init-site-profile.mjs create \
+  --site-id <id> \
+  --project-root . \
+  --deploy-target workers \
+  --zone <domain> \
+  --prod-hosts <domain>,www.<domain>
+# Default output: ./<id>.site-profile.json  (client project — not toolkit site-profiles/)
 node ./Web_Toolkit/project_init/bin/project-init.mjs apply-safe --project-root .
 npm run readiness
 ```

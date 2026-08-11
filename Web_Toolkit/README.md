@@ -43,7 +43,7 @@ Prepare the workstation and target project for development.
 
 - **[Setup Agent Environment](./Setup_agent_environment/README.md)**: Manifest-driven, OS-native workstation bootstrap for Codex/Antigravity/Cloudflare work with early elevation, latest-current Node enforcement, `pyenv-native` Python management, Linux official Node archives, and macOS Command Line Tools detection.
 - **[Setup Astro Environment](./Setup_astro_environment/README.md)**: Non-destructive project bootstrapping and "hole-finding."
-- **[Init Site Profile](./init_site_profile/README.md)**: Helper to generate a new spec-driven site profile.
+- **[Init Site Profile](./init_site_profile/README.md)**: Agent intake helper — writes `<client>/<siteId>.site-profile.json` (not into toolkit `site-profiles/`).
 - **[Integration Doctor](./integration_doctor/README.md)**: Validates `.env` posture and live API connectivity (Forms, Analytics, Auth).
 
 ---

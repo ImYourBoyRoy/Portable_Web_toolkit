@@ -2,7 +2,7 @@
   "name": "@imyourboyroy/portable-web-toolkit-repo",
   "private": true,
   "description": "Toolkit distribution repository — not a deployable website. Copy site-starter/ into a new client project folder.",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "license": "MIT",
   "type": "module",
   "engines": {

@@ -5,25 +5,55 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildProfile, missingFields, requiredQuestions } from '../lib/template.mjs';
+import {
+  buildProfile,
+  requirementsPayload,
+  requiredQuestions,
+  validateCreateFlags
+} from '../lib/template.mjs';
 
-export async function runRequirements() {
-  console.log('\nPortable site profile requirements');
+export async function runRequirements(flags = {}) {
+  const payload = requirementsPayload();
+  if (flags.json) {
+    console.log(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  console.log('\nPortable site profile — agent intake');
+  console.log(`Default output: ${payload.defaultOutput}`);
+  console.log(`Profile projectRoot value: "${payload.projectRootInProfile}" when written into the client project`);
+  console.log(`Note: ${payload.note}`);
+
+  console.log('\nRequired create flags:');
+  for (const entry of payload.requiredCreateFlags) {
+    console.log(`- ${entry.flag}  (${entry.field}) — ${entry.why}`);
+  }
+
+  console.log('\nOptional interview fields (propose defaults; ask only when unknown):');
+  for (const entry of payload.optionalInterviewFields) {
+    console.log(`- ${entry.flag}  (${entry.field}) — ${entry.why}`);
+  }
+
+  console.log('\nAgent protocol:');
+  for (const step of payload.agentProtocol) {
+    console.log(`- ${step}`);
+  }
+
+  console.log('\nLegacy checklist:');
   for (const question of requiredQuestions()) {
     console.log(`- ${question}`);
   }
-  console.log('\nAI guidance: if any required field is missing, ask the user before creating the profile.');
   return 0;
 }
 
 export async function runCreate(flags = {}) {
-  const missing = missingFields(flags);
-  if (missing.length > 0) {
-    console.log('\nMissing required profile fields');
-    for (const entry of missing) {
+  const errors = validateCreateFlags(flags);
+  if (errors.length > 0) {
+    console.log('\nCannot create site profile');
+    for (const entry of errors) {
       console.log(`- ${entry}`);
     }
-    console.log('\nRun `init-site-profile requirements` to see what the AI should ask for.');
+    console.log('\nRun `init-site-profile requirements` (or `requirements --json`) for the agent checklist.');
     return 2;
   }
 
@@ -34,7 +64,8 @@ export async function runCreate(flags = {}) {
   console.log('\nPortable site profile created');
   console.log(`- siteId: ${profile.siteId}`);
   console.log(`- deployTarget: ${profile.deployTarget}`);
+  console.log(`- projectRoot: ${profile.projectRoot}`);
   console.log(`- output: ${outputPath}`);
+  console.log(`- next: pass --site-profile "${outputPath}" to site-readiness / cf-agent`);
   return 0;
 }
-
