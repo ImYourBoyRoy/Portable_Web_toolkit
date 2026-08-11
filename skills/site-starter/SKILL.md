@@ -33,7 +33,7 @@ portable Node commands; adapt only path and shell quoting to the active host.
 
 Prefer **Workers** when the site will collect form submissions or need server APIs. Prefer **Pages static** only when the user confirms a static-only site.
 
-After choosing a target, copy `.env.example` from `site-starter/` (includes `GOOGLE_PAGESPEED_API_KEY`, Cloudflare, forms, analytics, Turnstile slots) and fill secrets in the project root `.env` only.
+After choosing a target, copy `.env.example` from `site-starter/` (sections A–D: required APIs, agent+user naming, recommended PostHog+GA4, optional features). User pastes section A secrets; agent proposes section B with the user; explain analytics early; do not require Porkbun.
 
 ## Portable scaffold transaction
 

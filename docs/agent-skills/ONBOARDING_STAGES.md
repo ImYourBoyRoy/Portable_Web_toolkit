@@ -35,7 +35,7 @@ After **every** stage below:
 | **S4** | Cloudflare MCP / plugin | Official Cloudflare agent skills + MCP for this IDE |
 | **S5** | Site intent interview | Written choices (Workers vs Pages, domain, integrations) |
 | **S6** | Scaffold site-starter | Client folder filled from templates; `Web_Toolkit` linked |
-| **S7** | Env, profile, brand | Site profile + Brand Guide + secrets filled |
+| **S7** | Env, profile, brand | A APIs present; B names confirmed; C analytics explained (keys or explicit decline) |
 | **S8** | Local gates | Build + discovery-doctor + site-readiness |
 | **S9** | Staging → production | Explicit prod authorization; dry-run before `--apply` |
 
@@ -202,14 +202,18 @@ If MCP OAuth fails: guide browser authorization; do not silently retry forever.
 Use [`Web_Toolkit/CHECKLIST.md`](../../Web_Toolkit/CHECKLIST.md) as the question bank. Always force early:
 
 1. Exact new folder path (prefer empty). Approve collisions separately if the folder is not empty.
-2. Production domain, registrar, whether Cloudflare already hosts DNS.
+2. Production domain, **current registrar** (whatever they use — Porkbun is only one optional toolkit example, not required), whether Cloudflare already hosts DNS.
 3. **Workers vs Pages static**
    - **Workers** — SSR, API routes, built-in forms, Turnstile server verify, Workers bindings (KV/D1/R2/cron)
    - **Pages static** — static HTML/assets only; no server runtime
-4. Analytics, email on domain, Instagram gallery, Google PageSpeed API key availability.
-5. Staging vs direct-to-prod expectations.
+4. **Analytics (explain WHY now — do not defer):**
+   - **PostHog** — product analytics, funnels, and session replay so the team can see real visitor behavior and fix UX after launch. Strongly recommend for almost every site.
+   - **GA4** — standard traffic/acquisition reporting; especially valuable when the client already uses Google Ads / Search Console / GA. Prefer pairing GA4 + PostHog.
+   - Challenge “we’ll add analytics later” — wiring empty slots early is cheap; retrofits miss launch traffic and privacy/consent design.
+5. Email on domain, Instagram gallery, Google PageSpeed API key availability.
+6. Staging vs direct-to-prod expectations.
 
-**Checkpoint:** Paste a short decision summary; ask “OK to scaffold?”
+**Checkpoint:** Paste a short decision summary (including analytics yes/no + registrar name); ask “OK to scaffold?”
 
 ---
 
@@ -220,7 +224,7 @@ Use [`Web_Toolkit/CHECKLIST.md`](../../Web_Toolkit/CHECKLIST.md) as the question
 Never scaffold inside the toolkit repo root.
 
 1. Copy matching templates from `site-starter/` (`workers.*` or `pages.*`).
-2. Copy `site-starter/.env.example` (includes `GOOGLE_PAGESPEED_API_KEY` and other API slots).
+2. Copy `site-starter/.env.example` (sections A–D: required APIs, agent+user naming, recommended analytics, optional features).
 3. Link toolkit:
 
 ```bash
@@ -237,12 +241,26 @@ node <toolkit>/scripts/link-web-toolkit.mjs \
 
 ## S7 — Env, profile, brand
 
-1. `init-site-profile` with `deployTarget` = `workers` or `pages`.
-2. Create or update project `BRAND_GUIDE.md`.
-3. Fill project `.env` from `.env.example` (Cloudflare, PageSpeed, forms, Turnstile, analytics as needed).
-4. Optional: `INSTAGRAM_USERNAME` only if a public gallery is wanted.
+**Division of labor for `.env` (see `site-starter/.env.example`):**
 
-**Checkpoint:** Which secrets are still empty placeholders?
+| Section | Who | What |
+|---------|-----|------|
+| **A — Required APIs** | **User pastes** | `CLOUDFLARE_API_TOKEN`, `GOOGLE_PAGESPEED_API_KEY` (never invent) |
+| **B — Agent + user** | **Agent proposes; user confirms** | Account id/name, zone, worker/pages project names, `PUBLIC_SITE_URL`, security contact |
+| **C — Recommended analytics** | **Agent explains WHY; user pastes keys if agreed** | PostHog (`PUBLIC_POSTHOG_*`) + GA4 (`PUBLIC_GA4_MEASUREMENT_ID`) |
+| **D — Optional features** | Only if opted in | Forms, Turnstile, Instagram, registrar tooling (e.g. **Porkbun as one example** — not required) |
+
+### Agent behavior (curious + challenge)
+
+1. Do **not** hand the user a blank `.env` and say “fill this out.” Walk section by section.
+2. For **B**, propose concrete names from the domain/folder (e.g. `acme.com` → worker `acme-web`). Challenge vague names (“site”, “test”, “new-project”).
+3. After the Cloudflare token exists, look up `CLOUDFLARE_ACCOUNT_ID` via API when possible; confirm with the user.
+4. For **C**, restate the S5 why: PostHog for product/UX truth; GA4 for Google-ecosystem reporting. If they decline, record the decision in project `MEMORY.md` — do not silently skip the conversation.
+5. For **D**, only open slots the interview selected. Registrar keys are optional; if they use Porkbun *and* want toolkit NS automation, then collect Porkbun keys — otherwise leave blank.
+6. `init-site-profile` with `deployTarget` = `workers` or `pages`.
+7. Create or update project `BRAND_GUIDE.md`.
+
+**Checkpoint:** List which **A** secrets are still empty, which **B** values the agent proposed, and whether **C** analytics keys are present or explicitly declined.
 
 ---
 
@@ -289,7 +307,8 @@ Follow [`Web_Toolkit/OPERATIONS.md`](../../Web_Toolkit/OPERATIONS.md):
 
 | Topic | Instruction |
 |-------|-------------|
-| Registrar / DNS cutover | Porkbun keys in `.env`; registrar dry-run before NS change |
+| Registrar / DNS cutover | Optional. Ask current registrar; **Porkbun is one example** with toolkit keys + `registrar` dry-run before NS change — not required |
+| Analytics (PostHog + GA4) | Explain WHY in S5; wire keys in S7 section C — do not treat as silent optional |
 | Email on domain | Check MX; warn before zone harden / orange-cloud proxy that can break mail |
 | Headers / CSP | `headers-deploy` before first production publish |
 | WCAG | Bundled `Web_Toolkit/wcag_auditor` only; install Playwright peers in the **client** project |

@@ -5,6 +5,14 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-08-11
+
+### Changed
+
+- **`.env` division of labor** (`site-starter/.env.example` + project-bootstrap): **A** user-pasted required APIs (Cloudflare token, PageSpeed), **B** agent+user naming/IDs, **C** recommended PostHog + GA4 (explain WHY early in S5/S7), **D** optional features.
+- Porkbun documented as an **optional example** registrar integration — not required.
+- Onboarding S5/S7, `site-onboarding`, checklist, and READMEs updated so agents propose names, challenge vague answers, and do not dump a blank `.env` on the user.
+
 ## [0.3.6] - 2026-08-11
 
 ### Added

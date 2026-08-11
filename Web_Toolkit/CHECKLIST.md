@@ -36,11 +36,12 @@
 ## Integrations
 
 - forms / CRM
-- analytics
+- **analytics early** — explain PostHog (product/UX) and GA4 (Google ecosystem); prefer both unless declined
 - email sending
 - booking/scheduling
 - payments
 - auth requirements
+- registrar access if toolkit will manage DNS/NS (**Porkbun is one example**, not required)
 
 ## Nice to collect early
 
@@ -50,3 +51,5 @@
 - multilingual needs
 - maintenance expectations
 - whether the client wants a sanitized toolkit copy later
+- Google PageSpeed Insights API key (required for launch quality gates)
+- PostHog project key + GA4 measurement id (recommended; wire slots even if keys come later)

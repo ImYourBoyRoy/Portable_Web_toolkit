@@ -40,9 +40,13 @@ export function buildProjectEnvExample({ projectRoot = '', profile = null } = {}
   const zoneName = String(profile?.zone?.name || '').trim();
   const cloudflareAccountId = String(profile?.cloudflare?.account?.id || '').trim();
   const cloudflareAccountName = String(profile?.cloudflare?.account?.name || '').trim();
+  const deployTarget = String(profile?.deployTarget || profile?.cloudflare?.deployTarget || '').trim().toLowerCase();
 
-  const requiredEntries = [];
-  const optionalEntries = [];
+  // A = required API · B = agent+user naming · C = recommended analytics · D = optional
+  const requiredApiEntries = [];
+  const agentUserEntries = [];
+  const recommendedAnalyticsEntries = [];
+  const optionalFeatureEntries = [];
   const seen = new Set();
 
   const pushEntry = (collection, key, value = '', note = '') => {
@@ -52,62 +56,85 @@ export function buildProjectEnvExample({ projectRoot = '', profile = null } = {}
     collection.push({ key: normalizedKey, value: String(value ?? ''), note: String(note || '').trim() });
   };
 
-  pushEntry(requiredEntries, 'CLOUDFLARE_API_TOKEN', '', 'required for live Cloudflare audits and deploys');
-  pushEntry(optionalEntries, 'CF_ZONE_NAME', zoneName, zoneName ? 'defaults to the linked site profile zone' : 'fill in the production zone/domain');
-  pushEntry(optionalEntries, 'CLOUDFLARE_ACCOUNT_ID', cloudflareAccountId, 'optional Cloudflare account id hint');
-  pushEntry(optionalEntries, 'CF_ACCOUNT_NAME', cloudflareAccountName, 'optional Cloudflare account name hint');
-  pushEntry(optionalEntries, 'CF_WORKER_NAME', '', 'Workers deploy name hint (when deployTarget=workers)');
-  pushEntry(optionalEntries, 'CF_PAGES_PROJECT', '', 'Pages project name hint (when deployTarget=pages)');
-  pushEntry(optionalEntries, 'GOOGLE_PAGESPEED_API_KEY', '', 'Google PageSpeed Insights API key (pagespeed-diagnostics / quality smoke)');
-  pushEntry(optionalEntries, 'PUBLIC_SITE_URL', '', 'optional production URL override');
-  pushEntry(optionalEntries, 'PUBLIC_SECURITY_CONTACT', '', 'optional security.txt contact (mailto: or https:)');
+  const writeSection = (lines, title, entries) => {
+    if (!entries.length) return;
+    lines.push(title);
+    for (const entry of entries) {
+      if (entry.note) lines.push(`# ${entry.note}`);
+      lines.push(`${entry.key}=${entry.value}`);
+    }
+    lines.push('');
+  };
+
+  // A) User-only API credentials (never invent)
+  pushEntry(requiredApiEntries, 'CLOUDFLARE_API_TOKEN', '', 'USER pastes — Cloudflare API token (Custom Create Token)');
+  pushEntry(requiredApiEntries, 'GOOGLE_PAGESPEED_API_KEY', '', 'USER pastes — Google PageSpeed Insights API key');
+
+  // B) Agent + user naming / IDs (propose from domain/folder; confirm)
+  pushEntry(agentUserEntries, 'CLOUDFLARE_ACCOUNT_ID', cloudflareAccountId, 'AGENT+USER — look up via API after token when possible');
+  pushEntry(agentUserEntries, 'CF_ACCOUNT_NAME', cloudflareAccountName, 'AGENT+USER — human account label');
+  pushEntry(agentUserEntries, 'CF_ZONE_NAME', zoneName, zoneName ? 'AGENT+USER — from site profile zone' : 'AGENT+USER — production zone/domain from interview');
+  if (deployTarget !== 'pages') {
+    pushEntry(agentUserEntries, 'CF_WORKER_NAME', '', 'AGENT+USER — propose from domain/folder (Workers)');
+  }
+  if (deployTarget !== 'workers') {
+    pushEntry(agentUserEntries, 'CF_PAGES_PROJECT', '', 'AGENT+USER — propose from domain/folder (Pages)');
+  }
+  pushEntry(agentUserEntries, 'PUBLIC_SITE_URL', zoneName ? `https://${zoneName}` : '', 'AGENT+USER — propose canonical production URL');
+  pushEntry(agentUserEntries, 'PUBLIC_SECURITY_CONTACT', '', 'AGENT+USER — security.txt contact (mailto: or https:)');
+
+  // C) Recommended analytics — explain WHY early (PostHog + GA4)
+  pushEntry(recommendedAnalyticsEntries, 'PUBLIC_ANALYTICS_ENABLED', 'true', 'RECOMMENDED — set false only if user explicitly declines analytics');
+  pushEntry(recommendedAnalyticsEntries, 'PUBLIC_POSTHOG_API_KEY', '', 'RECOMMENDED — PostHog project key (product analytics / replay)');
+  pushEntry(recommendedAnalyticsEntries, 'PUBLIC_POSTHOG_API_HOST', 'https://us.i.posthog.com', 'PostHog API host');
+  pushEntry(recommendedAnalyticsEntries, 'PUBLIC_GA4_MEASUREMENT_ID', '', 'RECOMMENDED — GA4 measurement id (G-…)');
 
   if (integrationEntries.length === 0) {
-    pushEntry(optionalEntries, 'PUBLIC_ANALYTICS_ENABLED', 'true', 'common analytics toggle');
-    pushEntry(optionalEntries, 'PUBLIC_GA4_MEASUREMENT_ID', '', 'optional GA4 measurement id');
-    pushEntry(optionalEntries, 'PUBLIC_POSTHOG_API_KEY', '', 'optional PostHog project key');
-    pushEntry(optionalEntries, 'PUBLIC_POSTHOG_API_HOST', 'https://us.i.posthog.com', 'PostHog API host');
-    pushEntry(optionalEntries, 'WEB3FORMS_ACCESS_KEY', '', 'optional contact-form provider key');
-    pushEntry(optionalEntries, 'RESEND_API_KEY', '', 'optional Resend API key for transactional email');
-    pushEntry(optionalEntries, 'RESEND_FROM', '', 'optional Resend from address');
-    pushEntry(optionalEntries, 'PUBLIC_TURNSTILE_SITE_KEY', '', 'optional Cloudflare Turnstile site key');
-    pushEntry(optionalEntries, 'TURNSTILE_SECRET_KEY', '', 'optional Cloudflare Turnstile secret');
-    pushEntry(optionalEntries, 'INSTAGRAM_USERNAME', '', 'optional Instagram handle for instagram-clone');
-    pushEntry(optionalEntries, 'INSTAGRAM_CLONE_LIMIT', '24', 'optional Instagram clone post limit');
+    pushEntry(optionalFeatureEntries, 'WEB3FORMS_ACCESS_KEY', '', 'optional contact-form provider key');
+    pushEntry(optionalFeatureEntries, 'RESEND_API_KEY', '', 'optional Resend API key');
+    pushEntry(optionalFeatureEntries, 'RESEND_FROM', '', 'optional Resend from address');
+    pushEntry(optionalFeatureEntries, 'PUBLIC_TURNSTILE_SITE_KEY', '', 'optional Turnstile site key');
+    pushEntry(optionalFeatureEntries, 'TURNSTILE_SECRET_KEY', '', 'optional Turnstile secret');
+    pushEntry(optionalFeatureEntries, 'INSTAGRAM_USERNAME', '', 'optional Instagram handle for gallery');
+    pushEntry(optionalFeatureEntries, 'INSTAGRAM_CLONE_LIMIT', '24', 'optional Instagram clone post limit');
+    pushEntry(optionalFeatureEntries, 'PORKBUN_API_KEY', '', 'optional example registrar (Porkbun) — not required');
+    pushEntry(optionalFeatureEntries, 'PORKBUN_SECRET_KEY', '', 'optional example registrar (Porkbun) — not required');
   }
 
   for (const entry of integrationEntries) {
-    pushEntry(entry.required ? requiredEntries : optionalEntries, entry.key, devVarsExample[entry.key] || '', entry.required ? 'required by the active site profile' : 'used by the active site profile when enabled');
+    const key = entry.key;
+    let target = optionalFeatureEntries;
+    let note = 'profile-enabled optional feature';
+    if (entry.required) {
+      target = requiredApiEntries;
+      note = 'required by the active site profile (USER pastes)';
+    } else if (
+      key === 'PUBLIC_POSTHOG_API_KEY'
+      || key === 'PUBLIC_POSTHOG_API_HOST'
+      || key === 'PUBLIC_GA4_MEASUREMENT_ID'
+      || key === 'PUBLIC_ANALYTICS_ENABLED'
+    ) {
+      target = recommendedAnalyticsEntries;
+      note = 'RECOMMENDED analytics (explain early; USER pastes if agreed)';
+    }
+    pushEntry(target, key, devVarsExample[key] || '', note);
   }
 
   for (const [key, value] of Object.entries(devVarsExample)) {
-    pushEntry(optionalEntries, key, value, 'carried over from .dev.vars.example');
+    pushEntry(optionalFeatureEntries, key, value, 'carried over from .dev.vars.example');
   }
 
   const lines = [
     '# Created by portable project bootstrap helpers',
-    '# Fill in the live values in the project root `.env`.',
-    '# Keep secrets out of the portable folder.',
+    '# A = USER API secrets · B = AGENT+USER naming · C = recommended analytics · D = optional',
+    '# Keep live secrets in the project root `.env` only — never commit them.',
     ''
   ];
 
-  if (requiredEntries.length > 0) {
-    lines.push('# Required first');
-    for (const entry of requiredEntries) {
-      if (entry.note) lines.push(`# ${entry.note}`);
-      lines.push(`${entry.key}=${entry.value}`);
-    }
-    lines.push('');
-  }
-
-  if (optionalEntries.length > 0) {
-    lines.push('# Optional / profile-specific');
-    for (const entry of optionalEntries) {
-      if (entry.note) lines.push(`# ${entry.note}`);
-      lines.push(`${entry.key}=${entry.value}`);
-    }
-    lines.push('');
-  }
+  writeSection(lines, '# ---- A) REQUIRED API CREDENTIALS (user pastes) ----', requiredApiEntries);
+  writeSection(lines, '# ---- B) AGENT + USER (propose names/IDs; confirm) ----', agentUserEntries);
+  writeSection(lines, '# ---- C) RECOMMENDED ANALYTICS (explain WHY early — PostHog + GA4) ----', recommendedAnalyticsEntries);
+  writeSection(lines, '# ---- D) OPTIONAL FEATURES (forms, gallery, registrar e.g. Porkbun) ----', optionalFeatureEntries);
 
   return `${lines.join('\n').trim()}\n`;
 }
@@ -130,7 +157,7 @@ ${siteProfileLine}
 ## Recommended next steps
 
 1. Create or link the site profile.
-2. Fill in the project root \`.env\` from \`.env.example\`.
+2. Fill project \`.env\`: user pastes **A** API keys; agent proposes **B** names/IDs; explain and wire **C** PostHog+GA4 early; enable **D** only for opted-in features (Porkbun is one optional registrar example).
 3. Add or verify the web app scaffold.
 4. Run portable project checks before any live deploys.
 

@@ -19,7 +19,7 @@ Cross-platform: [`docs/agent-skills/CROSS_PLATFORM.md`](../docs/agent-skills/CRO
 
 Set `deployTarget` in `*.site-profile.json` to `workers` or `pages`.
 
-Copy [`.env.example`](./.env.example) into the project (includes `GOOGLE_PAGESPEED_API_KEY` and other toolkit API slots). Live secrets go only in project-root `.env`.
+Copy [`.env.example`](./.env.example) into the project. Sections: **A** required API keys (user), **B** names/IDs (agent + user), **C** recommended PostHog + GA4 (explain early), **D** optional features (Porkbun is one optional registrar example). Live secrets go only in project-root `.env`.
 
 ## Quick start
 

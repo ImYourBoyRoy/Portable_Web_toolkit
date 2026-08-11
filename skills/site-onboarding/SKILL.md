@@ -25,6 +25,12 @@ Follow repository path `docs/agent-skills/ONBOARDING_STAGES.md` as the source of
 6. Always ask **Workers vs Pages static** before scaffolding.
 7. Verify Cloudflare tokens with `cf-agent permissions audit` before mutations.
 8. Re-fetch https://developers.cloudflare.com/agent-setup/prompt.md live for MCP/plugin install commands.
+9. **`.env` division of labor** (`site-starter/.env.example`):
+   - **A (user):** `CLOUDFLARE_API_TOKEN`, `GOOGLE_PAGESPEED_API_KEY`
+   - **B (agent + user):** account/zone/worker or pages names, public URL — propose and challenge
+   - **C (explain early):** PostHog + GA4 — why product analytics + Google reporting matter; do not defer the conversation
+   - **D (optional):** forms/Turnstile/Instagram; registrar keys only if needed (**Porkbun is an example**, not required)
+10. Be curious: challenge vague names, “analytics later,” and missing required API keys before calling setup done.
 
 ## After onboarding
 

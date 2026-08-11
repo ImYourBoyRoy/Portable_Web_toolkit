@@ -2,8 +2,8 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.2.0",
-  "toolkit_version": "0.3.6",
-  "source_base_commit": "09016556fdfd326b0dec12372adecb6992127408",
+  "toolkit_version": "0.3.7",
+  "source_base_commit": "e584ce0d62bad76903c100ce3ecec2311c16c019",
   "skills": [
     {
       "name": "instagram-clone",
@@ -39,7 +39,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-onboarding",
-      "content_sha256": "0efc387a5bf800658a23a608a9a3e582cb0e6e227055dda3b225948720b27241"
+      "content_sha256": "d8fdf59ee90fdda0ada643b837e030f727f380a241980ee006541c0fc4500d29"
     },
     {
       "name": "site-readiness",
@@ -57,7 +57,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-starter",
-      "content_sha256": "8310bb59cd6039349dc66b2a8faae0055de7da379dae0a523eb07c0fbaa756a2"
+      "content_sha256": "bef2f1cc390b1be61def973ed36b4bb1238704414905bc39d3e508b25c003cfe"
     },
     {
       "name": "toolkit-update",

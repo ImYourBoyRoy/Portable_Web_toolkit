@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.6`
+**Toolkit Release:** `v0.3.7`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.6` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.3.7` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -54,7 +54,7 @@ S4 Cloudflare MCP/plugin — ask first; then follow live
    https://developers.cloudflare.com/agent-setup/prompt.md (and agent page e.g. Cursor).
 S5 Site intent — ask Workers (forms/SSR/API) vs Pages static; domain; integrations.
 S6 Scaffold site-starter into a fresh client folder (files appearing is success); link Web_Toolkit.
-S7 Profile, Brand Guide, .env from site-starter/.env.example (incl. GOOGLE_PAGESPEED_API_KEY).
+S7 Profile, Brand Guide, .env sections A–D (user pastes CF+PageSpeed; agent fills names; explain PostHog+GA4 early).
 S8 Build + discovery-doctor + site-readiness (Workers dist/client vs Pages dist).
 S9 Staging → smoke → production only with explicit authorization; CF dry-run before --apply.
 
@@ -76,7 +76,7 @@ The agent follows [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL
 
 ### Working on a site
 
-Each client site lives in a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder using `scripts/link-web-toolkit.mjs`. Copy secrets from [`site-starter/.env.example`](./site-starter/.env.example) (includes PageSpeed, Cloudflare, forms, analytics slots).
+Each client site lives in a **separate folder** with its own `package.json`, `.env`, and site profile. Link this toolkit’s `Web_Toolkit/` into that folder using `scripts/link-web-toolkit.mjs`. Copy secrets from [`site-starter/.env.example`](./site-starter/.env.example) (A required APIs, B agent+user naming, C recommended PostHog+GA4, D optional — Porkbun is one registrar example only).
 
 ### Upgrading & Migrating Existing Installs
 
