@@ -47,7 +47,18 @@ export async function resolveConfigPath(projectRoot, flags = {}, profile = null)
     const candidate = path.resolve(projectRoot, profileConfig);
     if (fs.existsSync(candidate)) return candidate;
   }
-  const { api } = await importCore({ projectRoot });
+  const names = [
+    'wcag-auditor.config.mjs',
+    'wcag-auditor.config.js',
+    'wcagate.config.mjs',
+    'wcagate.config.js',
+    'wcagate.config.json'
+  ];
+  for (const name of names) {
+    const candidate = path.join(projectRoot, name);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  const { api } = await importCore({ ensure: true });
   return api.findConfig(projectRoot);
 }
 

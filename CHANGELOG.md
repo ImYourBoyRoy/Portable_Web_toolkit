@@ -5,6 +5,16 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+### Added
+
+- **Sourcing Doctor Wix harvest**: public storefront HTML + JSON-LD (no admin keys). Profile-driven shop paths, static pages, category rules, and catalog output. `sourcing-doctor audit|extract --site-profile`.
+
+### Changed
+
+- **WCAG engine is WCAGate from GitHub**, not a re-bundle. `Web_Toolkit/wcag_auditor` is a site-profile wrapper. `npm install` in `Web_Toolkit/` fetches `github:imyourboyroy/WCAGate` (unpinned). Engine refresh is `npm run wcagate:update` (reinstalls the git spec; `npm update` does not). `core-path` prints `node_modules/@imyourboyroy/wcagate`. See `docs/decisions/ADR-wcagate-engine.md`.
+- **site-starter** `build:headers:*` scripts pass `--apply` so `headers-deploy write-deploy` actually writes during build (the CLI is dry-run without it).
+- **clean-local-cache** uses `node:fs/promises.rm` instead of `rimraf`, so it still works after `Web_Toolkit/node_modules` exists for WCAGate.
+
 ## [0.3.9] - 2026-08-11
 
 ### Added

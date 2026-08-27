@@ -63,6 +63,19 @@ Do not:
 - delete a local-only module merely because upstream lacks it
 - install host software, push, tag, publish, or deploy without separate approval
 
+### WCAGate engine (independent of toolkit VERSION)
+
+After a toolkit `git pull`, refresh the accessibility engine without bumping toolkit `VERSION`:
+
+```bash
+cd Web_Toolkit
+npm run wcagate:update
+node ./wcag_auditor/bin/wcag-auditor.mjs core-path
+# → …/Web_Toolkit/node_modules/@imyourboyroy/wcagate
+```
+
+Or `node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs doctor --update-engine`. That reinstalls the GitHub spec (`npm update` does not refetch unpinned git deps). npm 12+ needs `--allow-git=all` (shipped in `Web_Toolkit/.npmrc`). Do not clone `AI/wcag-auditor`.
+
 ### Upgrading to Dynamic Symlinked Skill Architecture
 
 When upgrading an existing install to v0.3.2+:

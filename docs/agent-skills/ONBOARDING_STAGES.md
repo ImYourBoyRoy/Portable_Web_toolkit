@@ -325,7 +325,7 @@ Follow [`Web_Toolkit/OPERATIONS.md`](../../Web_Toolkit/OPERATIONS.md):
 | Analytics (PostHog + GA4) | Explain WHY in S5; wire keys in S7 section C — do not treat as silent optional |
 | Email on domain | Check MX; warn before zone harden / orange-cloud proxy that can break mail |
 | Headers / CSP | `headers-deploy` before first production publish |
-| WCAG | Bundled `Web_Toolkit/wcag_auditor` only; install Playwright peers in the **client** project |
+| WCAG | `Web_Toolkit/wcag_auditor` wrapper; engine via `cd Web_Toolkit && npm install --allow-git=all`; Playwright peers in the **client** project |
 | Instagram | Optional skill; only with user consent + `INSTAGRAM_USERNAME` |
 | package-updater | Latest floors; TypeScript stays `^6.0.3` until `@astrojs/check` peers allow 7 |
 | Privacy / export | `privacy-check` + `toolkit-purge` before sharing a toolkit copy |

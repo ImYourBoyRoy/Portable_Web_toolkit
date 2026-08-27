@@ -1,71 +1,56 @@
-# WCAG Auditor (toolkit-bundled)
+# WCAG Auditor (toolkit wrapper)
 
-Self-contained accessibility evidence gate for **Portable Web Toolkit website workflows**.
+Site-profile bridge to **[WCAGate](https://github.com/imyourboyroy/WCAGate)** for Portable Web Toolkit website workflows.
 
-This module lives entirely under `Web_Toolkit/wcag_auditor/`. Website agents and CLIs must **not** resolve `AI/wcag-auditor` or any other tree outside the linked toolkit.
+This module does **not** contain the evidence engine. Agents and CLIs must call `Web_Toolkit/wcag_auditor` (this wrapper), never `AI/wcag-auditor`. The engine lands in `Web_Toolkit/node_modules/@imyourboyroy/wcagate`.
 
 **Not a WCAG conformance certificate** — evidence gate only.
+
+If the engine is missing, see [ENGINE.md](./ENGINE.md).
 
 ## Run
 
 ```bash
 node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs help
 node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs core-path
-# → …/Web_Toolkit/wcag_auditor
+# → …/Web_Toolkit/node_modules/@imyourboyroy/wcagate
 
+node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs doctor --site-profile ./site.site-profile.json
 node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs init --site-profile ./site.site-profile.json
 node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run --site-profile ./site.site-profile.json --base-url https://example.com
 ```
 
-Peers in the **client** project (when using Playwright + axe). The toolkit CLI
-auto-installs missing peers/Chromium unless `--skip-playwright-install`:
+Peers in the **client** project (Playwright + axe). The wrapper auto-installs missing peers/Chromium unless `--skip-playwright-install`:
 
 ```bash
 npm install --save-dev playwright @axe-core/playwright
 npx playwright install chromium
 ```
 
-With a site profile and no checked-in config, `run --site-profile …` implies
-ephemeral `--from-profile` (valid `gate.unresolvedEvidence`: `error` | `ignore` only).
+With a site profile and no checked-in config, `run --site-profile …` implies ephemeral `--from-profile`. Checked-in configs may be `wcag-auditor.config.mjs` (toolkit) or `wcagate.config.mjs` (engine).
 
-## Dashboard + source locate
+## After every run
 
-After a run, open **`wcag-audit-dashboard.html`** under the client `output/` folder
-(absolute path is printed by the CLI). The dashboard lists findings with
-**file:line** when `source-locate` maps selectors/HTML classes into the project
-`src/` tree.
-
-Playwright Chromium is auto-prepared in the client project unless
-`--skip-playwright-install` is passed.
+1. Tell the user the gate: exit `0` pass, `1` blocking, `2` execution/config/missing engine, `3` unresolved.
+2. List blocking and unresolved findings with `file:line` when present.
+3. Optional HTML is `results.html` (or `wcag-audit-dashboard.html` alias). Do not open the HTML as a text file. Optional viewer: engine `wcagate serve`.
 
 ## Glassmorphism / frost UI
 
-Frosted panels and translucent “glass” are first-class. Axe often returns
-**color-contrast incomplete** → outcome **`cantTell`** on those surfaces. That
-is unresolved evidence, not a demand to remove the aesthetic.
+Frosted panels are first-class in WCAGate. Axe `color-contrast` incompletes map to `cantTell` (exit 3 unresolved), not an auto-fail. Do not strip frost UI solely to silence the gate.
 
-Path: design for WCAG AA → verify with a contrast sampler → pass
-`frost-glass-contrast` in `wcag-audit/manual-evidence.json` → add a bounded
-suppression with `outcomes: ["cantTell"]` for `axe/color-contrast`.
-
-Full guide: [`docs/GLASSMORPHISM.md`](./docs/GLASSMORPHISM.md). Examples:
-`examples/astro/manual-evidence-frost.json`,
-`examples/astro/frost-canttell-suppression.example.mjs`.
+See WCAGate `docs/GLASSMORPHISM.md` in the installed package or on GitHub. Toolkit example: `examples/astro/frost-canttell-suppression.example.mjs`.
 
 ## Layout
 
 ```text
-Web_Toolkit/wcag_auditor/
-  bin/wcag-auditor.mjs     ← toolkit entry (--site-profile aware)
-  src/                     ← full auditor core (bundled)
-  src/core/source-locate.mjs
-  src/reporters/dashboard.mjs
-  src/toolkit/             ← site-profile / Astro helpers only
-  docs/ examples/ tests/
+Web_Toolkit/wcag_auditor/          ← wrapper (this repo)
+  bin/wcag-auditor.mjs             ← agent-facing CLI
+  src/toolkit/                     ← --site-profile, ephemeral Astro configs
+Web_Toolkit/node_modules/@imyourboyroy/wcagate
+                                   ← engine (npm git dep, not committed)
 ```
-
-`core-path` must always print this module directory (never an `AI/` sibling).
 
 ## Apps outside the toolkit
 
-Non-website apps may keep a separate checkout or npm package if you want one. That path is **out of scope for toolkit-managed sites**.
+Use WCAGate directly: `npm install --save-dev github:imyourboyroy/WCAGate`. That path is out of scope for toolkit-managed sites.

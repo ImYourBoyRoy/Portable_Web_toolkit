@@ -82,7 +82,7 @@ New machine / Cloudflare beginner? → site-onboarding (ONBOARDING_STAGES S0–S
 New managed site?       → site-onboarding or site-starter (ask Workers vs Pages/static first)
 State uncertain?        → site-readiness
 Deploy or Cloudflare?   → portable-web-toolkit
-Accessibility evidence? → wcag-auditor skill → Web_Toolkit/wcag_auditor (never AI/)
+Accessibility evidence? → wcag-auditor skill → Web_Toolkit/wcag_auditor wrapper (engine: node_modules/@imyourboyroy/wcagate; never AI/)
 PageSpeed Insights?     → pagespeed-diagnostics
 Discovery layer?        → discovery-doctor
 Maintenance day?        → site-maintenance (HOW_TO.md loop)

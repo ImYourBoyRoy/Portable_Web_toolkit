@@ -3,9 +3,8 @@
 /**
  * Portable Web Toolkit WCAG Auditor CLI.
  *
- * When linked inside Web_Toolkit (shared helpers present): site-profile / Astro aware.
- * When invoked as a standalone package install: delegates to the bundled core CLI.
- * Never resolves AI/ or other trees outside this module / linked toolkit.
+ * Site-profile / Astro wrapper around WCAGate (`@imyourboyroy/wcagate`).
+ * Never resolves AI/ sibling checkouts. Missing engine: npm install in Web_Toolkit/.
  */
 
 import fs from 'node:fs';
@@ -46,8 +45,29 @@ function parseArgs(argv) {
   return { command, flags };
 }
 
-async function runCoreCli(argv) {
-  const cli = await import(pathToFileURL(path.join(MODULE_ROOT, 'src', 'cli.mjs')).href);
+function engineOptions(flags = {}) {
+  return {
+    skip: toBool(flags['skip-engine-install'], false),
+    update: toBool(flags['update-engine'], false)
+  };
+}
+
+function findReportFile(run, config, names) {
+  const reportFiles = run.reportFiles || [];
+  const candidates = [];
+  for (const name of names) {
+    const match = reportFiles.find((file) => String(file).replace(/\\/g, '/').endsWith(name));
+    if (match) {
+      candidates.push(path.isAbsolute(match) ? match : path.resolve(run.project.root, match));
+    }
+    candidates.push(path.join(config.outputDirectory, name));
+  }
+  return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0] || null;
+}
+
+async function runCoreCli(argv, flags = {}) {
+  const { importCore } = await import('../src/toolkit/resolve-core.mjs');
+  const { cli } = await importCore(engineOptions(flags));
   return cli.main(argv);
 }
 
@@ -70,54 +90,61 @@ async function runToolkitMode(argv) {
   function printHelp(coreRoot = '') {
     return printStandardHelp({
       name: 'wcag-auditor',
-      summary: 'Accessibility evidence gate bundled in Web_Toolkit (site-profile aware)',
+      summary: 'Accessibility evidence gate: site-profile wrapper around WCAGate',
       usage: [
         'wcag-auditor run --site-profile <profile> [--project-root <path>] [--from-profile] [--manage-server]',
         'wcag-auditor run --project-root <path> [--config <file>]',
         'wcag-auditor init --site-profile <profile> [--force]',
+        'wcag-auditor doctor [--site-profile <profile>]',
         'wcag-auditor validate-config --site-profile <profile>',
         'wcag-auditor list-rules',
         'wcag-auditor explain <rule-id>',
         'wcag-auditor core-path'
       ],
       commands: [
-        { name: 'run', description: 'Run the bundled auditor against a toolkit-managed site.' },
+        { name: 'run', description: 'Run WCAGate against a toolkit-managed site.' },
         { name: 'init', description: 'Write Astro/site-profile-aware starter config + manual evidence template.' },
+        { name: 'doctor', description: 'Diagnose engine, Node, and Playwright readiness (fail closed).' },
         { name: 'validate-config', description: 'Load and validate the accessibility configuration.' },
         { name: 'list-rules', description: 'List built-in rule metadata.' },
         { name: 'explain', description: 'Print one built-in rule definition as JSON.' },
-        { name: 'core-path', description: 'Print this bundled module root (must be under Web_Toolkit/).' }
+        { name: 'core-path', description: 'Print the resolved WCAGate engine root (under Web_Toolkit/node_modules).' }
       ],
       flags: [
         { name: '--site-profile <path>', description: 'Portable site profile JSON for the target site.' },
         { name: '--project-root <path>', description: 'Override the project root from the site profile.' },
-        { name: '--config <file>', description: 'Explicit wcag-auditor config path (relative to project root).' },
+        { name: '--config <file>', description: 'Explicit wcag-auditor / wcagate config path (relative to project root).' },
         { name: '--from-profile', description: 'Build an ephemeral config from site-profile routes/hosts.' },
         { name: '--manage-server', description: 'Start profile commands.preview for profile-built configs.' },
         { name: '--base-url <url>', description: 'Override adapter baseURL (local preview or live URL).' },
         { name: '--skip-playwright-install', description: 'Do not auto-install Playwright peers/Chromium when missing.' },
+        { name: '--skip-engine-install', description: 'Do not auto-npm-install WCAGate when missing (exit 2 instead).' },
+        { name: '--update-engine', description: 'Reinstall github:imyourboyroy/WCAGate in Web_Toolkit/ (no toolkit VERSION bump).' },
         { name: '--force', description: 'Overwrite starter files during init.' },
         { name: '--quiet', description: 'Reduce console reporter noise.' },
         { name: '--no-color', description: 'Disable ANSI color in console output.' }
       ],
       examples: [
         'wcag-auditor init --site-profile ../site-profiles/example-workers.json',
+        'wcag-auditor doctor --site-profile ../site-profiles/example-workers.json',
         'wcag-auditor run --site-profile ../site-profiles/example-workers.json --base-url http://127.0.0.1:4321',
         'wcag-auditor run --site-profile ../site-profiles/example-workers.json --from-profile',
         'wcag-auditor core-path'
       ],
       notes: [
-        'Prefer a checked-in wcag-auditor.config.mjs; with --site-profile and no config, --from-profile is implied.',
+        'Engine is github:imyourboyroy/WCAGate, installed into Web_Toolkit/node_modules.',
+        'If the engine is missing: cd Web_Toolkit && npm install --allow-git=all',
+        'Prefer a checked-in wcag-auditor.config.mjs or wcagate.config.mjs; with --site-profile and no config, --from-profile is implied.',
         'Playwright peers install in the client project; Chromium is auto-installed unless --skip-playwright-install.',
-        'After run, share wcag-audit-dashboard.html (file:line when mapped) with the user.',
-        'Engine is self-contained in Web_Toolkit/wcag_auditor (no AI/ resolution).',
-        coreRoot ? `Bundled core: ${coreRoot}` : 'Run `wcag-auditor core-path` to confirm the toolkit module path.',
+        'After run, tell the user the gate (0/1/2/3) and findings with file:line. Optional HTML: results.html (serve) — not a GUI.',
+        'Never resolve AI/wcag-auditor. core-path should contain node_modules/@imyourboyroy/wcagate.',
+        coreRoot ? `WCAGate engine: ${coreRoot}` : 'Run `wcag-auditor core-path` after npm install in Web_Toolkit/.',
         'Evidence gate only — does not certify WCAG conformance.'
       ],
       exitCodes: [
         { name: '0', description: 'Configured gate passed.' },
         { name: '1', description: 'Blocking accessibility findings.' },
-        { name: '2', description: 'Configuration, dependency, adapter, or empty-surface failure.' },
+        { name: '2', description: 'Configuration, dependency, adapter, missing engine, or empty-surface failure.' },
         { name: '3', description: 'Required evidence remains untested or inconclusive.' }
       ]
     });
@@ -135,9 +162,8 @@ async function runToolkitMode(argv) {
     if (!useFromProfile) {
       configPath = await resolveConfigPath(projectRoot, flags, profile);
       if (!configPath && (flags['site-profile'] || flags.profile)) {
-        // Site profile present but no checked-in config — ephemeral from profile.
         useFromProfile = true;
-        console.log('[wcag-auditor] no wcag-auditor.config.mjs found; using --from-profile ephemeral config');
+        console.log('[wcag-auditor] no wcag-auditor.config.mjs / wcagate.config.mjs found; using --from-profile ephemeral config');
       }
     }
 
@@ -154,7 +180,7 @@ async function runToolkitMode(argv) {
       console.log(`[wcag-auditor] ephemeral config → ${configPath}`);
     } else if (!configPath) {
       throw new Error(
-        `No wcag-auditor.config.mjs found under ${projectRoot}. Run \`wcag-auditor init --site-profile <profile>\` or pass --from-profile.`
+        `No wcag-auditor.config.mjs or wcagate.config.mjs found under ${projectRoot}. Run \`wcag-auditor init --site-profile <profile>\` or pass --from-profile.`
       );
     }
 
@@ -185,18 +211,11 @@ async function runToolkitMode(argv) {
       stream: process.stdout
     });
 
-    console.log(`[wcag-auditor] core → ${resolveCoreRoot()}`);
+    console.log(`[wcag-auditor] engine → ${resolveCoreRoot(engineOptions(flags))}`);
     console.log(`[wcag-auditor] reports → ${config.outputDirectory}`);
-    const dashboardRel = (run.reportFiles || []).find((file) => String(file).includes('wcag-audit-dashboard.html'));
-    const dashboardCandidates = [
-      dashboardRel
-        ? (path.isAbsolute(dashboardRel) ? dashboardRel : path.resolve(run.project.root, dashboardRel))
-        : null,
-      path.join(config.outputDirectory, 'wcag-audit-dashboard.html')
-    ].filter(Boolean);
-    const dashboardAbs = dashboardCandidates.find((candidate) => fs.existsSync(candidate)) || dashboardCandidates[0];
-    if (dashboardAbs) {
-      console.log(`[wcag-auditor] stakeholder dashboard (share with user) → ${dashboardAbs}`);
+    const resultsAbs = findReportFile(run, config, ['results.html', 'wcag-audit-dashboard.html']);
+    if (resultsAbs) {
+      console.log(`[wcag-auditor] results HTML (optional view; share path, do not open as text) → ${resultsAbs}`);
     }
     console.log(`[wcag-auditor] gate exit → ${run.gate.exitCode} (${run.gate.reason})`);
     return run.gate.exitCode;
@@ -238,7 +257,7 @@ async function runToolkitMode(argv) {
     });
     console.log(`[wcag-auditor] created ${files.configPath}`);
     if (files.evidencePath) console.log(`[wcag-auditor] created ${files.evidencePath}`);
-    console.log(`[wcag-auditor] core → ${resolveCoreRoot()}`);
+    console.log(`[wcag-auditor] engine → ${resolveCoreRoot(engineOptions(flags))}`);
     console.log('[wcag-auditor] edit scenarios/baseURL, install Playwright peers if needed, then run.');
     return 0;
   }
@@ -253,36 +272,59 @@ async function runToolkitMode(argv) {
     console.log(`Project: ${config.project.name}`);
     console.log(`Adapters: ${config.adapters.length}`);
     console.log(`Output: ${config.outputDirectory}`);
-    console.log(`Core: ${resolveCoreRoot()}`);
+    console.log(`Engine: ${resolveCoreRoot(engineOptions(flags))}`);
     return 0;
   }
 
   const { command, flags } = parseArgs(argv);
   const primary = String(command[0] || 'help').toLowerCase();
+  const opts = engineOptions(flags);
 
   if (primary === 'core-path') {
-    console.log(resolveCoreRoot());
+    console.log(resolveCoreRoot(opts));
     return 0;
   }
 
   if (['help', '--help', '-h'].includes(primary)) {
-    let coreRoot = '(not resolved)';
+    let coreRoot = '(engine not resolved)';
     try {
-      coreRoot = resolveCoreRoot();
+      coreRoot = resolveCoreRoot({ ...opts, skip: true });
     } catch {
-      // keep placeholder
+      try {
+        coreRoot = resolveCoreRoot(opts);
+      } catch {
+        // keep placeholder
+      }
     }
     printHelp(coreRoot);
     return 0;
   }
 
-  const { api, cli } = await importCore();
+  const { api, cli } = await importCore(opts);
 
   if (primary === 'version' || primary === '--version' || primary === '-v') {
     return cli.main(['version']);
   }
   if (primary === 'list-rules') return cli.main(['list-rules']);
   if (primary === 'explain') return cli.main(['explain', ...command.slice(1)]);
+
+  if (primary === 'doctor') {
+    const resolved = resolveProfile(flags);
+    const projectRoot = resolveProjectRoot(flags, resolved);
+    const doctorArgs = ['doctor', '--cwd', projectRoot];
+    if (flags.json) doctorArgs.push('--json');
+    if (flags.config) doctorArgs.push('--config', String(flags.config));
+    return cli.main(doctorArgs);
+  }
+
+  if (primary === 'prepare') {
+    const resolved = resolveProfile(flags);
+    const projectRoot = resolveProjectRoot(flags, resolved);
+    const prepareArgs = ['prepare', '--cwd', projectRoot];
+    if (flags.config) prepareArgs.push('--config', String(flags.config));
+    if (flags['skip-playwright-install']) prepareArgs.push('--skip-playwright-install');
+    return cli.main(prepareArgs);
+  }
 
   if (primary === 'init') {
     if (flags['site-profile'] || flags.profile || flags['project-root']) {
@@ -291,6 +333,7 @@ async function runToolkitMode(argv) {
     const args = ['init', ...command.slice(1)];
     if (flags.force) args.push('--force');
     if (flags.cwd) args.push('--cwd', String(flags.cwd));
+    if (flags.preset) args.push('--preset', String(flags.preset));
     return cli.main(args);
   }
 
@@ -298,9 +341,7 @@ async function runToolkitMode(argv) {
     if (flags['site-profile'] || flags.profile || flags['project-root'] || flags.config) {
       return validateWithToolkit(flags, api);
     }
-    return cli.main(['validate-config', ...Object.entries(flags).flatMap(([k, v]) => (
-      v === true ? [`--${k}`] : [`--${k}`, String(v)]
-    ))]);
+    return cli.main(['validate-config', '--cwd', String(flags.cwd || process.cwd())]);
   }
 
   if (primary === 'run') {
@@ -316,14 +357,15 @@ async function runToolkitMode(argv) {
   }
 
   console.error(`Unknown command: ${primary}`);
-  printHelp(resolveCoreRoot());
+  printHelp(resolveCoreRoot(opts));
   return 2;
 }
 
 async function main() {
   const argv = process.argv.slice(2);
+  const { flags } = parseArgs(argv);
   if (!HAS_TOOLKIT_SHARED) {
-    return runCoreCli(argv);
+    return runCoreCli(argv, flags);
   }
   return runToolkitMode(argv);
 }

@@ -8,7 +8,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { frostGlassContrastCheck } from '../core/frost-ui.mjs';
+import { importCore } from './resolve-core.mjs';
 
 function routesFromProfile(profile = {}) {
   const wcag = profile.diagnostics?.wcagAuditor || {};
@@ -167,7 +167,7 @@ export function buildAstroConfigObject({
       { type: 'sarif', file: 'wcag-audit.sarif' },
       { type: 'junit', file: 'wcag-audit.junit.xml' },
       { type: 'html', file: 'wcag-audit.html' },
-      { type: 'dashboard', file: 'wcag-audit-dashboard.html' },
+      { type: 'results', file: 'results.html' },
       { type: 'markdown', file: 'wcag-audit.md' }
     ],
     suppressions: [],
@@ -186,7 +186,8 @@ export default ${JSON.stringify(configObject, null, 2)};
 `;
 }
 
-export function starterManualEvidence(projectName = 'site') {
+export async function starterManualEvidence(projectName = 'site') {
+  const { api } = await importCore({ ensure: true });
   return {
     schemaVersion: 1,
     project: projectName,
@@ -226,7 +227,7 @@ export function starterManualEvidence(projectName = 'site') {
         notes: '',
         remediation: 'Smoke-test primary routes with a screen reader and record defects.'
       },
-      frostGlassContrastCheck()
+      api.frostGlassContrastCheck()
     ]
   };
 }
@@ -259,7 +260,7 @@ export async function writeAstroStarterFiles(projectRoot, {
   if (includeManualEvidence) {
     fs.writeFileSync(
       evidencePath,
-      `${JSON.stringify(starterManualEvidence(configObject.project.name), null, 2)}\n`,
+      `${JSON.stringify(await starterManualEvidence(configObject.project.name), null, 2)}\n`,
       'utf8'
     );
   }

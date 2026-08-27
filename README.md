@@ -147,7 +147,7 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed �
 | PageSpeed Insights | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `pagespeed-diagnostics` |
 | Cloudflare audit / repair | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `cf-agent` (dry-run before `--apply`) |
 | Full maintenance loop | Prompt in [`HOW_TO.md`](./HOW_TO.md) (upgrade → smoke → deploy → purge → warm → PSI) |
-| Accessibility evidence (sites) | Bundled `Web_Toolkit/wcag_auditor` only (no `AI/` resolution) |
+| Accessibility evidence (sites) | `Web_Toolkit/wcag_auditor` wrapper + WCAGate from GitHub (never `AI/` resolution) |
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
 | Compare toolkit + skills | `toolkit-update` or `node scripts/update-toolkit.mjs` |
 | Prepare an SVG candidate | Optional `vectorize-pipeline` skill |

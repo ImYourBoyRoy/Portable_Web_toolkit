@@ -1,4 +1,7 @@
-// Web_Toolkit/sourcing_doctor/src/commands/extract.mjs
+// ./Web_Toolkit/sourcing_doctor/src/commands/extract.mjs
+/**
+ * WordPress REST extraction into ContentManifest, URL map, and optional media.
+ */
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fetchAllWordPressPages, fetchAllWordPressPosts, fetchAllWordPressMedia } from '../lib/wordpress/client.mjs';

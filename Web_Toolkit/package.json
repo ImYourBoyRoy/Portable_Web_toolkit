@@ -34,7 +34,11 @@
     "agent-env-setup": "./Setup_agent_environment/bin/agent-env-setup.mjs",
     "astro-env-setup": "./Setup_astro_environment/bin/astro-env-setup.mjs"
   },
+  "dependencies": {
+    "@imyourboyroy/wcagate": "github:imyourboyroy/WCAGate"
+  },
   "scripts": {
+    "wcagate:update": "npm install github:imyourboyroy/WCAGate --allow-git=all",
     "check:syntax": "node ./scripts/check-syntax.mjs",
     "verify": "node ./toolkit_verify/bin/toolkit-verify.mjs",
     "quality:smoke:batch": "node ./scripts/batch-quality-smoke.mjs",

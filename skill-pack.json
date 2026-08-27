@@ -57,7 +57,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/portable-web-toolkit",
-      "content_sha256": "d8ad8d4cd0c8e4d65e542b9c548eaa6e45f5ac724fe5dc1ab4ed56d19b8467c0"
+      "content_sha256": "4a0237e61972fd597cbab0f2a8870b862dcc666c03a31961798fb37581dbf7d3"
     },
     {
       "name": "portable-web-toolkit-router",
@@ -66,7 +66,7 @@
       "status": "stable",
       "install_by_default": true,
       "path": "skills/portable-web-toolkit-router",
-      "content_sha256": "c458fc85e9e520056af85ce0ef6222efe7a770ade4e63987c28bd884fa9ca5cf"
+      "content_sha256": "38cfd31e7d427b43e83b33188b507382a623913189bc39eee4ef5d4a87067da4"
     },
     {
       "name": "site-maintenance",
@@ -111,7 +111,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/toolkit-update",
-      "content_sha256": "02992a66264793264ff33f8d019f38cdaf00f52d58f741bc009ed6e5e955738c"
+      "content_sha256": "fa4c0db6cda516eacaa5e72e02baffaa5e030bec75911f92cda3ec8b7ff2facc"
     },
     {
       "name": "vectorize-pipeline",
@@ -124,12 +124,12 @@
     },
     {
       "name": "wcag-auditor",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "tier": "core",
       "status": "stable",
       "install_by_default": false,
       "path": "skills/wcag-auditor",
-      "content_sha256": "e7730c7652e8f2191af0babb35e9211ac21244f0cc76b1612659da5ddb74011f"
+      "content_sha256": "36d861045c01846216204ba93ef17a251bb2e5ee4c8e8f624372183d742b5ab3"
     }
   ]
 }
