@@ -20,7 +20,7 @@ Only this router is `install_by_default` / globally installed.
 | Readiness / gates | `site-readiness` |
 | Deploy / Cloudflare ops | `portable-web-toolkit` |
 | Full upgrade → smoke → deploy → purge → warm → PSI | `site-maintenance` → `HOW_TO.md` |
-| Accessibility evidence | `wcag-auditor` → `Web_Toolkit/wcag_auditor` only (never `AI/`) |
+| Accessibility evidence | `wcag-auditor` → `Web_Toolkit/wcag_auditor` wrapper (engine in `node_modules/@imyourboyroy/wcagate`; never `AI/`) |
 | PageSpeed Insights | `pagespeed-diagnostics` |
 | Discovery layer (robots/sitemap/llms) | `discovery-doctor` |
 | Brand / favicon / OG | `brand-doctor` |

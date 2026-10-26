@@ -56,7 +56,7 @@ Use this sequence unless you have a good reason to skip a step.
 - Do not “fix everything” blindly — show a plan, then apply.
 - PageSpeed **100/100/100/100** is a *target*, not a promise. Chase Core Web Vitals
   and real regressions without breaking design, SEO, forms, or accessibility.
-  Use bundled `wcag_auditor` for a11y evidence — not the PSI Accessibility score alone.
+  Use `wcag_auditor` (WCAGate wrapper) for a11y evidence — not the PSI Accessibility score alone.
 - **Images:** prefer **Astro `Image` / `Picture`** (`astro:assets`, masters in `src/assets/`) with
   `OptimizedPicture` (`formats={['avif','webp']}`). Workers use `cloudflare({ imageService: 'compile' })`.
   Use **image-pipeline** only for leftover JPG/PNG under `public/` (WebP default; optional AVIF).
@@ -129,11 +129,11 @@ optionally re-check the live production URL after I approve deploy.
 ### 7) Accessibility evidence
 
 ```text
-Use the wcag-auditor Portable Web Toolkit skill (Web_Toolkit/wcag_auditor only —
-never AI/wcag-auditor). Ensure Playwright Chromium is ready in this client project,
-then run against the site profile and https://… or local preview. After the run,
-open and share wcag-audit-dashboard.html with me (it lists file:line when mapped).
-Summarize blocking findings and safe fixes. Do not treat PageSpeed Accessibility as
+Use the wcag-auditor Portable Web Toolkit skill (Web_Toolkit/wcag_auditor wrapper —
+never AI/wcag-auditor). If core-path is missing, cd Web_Toolkit && npm install --allow-git=all.
+Ensure Playwright Chromium is ready in this client project, then run against the site
+profile and https://… or local preview. After the run, tell me the gate (0/1/2/3) and
+share results.html (file:line when mapped). Do not treat PageSpeed Accessibility as
 WCAG proof.
 ```
 
@@ -250,7 +250,7 @@ target client site. Secrets stay in the **client** `.env`.
 |--------|------------------|--------------|
 | **Site Readiness** | `site_readiness/bin/site-readiness.mjs` | Phased “what’s missing / next step” report before material work. |
 | **Discovery Doctor** | `discovery_doctor/bin/discovery-doctor.mjs` | Audits robots, sitemap, llms, humans, security.txt, content/search APIs, JSON-LD. **Fail-closed** (exit `2` on FAIL). |
-| **Sourcing Doctor** | `sourcing_doctor/bin/sourcing-doctor.mjs` | Extracts high-fidelity content from legacy CMS (e.g. WordPress) into structured JSON. |
+| **Sourcing Doctor** | `sourcing_doctor/bin/sourcing-doctor.mjs` | Extracts WordPress REST or public Wix storefront content into manifests. |
 | **Integration Doctor** | `integration_doctor/bin/integration-doctor.mjs` | Validates `.env` posture and live integrations (CF token, analytics, forms, email). |
 | **Toolkit Report** | `toolkit_report/bin/toolkit-report.mjs` | Quick readiness snapshot for project + toolkit. |
 
@@ -281,7 +281,7 @@ target client site. Secrets stay in the **client** `.env`.
 | **PageSpeed Diagnostics** | `pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs` | Google PSI (mobile/desktop) + agent batch/diff helpers (one fetch per strategy). |
 | **Performance Fixes** | `performance_fixes/bin/performance-fixes.mjs` | Reads latest `pagespeed-*` JSON + suggests low-risk `_headers`/perf helpers (not auto-fix Lighthouse). |
 | **Browser Diagnostics** | `browser_diagnostics/bin/browser-diagnostics.mjs` | Real-browser console/network classification (Playwright). |
-| **WCAG Auditor** | `wcag_auditor/bin/wcag-auditor.mjs` | Accessibility **evidence gate** + stakeholder dashboard (`file:line` when mapped). Not a conformance certificate. |
+| **WCAG Auditor** | `wcag_auditor/bin/wcag-auditor.mjs` | Accessibility **evidence gate** + `results.html` (`file:line` when mapped). WCAGate engine via npm. Not a conformance certificate. |
 | **Site Doctor** | `site_doctor/bin/site-doctor.mjs` | Combined local + Cloudflare health diagnostics (optional WCAG). |
 
 ### Toolkit hygiene

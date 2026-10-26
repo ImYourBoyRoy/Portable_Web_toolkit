@@ -8,6 +8,19 @@ This toolkit is **highly portable**, **spec-driven**, and **AI-Ready**. It is de
 
 **Node pin:** exact runtime pin is the **repository root** [`.node-version`](../.node-version) only. Do not place a second `.node-version` under `Web_Toolkit/`. Module `engines.node` floors stay `>=26`.
 
+## Automatic freshness
+
+Toolkit commands perform a throttled freshness check once per 24 hours by
+default. A clean `main` checkout of the public toolkit may fast-forward to
+`origin/main`; dirty worktrees, feature branches, exported folders, and
+unmanaged repositories are left untouched. WCAGate follows its unpinned GitHub
+`main` dependency and refreshes when the remote head changes.
+
+Reports are printed for the agent and saved to
+`.runtime/toolkit-auto-update.json`. Set `PORTABLE_TOOLKIT_AUTO_UPDATE=0` to
+disable the behavior, or set `PORTABLE_TOOLKIT_UPDATE_INTERVAL_HOURS` to change
+the interval. Run `npm run auto-update -- --force --json` for an explicit check.
+
 ## The Brain: `site-profile.json`
 
 Every tool in this toolkit is an execution engine for the **[Master Site Specification](./site-profile.schema.json)**.
@@ -31,8 +44,8 @@ The premium automated CI loop. It unifies the build, deploy, purge, and verify p
 
 Determine project requirements and retrieve legacy assets.
 
-- **[Discovery Doctor](./discovery_doctor/README.md)**: Zenith discovery audit (**fail-closed**, exit `2` on FAIL). Sitemap-index OK; BreadcrumbList warn-only on homepage.
-- **[Sourcing Doctor](./sourcing_doctor/README.md)**: High-fidelity content extraction (WordPress/Wix REST API to JSON).
+- **[Discovery Doctor](./discovery_doctor/README.md)**: standards-aware discovery audit (**fail-closed** for the active policy, exit `2` on FAIL). Semantically validates sitemap XML, robots, llms/security documents, JSON-LD, media types, public REST endpoints, and modern/legacy MCP list discovery without calling tools.
+- **[Sourcing Doctor](./sourcing_doctor/README.md)**: High-fidelity content extraction (WordPress REST, public Wix HTML/JSON-LD).
 - **[Site Readiness](./site_readiness/README.md)**: Run-all sandbox-aware readiness pass with next-step report for client projects.
 - **[Project Init](./project_init/README.md)**: Safe starter gaps (skill links, scaffolding); skill-link failures are fail-loud.
 - **[Package Updater](./package_updater/README.md)**: `@astrojs/upgrade` for Astro sites + dependency pin bumps; non-zero if upgrade/registry fails.
@@ -84,7 +97,7 @@ Verify that the site meets all performance and quality targets.
 - **[PageSpeed Diagnostics](./pagespeed_diagnostics/README.md)**: Automated Google PSI metrics tracking.
 - **PageSpeed Agent Batch/Diff**: JSON-only, problem-only PageSpeed batch runner and regression comparator for AI agents.
 - **[Browser Diagnostics](./browser_diagnostics/README.md)**: Real-browser error scraping and request classification.
-- **[WCAG Auditor](./wcag_auditor/README.md)**: Self-contained accessibility evidence gate under `Web_Toolkit/wcag_auditor`. Does **not** certify WCAG conformance. Website workflows must not resolve outside this toolkit.
+- **[WCAG Auditor](./wcag_auditor/README.md)**: Site-profile wrapper around WCAGate. Engine is `github:imyourboyroy/WCAGate` in `Web_Toolkit/node_modules`. Does **not** certify WCAG conformance. Never resolve `AI/wcag-auditor`.
 - **[Site Doctor](./site_doctor/README.md)**: Combined local + cloud health diagnostics (optional `--wcag`).
 
 ---

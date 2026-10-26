@@ -173,6 +173,82 @@
         "apiRoot": {
           "type": "string",
           "description": "Optional override for REST API root."
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 900,
+          "description": "Delay between public Wix page fetches to avoid connection resets."
+        },
+        "maxPages": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max paginated shop listing pages per shop path."
+        },
+        "maxProducts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional cap on harvested product slugs (debug / smoke)."
+        },
+        "shopPath": {
+          "type": "string",
+          "description": "Single Wix shop listing path. Prefer shopPaths when both / and /shop exist."
+        },
+        "shopPaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Wix listing paths to paginate. Default: [\"/\", \"/shop\"]."
+        },
+        "productPathPrefix": {
+          "type": "string",
+          "default": "/product-page/",
+          "description": "Public Wix product URL prefix."
+        },
+        "rebuildProductPath": {
+          "type": "string",
+          "default": "/product/",
+          "description": "Target rebuild path prefix written into URLMap and catalog."
+        },
+        "writeCatalog": {
+          "type": "string",
+          "default": "src/data/catalog.json",
+          "description": "Project-relative path for the Wix catalog JSON snapshot."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Optional contact phone. Otherwise harvested from public page text."
+        },
+        "pages": {
+          "type": "array",
+          "description": "Optional static Wix paths to harvest as pages. Default tries /faq and /contact.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "slug": { "type": "string" },
+              "title": { "type": "string" },
+              "excerpt": { "type": "string" },
+              "rebuildPath": { "type": "string" }
+            },
+            "required": ["path"]
+          }
+        },
+        "categoryRules": {
+          "type": "array",
+          "description": "Client-specific product taxonomy. Each pattern is a JS regex source.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": { "type": "string" },
+              "pattern": { "type": "string" },
+              "flags": { "type": "string", "default": "i" }
+            },
+            "required": ["category", "pattern"]
+          }
+        },
+        "defaultCategory": {
+          "type": "string",
+          "default": "Uncategorized"
         }
       },
       "additionalProperties": true
@@ -180,6 +256,64 @@
     "diagnostics": {
       "type": "object",
       "properties": {
+        "discovery": {
+          "type": "object",
+          "description": "Discovery Doctor policy. Core discovery artifacts are required by default; explicitly set a requirement to false to relax it or add endpoints for a stricter public contract.",
+          "properties": {
+            "environment": {
+              "enum": ["production", "development"]
+            },
+            "required": {
+              "type": "object",
+              "properties": {
+                "robots": { "type": "boolean" },
+                "sitemap": { "type": "boolean" },
+                "llms": { "type": "boolean" },
+                "llmsFull": { "type": "boolean" },
+                "contentApi": { "type": "boolean" },
+                "searchApi": { "type": "boolean" },
+                "humans": { "type": "boolean" },
+                "securityTxt": { "type": "boolean" },
+                "headers": { "type": "boolean" },
+                "jsonLd": { "type": "boolean" }
+              },
+              "additionalProperties": true
+            },
+            "sitemapCandidates": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "endpoints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": { "type": "string", "minLength": 1 },
+                  "label": { "type": "string" },
+                  "method": { "enum": ["GET", "POST", "HEAD"] },
+                  "format": { "enum": ["text", "json", "xml", "llms", "security", "mcp"] },
+                  "required": { "type": "boolean" },
+                  "runtimeOnly": { "type": "boolean" },
+                  "ssrOk": { "type": "boolean" },
+                  "checkLinks": { "type": "boolean" },
+                  "schema": { "enum": ["object", "array", "envelope"] },
+                  "protocolVersion": { "type": "string" }
+                },
+                "additionalProperties": true
+              }
+            },
+            "checkLinks": { "type": "boolean" },
+            "maxLinks": { "type": "integer", "minimum": 1, "maximum": 200 },
+            "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+            "mcpProtocolVersion": { "type": "string" },
+            "privatePathSegments": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": true
+        },
         "qualitySmoke": {
           "type": "object",
           "properties": {

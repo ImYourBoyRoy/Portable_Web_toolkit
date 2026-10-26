@@ -77,7 +77,9 @@ function shouldSkip(relativePath, flags) {
   if (normalized.startsWith('output/')) return true;
   if (normalized.includes('/output/')) return true;
   if (normalized.includes('/dist/')) return true;
+  if (normalized === 'node_modules' || normalized.startsWith('node_modules/')) return true;
   if (normalized.includes('/node_modules/')) return true;
+  if (basename === 'package-lock.json') return true;
   if (normalized.includes('/.cf-agent/')) return true;
   if (normalized.includes('/__pycache__/')) return true;
   if (normalized.endsWith('/.env')) return true;

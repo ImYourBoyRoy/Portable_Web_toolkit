@@ -10,6 +10,8 @@ output/
 
 # dependencies
 node_modules/
+# WCAGate is unpinned (github:imyourboyroy/WCAGate). Do not lock the engine SHA.
+Web_Toolkit/package-lock.json
 
 # logs
 npm-debug.log*

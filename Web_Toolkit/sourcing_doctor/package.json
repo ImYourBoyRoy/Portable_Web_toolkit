@@ -1,16 +1,20 @@
 {
-    "name":  "sourcing-doctor",
-    "version":  "1.0.0",
-    "private":  true,
-    "type":  "module",
-    "author":  "Roy Dawson IV",
-    "license":  "MIT",
-    "bin":  {
-                "sourcing-doctor":  "./bin/sourcing-doctor.mjs"
-            },
-    "scripts":  {
-                    "start":  "node ./bin/sourcing-doctor.mjs",
-                    "extract":  "node ./bin/sourcing-doctor.mjs extract",
-                    "audit":  "node ./bin/sourcing-doctor.mjs audit"
-                }
+  "name": "sourcing-doctor",
+  "version": "1.1.0",
+  "private": true,
+  "description": "WordPress REST and public Wix storefront harvest for Portable Web Toolkit rebuilds.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "sourcing-doctor": "./bin/sourcing-doctor.mjs"
+  },
+  "scripts": {
+    "start": "node ./bin/sourcing-doctor.mjs",
+    "extract": "node ./bin/sourcing-doctor.mjs extract",
+    "audit": "node ./bin/sourcing-doctor.mjs audit",
+    "test": "node --test ./tests/wix.test.mjs"
+  },
+  "engines": {
+    "node": ">=26"
+  }
 }

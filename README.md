@@ -1,11 +1,11 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.3.9`
+**Toolkit Release:** `v0.4.0`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.3.9` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.4.0` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -72,7 +72,7 @@ node /path/to/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --proj
   --skills portable-web-toolkit,site-readiness,site-starter,toolkit-update
 ```
 
-The agent follows [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md). Running `git pull` in `Portable_Web_toolkit` updates all symlinked client skills live.
+The agent follows [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md). Running `git pull` in `Portable_Web_toolkit` updates all symlinked client skills live. Toolkit commands also perform a guarded, once-daily freshness preflight by default; see [`Web_Toolkit/README.md`](./Web_Toolkit/README.md#automatic-freshness).
 
 ### Working on a site
 
@@ -147,11 +147,11 @@ Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed �
 | PageSpeed Insights | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `pagespeed-diagnostics` |
 | Cloudflare audit / repair | Prompt in [`HOW_TO.md`](./HOW_TO.md) → `cf-agent` (dry-run before `--apply`) |
 | Full maintenance loop | Prompt in [`HOW_TO.md`](./HOW_TO.md) (upgrade → smoke → deploy → purge → warm → PSI) |
-| Accessibility evidence (sites) | Bundled `Web_Toolkit/wcag_auditor` only (no `AI/` resolution) |
+| Accessibility evidence (sites) | `Web_Toolkit/wcag_auditor` wrapper + WCAGate from GitHub (never `AI/` resolution) |
 | Public Instagram gallery | `instagram-clone` skill (`INSTAGRAM_USERNAME` in `.env`) |
 | Compare toolkit + skills | `toolkit-update` or `node scripts/update-toolkit.mjs` |
 | Prepare an SVG candidate | Optional `vectorize-pipeline` skill |
-| Verify discovery layer | `discovery-doctor` on `dist/` or live URL |
+| Verify discovery layer | `discovery-doctor` on `dist/` or live URL with the active site-profile policy |
 
 Full CLI list: [`Web_Toolkit/README.md`](./Web_Toolkit/README.md) or the `portable-web-toolkit` skill.
 

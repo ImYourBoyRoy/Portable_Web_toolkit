@@ -111,6 +111,14 @@ function verifySteps(flags = {}, exportRoot) {
       args: [toolkitScript('wcag_auditor/bin/wcag-auditor.mjs'), 'help']
     },
     {
+      name: 'wcag-auditor core-path',
+      args: [toolkitScript('wcag_auditor/bin/wcag-auditor.mjs'), 'core-path']
+    },
+    {
+      name: 'sourcing-doctor help',
+      args: [toolkitScript('sourcing_doctor/bin/sourcing-doctor.mjs'), 'help']
+    },
+    {
       name: 'export portable toolkit',
       args: [toolkitScript('scripts/export-portable-toolkit.mjs'), '--to', exportRoot]
     },

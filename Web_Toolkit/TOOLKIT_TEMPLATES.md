@@ -18,7 +18,7 @@ Walkthrough: [`../../site-starter/README.md`](../../site-starter/README.md)
 
 ## Discovery (Zenith layer)
 
-[`./templates/discovery/`](./templates/discovery/) — robots, sitemap, llms, llms-full, humans, security.txt, content/search APIs, JSON-LD, middleware. Customize `site-config.ts` per client; no baked-in client domains.
+[`./templates/discovery/`](./templates/discovery/) — robots, sitemap, llms, llms-full, humans, security.txt, content/search APIs, JSON-LD, middleware. Customize `site-config.ts` per client and declare required public REST/MCP endpoints in `diagnostics.discovery`; no baked-in client domains.
 
 ## Branding
 

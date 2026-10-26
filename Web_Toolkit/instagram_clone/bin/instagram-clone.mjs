@@ -15,10 +15,13 @@
 
 import { runClone } from '../src/commands/clone.mjs';
 import { runAudit } from '../src/commands/audit.mjs';
+import { resolvePortableRoot } from '../../shared/lib/context.mjs';
 import {
   formatMissingUsernameHelp,
   resolveCloneContext,
 } from '../src/lib/resolve-context.mjs';
+
+resolvePortableRoot(import.meta.url, 2);
 
 function printHelp() {
   console.log('instagram-clone — Clone public Instagram feeds for static/portfolio sites');

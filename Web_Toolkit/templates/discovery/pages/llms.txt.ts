@@ -13,30 +13,34 @@ function pageUrl(baseUrl: string, routePath: string): string {
   return new URL(routePath, `${baseUrl}/`).href;
 }
 
+function discoveryUrl(baseUrl: string, href: string): string {
+  if (!baseUrl) return href;
+  return new URL(href, `${baseUrl}/`).href;
+}
+
 export const GET: APIRoute = ({ site }) => {
   const buildDate = new Date().toISOString().split('T')[0];
   const routes = getPublicPageRoutes(buildDate);
   const baseUrl = resolveBaseUrl(site);
+  const optionalDiscovery = (siteConfig as typeof siteConfig & {
+    publicDiscovery?: Array<{ label: string; path: string; description?: string }>;
+  }).publicDiscovery;
+  const configuredDiscovery = Array.isArray(optionalDiscovery) ? optionalDiscovery : [];
 
   const body = [
     `# ${siteConfig.name}`,
-    siteConfig.description,
+    `> ${siteConfig.description}`,
     '',
     '## Routes',
     ...routes.map((route) =>
-      baseUrl
-        ? `- [${route.title}](${pageUrl(baseUrl, route.path)}): ${route.description}`
-        : `- ${route.title} (${route.path}): ${route.description}`,
+      `- [${route.title}](${baseUrl ? pageUrl(baseUrl, route.path) : route.path}): ${route.description}`,
     ),
     '',
-    ...(baseUrl
-      ? [
-          '## Discovery',
-          `- Sitemap: ${new URL('/sitemap.xml', `${baseUrl}/`).href}`,
-          `- Full context: ${new URL('/llms-full.txt', `${baseUrl}/`).href}`,
-          `- Content API: ${new URL('/api/content.json', `${baseUrl}/`).href}`,
-        ]
-      : []),
+    '## Discovery',
+    `- [Sitemap](${discoveryUrl(baseUrl, '/sitemap.xml')}): Public URL index.`,
+    `- [Full context](${discoveryUrl(baseUrl, '/llms-full.txt')}): Expanded public context.`,
+    `- [Content API](${discoveryUrl(baseUrl, '/api/content.json')}): Public route structure only.`,
+    ...configuredDiscovery.map((entry) => `- [${entry.label}](${discoveryUrl(baseUrl, entry.path)}): ${entry.description || 'Public discovery endpoint.'}`),
   ].join('\n');
 
   return new Response(body, {

@@ -35,7 +35,10 @@ describe('discovery-doctor CLI', () => {
     fs.writeFileSync(path.join(dir, 'llms-full.txt'), '# full');
     fs.writeFileSync(path.join(dir, 'humans.txt'), '/* team */');
     fs.mkdirSync(path.join(dir, '.well-known'), { recursive: true });
-    fs.writeFileSync(path.join(dir, '.well-known', 'security.txt'), 'Contact: mailto:sec@example.com\n');
+    fs.writeFileSync(
+      path.join(dir, '.well-known', 'security.txt'),
+      'Contact: mailto:sec@example.com\nExpires: 2099-01-01T00:00:00Z\n'
+    );
     fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'api', 'content.json'), '{"pages":[]}');
     fs.writeFileSync(
@@ -59,5 +62,32 @@ describe('discovery-doctor CLI', () => {
     assert.equal(result.status, 0, result.stderr || result.stdout);
     assert.match(result.stdout + result.stderr, /Breadcrumb Schema/i);
     assert.match(result.stdout + result.stderr, /\[WARN\]/i);
+  });
+
+  it('fails a required endpoint with a valid but wrong JSON shape', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dd-policy-'));
+    fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'api', 'catalog.json'), '[]');
+    const policy = path.join(dir, 'policy.json');
+    fs.writeFileSync(policy, JSON.stringify({
+      required: {
+        sitemap: false,
+        robots: false,
+        llms: false,
+        llmsFull: false,
+        humans: false,
+        securityTxt: false,
+        contentApi: false,
+        headers: false,
+        jsonLd: false,
+      },
+      endpoints: [{ path: '/api/catalog.json', label: 'Catalog', format: 'json', required: true, schema: 'envelope' }],
+    }));
+    const result = spawnSync(process.execPath, [bin, dir, '--policy', policy], {
+      encoding: 'utf8',
+      cwd: path.resolve(__dirname, '../../..'),
+    });
+    assert.equal(result.status, 2, result.stderr || result.stdout);
+    assert.match(result.stdout + result.stderr, /envelope/i);
   });
 });

@@ -15,7 +15,7 @@ This file is a short overview. Prefer `SKILL_INDEX.md` for selection criteria an
 | `site-starter` | Scaffold from approved templates |
 | `site-readiness` | Readiness evidence and next actions |
 | `site-maintenance` | Healthy ops loop (`HOW_TO.md`) |
-| `wcag-auditor` | A11y evidence via bundled `Web_Toolkit/wcag_auditor` |
+| `wcag-auditor` | A11y evidence via `Web_Toolkit/wcag_auditor` + WCAGate from GitHub |
 | `pagespeed-diagnostics` | Google PSI via toolkit CLI |
 | `discovery-doctor` | Discovery layer on `dist` or live URL (fail-closed) |
 | `toolkit-update` | Compare and reconcile toolkit/skill versions |

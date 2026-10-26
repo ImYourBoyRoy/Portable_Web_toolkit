@@ -1,31 +1,17 @@
-# WCAG Auditor — Agent Instructions
+# WCAG Auditor wrapper — Agent Instructions
 
-Self-contained accessibility evidence gate bundled inside Portable Web Toolkit
-at `Web_Toolkit/wcag_auditor/`.
-
-## Authority
-
-1. Explicit user request
-2. This module's `AGENTS.md` / `README.md`
-3. Parent toolkit `AGENTS.md` / `OPERATIONS.md` when operating on toolkit-managed sites
-4. Consumer project instructions when auditing inside that project
+Site-profile CLI for toolkit-managed websites. Engine is WCAGate.
 
 ## Rules
 
-- Do **not** invent WCAG conformance percentages or claim certification.
-- Prefer adapter evidence (`playwright-axe`, `svelte`, `manual-evidence`, `native-evidence`) over source regex heuristics.
-- Fail closed: missing targets, empty surfaces, and adapter failures are exit `2` / unresolved `3`, never silent passes.
-- Glassmorphism / frost UI is supported: axe contrast incompletes are `cantTell`, not a mandate to remove frost. Resolve via AA design tweaks + `frost-glass-contrast` manual evidence + bounded `outcomes: ["cantTell"]` suppressions (`docs/GLASSMORPHISM.md`).
-- Keep secrets out of configs, suppressions, and committed reports.
-- Verify Node/package versions from this repo + registry — do not trust model memory.
-- Website / toolkit workflows resolve **only** this module (`core-path` under `Web_Toolkit/wcag_auditor`). Never open sibling `AI/` trees for the auditor.
-
-## Apps and sites
-
-Sites and apps that use the Portable Web Toolkit install should call:
+- Website / toolkit workflows call **only** `Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs`.
+- Never open sibling `AI/wcag-auditor` trees for site work.
+- `core-path` must print `…/Web_Toolkit/node_modules/@imyourboyroy/wcagate` (the engine), not an `AI/` path.
+- Missing engine → `cd Web_Toolkit && npm install --allow-git=all` (or let auto-ensure run). Fail closed (exit 2). Never silent pass.
+- After a run: tell the user gate `0/1/2/3` and findings with `file:line`. Optional HTML is `results.html`, not a GUI.
+- Evidence gate only — do not invent WCAG conformance percentages.
 
 ```bash
-node <toolkit>/Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs …
+node <toolkit>/Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs doctor --site-profile <profile>
+node <toolkit>/Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run --site-profile <profile> --base-url <url>
 ```
-
-Optional peers (`playwright`, `@axe-core/playwright`, `svelte`) install in the **consumer** project, not inside this module.

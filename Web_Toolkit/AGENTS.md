@@ -20,7 +20,11 @@ does not override client safety or release policy.
 - Generated artifacts in `.runtime/` only
 - Dry-run before `--apply` on Cloudflare, DNS, cache, registrar
 - Custom discovery generators — **not** `@astrojs/sitemap` / `@astrojs/robots`
+- `discovery-doctor` is standards-aware and policy-driven: the default contract requires `llms*`, API, humans, and security resources; explicitly relaxed or runtime-only resources are INFO when absent, while advertised-but-invalid resources are FAIL. Put client-specific requirements under `diagnostics.discovery` in the site profile.
+- Live MCP discovery is read-only: probe modern `2026-07-28` `server/discover`/list methods with legacy fallback; never call tools or attach credentials. Local SSR/MCP routes are runtime-only evidence and require a live check.
+- `security.txt` is required for production by default; development, preview, and staging policies may omit it because the generator intentionally returns 404 on non-indexable hosts.
 - `site-readiness run` before material work when current evidence is absent or stale
+- Automatic freshness runs at most once per 24 hours. It may fast-forward only a clean public `main` checkout; it never overwrites dirty, feature, exported, or unmanaged state. WCAGate refresh follows the public GitHub `main` head.
 
 ## Site deploy gate
 
