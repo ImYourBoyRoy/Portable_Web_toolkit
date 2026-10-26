@@ -1,6 +1,6 @@
 ---
 name: toolkit-update
-description: Compare, plan, or apply an explicitly authorized Portable Web Toolkit or toolkit-skill update. Use when asked to check toolkit freshness, reconcile a local export with GitHub, inspect installed skill versions, or update to a selected tag or commit. Default to read-only status, preserve local-only capabilities, and never reinstall or overwrite skills automatically.
+description: Compare, plan, or apply Portable Web Toolkit or toolkit-skill updates. Use when asked to inspect freshness, reconcile a local export with GitHub, inspect installed skill versions, or review an update. Normal toolkit commands perform a guarded, throttled freshness preflight; this skill handles manual review and reconciliation.
 ---
 
 # Toolkit Update
@@ -22,7 +22,7 @@ work, then locate the actual toolkit source and selected client skill roots.
 4. Compare skill directories, versions, hashes, toolkit modules, templates,
    instructions, and release notes.
 5. Classify local-only, upstream-only, modified, generated, and ignored content.
-6. Report the status and stop unless an update was explicitly authorized.
+6. Report the status. The automatic preflight may apply only the guarded fast-forward and WCAGate refresh described below; manual reconciliation still stops unless explicitly authorized.
 
 Before reporting a Git remote, remove URL userinfo, credentials, query strings,
 and fragments. Describe private-fork locations generically unless the exact
@@ -51,9 +51,10 @@ Never claim that `git pull` updated an export without `.git`.
 
 ## Apply
 
-Require exact update authorization. Use `git pull --ff-only` only when the
-worktree and branch permit it. Otherwise use a staging clone and explicit
-reconciliation.
+For manual source reconciliation, require exact update authorization. Use
+`git pull --ff-only` only when the worktree and branch permit it. Otherwise use
+a staging clone and explicit reconciliation. Normal command-time freshness uses
+the same clean-main/fast-forward gate and never overwrites local changes.
 
 Do not:
 
@@ -64,6 +65,12 @@ Do not:
 - install host software, push, tag, publish, or deploy without separate approval
 
 ### WCAGate engine (independent of toolkit VERSION)
+
+The toolkit automatically checks the unpinned public `main` head at most once
+per 24 hours. It refreshes the ignored `Web_Toolkit/node_modules` install when
+the remote head changes and writes the result to
+`Web_Toolkit/.runtime/toolkit-auto-update.json`. Set
+`PORTABLE_TOOLKIT_AUTO_UPDATE=0` to disable the preflight.
 
 After a toolkit `git pull`, refresh the accessibility engine without bumping toolkit `VERSION`:
 

@@ -53,12 +53,56 @@ export function assertPublicHttpUrl(input, label = 'URL') {
 
 export async function fetchPublicText(urlInput, options = {}) {
   const url = assertPublicHttpUrl(urlInput, options.label || 'URL');
-  const response = await fetch(url, options.fetchOptions || {});
-  const body = await response.text();
-  return {
-    ok: response.status >= 200 && response.status < 400,
-    status: response.status,
-    body,
-    url: url.href
-  };
+  const fetchImpl = options.fetchImpl || globalThis.fetch;
+  const timeoutMs = Number(options.timeoutMs || 15000);
+  const maxBytes = Number(options.maxBytes || 8 * 1024 * 1024);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      ...(options.fetchOptions || {}),
+      signal: options.fetchOptions?.signal || controller.signal,
+    });
+    const declaredLength = Number(response.headers?.get?.('content-length') || 0);
+    if (declaredLength > maxBytes) throw new Error(`${options.label || 'Response'} exceeds ${maxBytes} bytes.`);
+    let body;
+    if (response.body?.getReader) {
+      const reader = response.body.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > maxBytes) {
+          await reader.cancel();
+          throw new Error(`${options.label || 'Response'} exceeds ${maxBytes} bytes.`);
+        }
+        chunks.push(value);
+      }
+      const merged = new Uint8Array(total);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      body = new TextDecoder().decode(merged);
+    } else {
+      body = await response.text();
+      if (new TextEncoder().encode(body).byteLength > maxBytes) {
+        throw new Error(`${options.label || 'Response'} exceeds ${maxBytes} bytes.`);
+      }
+    }
+    return {
+      ok: response.status >= 200 && response.status < 400,
+      status: response.status,
+      body,
+      url: response.url || url.href,
+      headers: Object.fromEntries(response.headers?.entries?.() || []),
+      redirected: Boolean(response.redirected),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }

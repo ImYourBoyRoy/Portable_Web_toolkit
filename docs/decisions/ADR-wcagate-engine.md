@@ -16,7 +16,7 @@ The toolkit re-bundled a full WCAG engine under `Web_Toolkit/wcag_auditor` so ag
 - Toolkit keeps a thin `--site-profile` wrapper at `Web_Toolkit/wcag_auditor`.
 - Install into `Web_Toolkit/node_modules` (`npm install --allow-git=all`). Auto-ensure on doctor/run/core-path.
 - `core-path` prints the engine package root. Never auto-discover `AI/wcag-auditor`.
-- Engine updates via `npm run wcagate:update` (reinstalls `github:imyourboyroy/WCAGate`; `npm update` does not refetch git deps) without bumping toolkit VERSION.
+- A throttled freshness preflight checks WCAGate `main` once per 24 hours and reinstalls the Git dependency when its remote head changes. Manual refresh remains available through `npm run wcagate:update`; this does not bump toolkit `VERSION`.
 
 ## Alternatives considered
 
@@ -28,4 +28,5 @@ The toolkit re-bundled a full WCAG engine under `Web_Toolkit/wcag_auditor` so ag
 
 - First run needs network to fetch GitHub unless node_modules already has WCAGate.
 - Unpinned `main` can break the wrapper; keep the wrapper on WCAGate public CLI/API only.
+- Existing installs are intentionally mutable: the freshness preflight records the checked remote head under ignored `.runtime/` so unchanged runs avoid reinstalling.
 - npm 12 requires `Web_Toolkit/.npmrc` `allow-git=all` for this known GitHub dependency.

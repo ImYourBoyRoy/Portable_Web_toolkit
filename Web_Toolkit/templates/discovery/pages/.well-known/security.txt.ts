@@ -11,10 +11,15 @@ function securityContact(): string {
   const fromEnv = String(import.meta.env.PUBLIC_SECURITY_CONTACT || '').trim();
   if (fromEnv) return fromEnv;
   const fromConfig = String(siteConfig.contactEmail || '').trim();
-  if (fromConfig) return fromConfig.startsWith('mailto:') || fromConfig.startsWith('https:')
+  if (fromConfig) return fromConfig.startsWith('mailto:') || fromConfig.startsWith('https:') || fromConfig.startsWith('tel:')
     ? fromConfig
     : `mailto:${fromConfig}`;
   return '';
+}
+
+function securityPolicyUrl(): string {
+  const value = String((siteConfig as typeof siteConfig & { securityPolicyUrl?: string }).securityPolicyUrl || '').trim();
+  return /^https?:\/\//i.test(value) ? value : '';
 }
 
 export const GET: APIRoute = ({ site }) => {
@@ -28,11 +33,14 @@ export const GET: APIRoute = ({ site }) => {
   }
 
   const baseUrl = resolveBaseUrl(site);
+  const expires = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const policyUrl = securityPolicyUrl();
   const body = [
     `Contact: ${contact}`,
+    `Expires: ${expires}`,
     'Preferred-Languages: en',
     ...(baseUrl ? [`Canonical: ${new URL('/.well-known/security.txt', `${baseUrl}/`).href}`] : []),
-    'Policy: Report security issues responsibly; allow reasonable time to remediate before disclosure.',
+    ...(policyUrl ? [`Policy: ${policyUrl}`] : []),
   ].join('\n');
 
   return new Response(`${body}\n`, {

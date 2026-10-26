@@ -9,6 +9,15 @@ import { extractMetadataFromContent } from '../lib/metadata-extractor';
 
 export const prerender = true;
 
+function escapeXml(value: string): string {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
 export const GET: APIRoute = async ({ site }) => {
   const pages = import.meta.glob('./**/*.{astro,md,mdx}', {
     query: '?raw',
@@ -34,7 +43,7 @@ export const GET: APIRoute = async ({ site }) => {
     const metadata = extractMetadataFromContent(content, fileKey, buildDate);
 
     return {
-      loc: new URL(urlPath === '/' ? '' : urlPath, base).href,
+    loc: new URL(urlPath === '/' ? '' : urlPath, base).href,
       lastmod: metadata.lastmod,
       priority: urlPath === '/' ? '1.0' : '0.8',
       changefreq: 'monthly',
@@ -51,13 +60,13 @@ export const GET: APIRoute = async ({ site }) => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${filteredEntries.map((entry) => `  <url>
-    <loc>${entry.loc}</loc>
-    <lastmod>${entry.lastmod}</lastmod>
-    <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>
+    <loc>${escapeXml(entry.loc)}</loc>
+    <lastmod>${escapeXml(entry.lastmod)}</lastmod>
+    <changefreq>${escapeXml(entry.changefreq)}</changefreq>
+    <priority>${escapeXml(entry.priority)}</priority>
 ${entry.images.map((img) => `    <image:image>
-      <image:loc>${img.src.startsWith('http') ? img.src : new URL(img.src, base).href}</image:loc>
-      <image:title>${img.alt}</image:title>
+      <image:loc>${escapeXml(img.src.startsWith('http') ? img.src : new URL(img.src, base).href)}</image:loc>
+      <image:title>${escapeXml(img.alt)}</image:title>
     </image:image>`).join('\n')}
   </url>`).join('\n')}
 </urlset>`;

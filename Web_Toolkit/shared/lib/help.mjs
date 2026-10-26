@@ -6,6 +6,13 @@
  * scan usage, flags, examples, and exit-code behavior quickly.
  */
 
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { maybeAutoUpdate } from './auto-update.mjs';
+
+const PORTABLE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+maybeAutoUpdate({ portableRoot: PORTABLE_ROOT });
+
 function formatList(items = [], indent = '  ') {
   return items.map((item) => `${indent}${item}`);
 }

@@ -2,7 +2,7 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.4.0",
-  "toolkit_version": "0.3.9",
+  "toolkit_version": "0.4.0",
   "source_base_commit": "fffa17c8f95e3613b0b1530107e06e010fe16675",
   "skills": [
     {
@@ -21,7 +21,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/discovery-doctor",
-      "content_sha256": "a895662835c10295cfbb08d5df5d82a74f137398269da26da88c656784e10f0f"
+      "content_sha256": "89a48a2c0d5893f79d913de1e4b8ce4b6f29e5d5ff27db38be5d19a7d11ab044"
     },
     {
       "name": "image-pipeline",
@@ -111,7 +111,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/toolkit-update",
-      "content_sha256": "fa4c0db6cda516eacaa5e72e02baffaa5e030bec75911f92cda3ec8b7ff2facc"
+      "content_sha256": "f5dc09814b355f432eb7d50d567b74ebd03e87e40d7becd19572643ba4be022b"
     },
     {
       "name": "vectorize-pipeline",

@@ -6,7 +6,7 @@ The accessibility engine is **[WCAGate](https://github.com/imyourboyroy/WCAGate)
 
 ## If the engine is missing
 
-Auto-ensure runs on `wcag-auditor doctor`, `run`, and `core-path` unless you pass `--skip-engine-install`.
+Auto-ensure runs on `wcag-auditor doctor`, `run`, and `core-path` unless you pass `--skip-engine-install`. The toolkit also checks the public WCAGate `main` head at most once per 24 hours and refreshes the installed Git dependency when that head changes.
 
 Manual:
 
@@ -30,7 +30,7 @@ Do **not**:
 - add a git submodule under `wcag_auditor/`
 - treat a missing engine as a pass (exit `2`)
 
-## Updates without a toolkit version bump
+## Manual refresh without a toolkit version bump
 
 ```bash
 cd Web_Toolkit

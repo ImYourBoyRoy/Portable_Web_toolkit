@@ -72,8 +72,9 @@ node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run \
 ```
 
 Use `--skip-network` when required. Read the structured report before choosing
-fixes. Readiness does not authorize dependency installation, toolkit updates,
-infrastructure mutation, or deployment.
+fixes. Readiness does not authorize dependency installation, manual toolkit
+reconciliation, infrastructure mutation, or deployment. The guarded automatic
+freshness preflight is separate and may run before the command.
 
 ## 4. Route narrowly
 
@@ -103,12 +104,21 @@ Use the existing project profile and package scripts. Audit and dry-run
 infrastructure changes before an authorized apply. Require separate production
 authorization.
 
-## 5. Separate maintenance
+## 5. Automatic freshness and separate maintenance
 
-Toolkit updates, skill distribution, host setup, and toolkit publication are
-separate tasks. Do not run them at the beginning of every site session.
+Toolkit commands run a throttled freshness preflight by default (once every
+24 hours). It checks the public toolkit and WCAGate repositories, fast-forwards
+the toolkit only when the checkout is a clean `main` tracking `origin/main`,
+and refreshes the unpinned WCAGate Git dependency when its public `main` head
+changes. The result is printed to the agent and stored under
+`Web_Toolkit/.runtime/toolkit-auto-update.json`.
 
-- Updates: use `toolkit-update` for comparison before mutation.
+Dirty worktrees, feature branches, exported folders, unmanaged repositories,
+and network failures are preserved and reported rather than overwritten.
+Set `PORTABLE_TOOLKIT_AUTO_UPDATE=0` to disable it, or use
+`PORTABLE_TOOLKIT_UPDATE_INTERVAL_HOURS` to change the check interval.
+
+- Manual status/reconciliation: use `toolkit-update` when source changes need review.
 - Host setup: inspect setup manifests and obtain authorization before system or
   privileged changes.
 - Publication: require an intended release, source commit, validation, privacy

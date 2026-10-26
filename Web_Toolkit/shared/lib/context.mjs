@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnvFile, mergeEnvFiles } from './env.mjs';
 import { assertSafeProjectRoot, assertValidSiteProfile } from './site-profile.mjs';
+import { maybeAutoUpdate } from './auto-update.mjs';
 
 function uniquePaths(paths = []) {
   return [...new Set(paths.filter(Boolean).map((entry) => path.resolve(entry)))];
@@ -19,7 +20,11 @@ function existingPath(candidates = []) {
 
 export function resolvePortableRoot(importMetaUrl, levelsFromFile = 2) {
   const filePath = fileURLToPath(importMetaUrl);
-  return path.resolve(path.dirname(filePath), ...Array.from({ length: levelsFromFile }, () => '..'));
+  const root = path.resolve(path.dirname(filePath), ...Array.from({ length: levelsFromFile }, () => '..'));
+  if (path.basename(root).toLowerCase() === 'web_toolkit') {
+    maybeAutoUpdate({ portableRoot: root });
+  }
+  return root;
 }
 
 export function portableEnvPath(portableRoot) {

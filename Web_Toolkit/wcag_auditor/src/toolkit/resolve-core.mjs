@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { maybeAutoUpdate } from '../../../shared/lib/auto-update.mjs';
 
 const ENGINE_PACKAGE = '@imyourboyroy/wcagate';
 const ENGINE_GITHUB = 'github:imyourboyroy/WCAGate';
@@ -170,6 +171,9 @@ export function ensureEngine({ skip = false, update = false } = {}) {
 }
 
 export function resolveCoreRoot(options = {}) {
+  if (options.autoUpdate !== false && options.skip !== true) {
+    maybeAutoUpdate({ portableRoot: WEB_TOOLKIT_ROOT });
+  }
   const ensure = options.ensure !== false && options.skip !== true;
   if (ensure) return ensureEngine(options);
   const explicit = resolveExplicitRoot();

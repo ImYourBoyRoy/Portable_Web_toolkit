@@ -5,15 +5,21 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-26
+
 ### Added
 
 - **Sourcing Doctor Wix harvest**: public storefront HTML + JSON-LD (no admin keys). Profile-driven shop paths, static pages, category rules, and catalog output. `sourcing-doctor audit|extract --site-profile`.
+- **Standards-aware Discovery Doctor**: bounded sitemap XML parsing, llms.txt/security.txt/robots semantics, media-type checks, profile-driven public REST/MCP endpoints, same-origin discovery-link checks, and modern MCP `2026-07-28` discovery with legacy fallback.
 
 ### Changed
 
 - **WCAG engine is WCAGate from GitHub**, not a re-bundle. `Web_Toolkit/wcag_auditor` is a site-profile wrapper. `npm install` in `Web_Toolkit/` fetches `github:imyourboyroy/WCAGate` (unpinned). Engine refresh is `npm run wcagate:update` (reinstalls the git spec; `npm update` does not). `core-path` prints `node_modules/@imyourboyroy/wcagate`. See `docs/decisions/ADR-wcagate-engine.md`.
+- **Automatic toolkit freshness**: commands check once per 24 hours by default, fast-forward only a clean public `main` checkout, refresh WCAGate when its public `main` head changes, and report skipped/error states under `Web_Toolkit/.runtime/toolkit-auto-update.json`.
 - **site-starter** `build:headers:*` scripts pass `--apply` so `headers-deploy write-deploy` actually writes during build (the CLI is dry-run without it).
 - **clean-local-cache** uses `node:fs/promises.rm` instead of `rimraf`, so it still works after `Web_Toolkit/node_modules` exists for WCAGate.
+- **Discovery templates** now emit blockquote-shaped llms documents, escaped sitemap XML, and RFC 9116-compatible security.txt `Expires`/URI fields.
+- **Discovery Doctor defaults** now require the core production discovery contract (`llms.txt`, `llms-full.txt`, `humans.txt`, `security.txt`, structured content, headers, and JSON-LD); runtime-only search remains opt-in, profiles may explicitly relax requirements, and development/preview mode correctly relaxes sitemap/security.txt for non-indexable hosts.
 
 ## [0.3.9] - 2026-08-11
 

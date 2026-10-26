@@ -51,7 +51,7 @@ Do **not** load `docs/templates/AGENT.template.md` for toolkit work — that fil
 | `site_readiness/` | Sandbox-aware run-all; primary agent orchestrator |
 | `project_init/` | Non-destructive client bootstrap |
 | `cloudflare-agent-toolkit/` | CF audit, deploy, DNS, hardening |
-| `discovery_doctor/` | robots/sitemap/llms/JSON-LD verification |
+| `discovery_doctor/` | policy-driven robots/sitemap/llms/security/JSON-LD, public REST, and modern/legacy MCP verification |
 | `wcag_auditor/` | Site-profile wrapper around WCAGate (`github:imyourboyroy/WCAGate` in `node_modules`; never `AI/`) |
 | `sourcing_doctor/` | WordPress REST + public Wix HTML/JSON-LD harvest into manifests |
 | `headers_deploy/` | `public/_headers` scaffold and deploy merge |

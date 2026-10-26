@@ -1,6 +1,6 @@
 {
   "name": "@imyourboyroy/web-toolkit",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "description": "AI-agent-first portable website diagnostics, Cloudflare, PageSpeed, and publishing toolkit.",
   "type": "module",
   "license": "MIT",
@@ -38,6 +38,7 @@
     "@imyourboyroy/wcagate": "github:imyourboyroy/WCAGate"
   },
   "scripts": {
+    "auto-update": "node ./scripts/auto-update.mjs",
     "wcagate:update": "npm install github:imyourboyroy/WCAGate --allow-git=all",
     "check:syntax": "node ./scripts/check-syntax.mjs",
     "verify": "node ./toolkit_verify/bin/toolkit-verify.mjs",

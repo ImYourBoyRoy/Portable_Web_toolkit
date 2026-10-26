@@ -373,7 +373,7 @@ Record generator paths and public URLs in `MEMORY.md` under **Discovery Artifact
 
 #### Verification
 
-When a portable operator toolkit is present, run **discovery-doctor** against `dist/` (pre-deploy) and the live URL (post-deploy). Do not ship until the full discovery layer passes.
+When a portable operator toolkit is present, run **discovery-doctor** against `dist/` (pre-deploy) and the live URL (post-deploy) with the active site-profile discovery policy. Do not ship until the default core discovery resources and any profile-declared resources pass; explicitly relaxed or optional resources are still validated when present.
 
 ```bash
 node path/to/discovery_doctor/bin/discovery-doctor.mjs ./dist

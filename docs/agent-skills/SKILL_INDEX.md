@@ -19,7 +19,7 @@ This index is the fast-lookup manifest used by AI coding agents (**Antigravity, 
 | **`site-maintenance`** | `core` | **Healthy ops loop**: packages → smoke → deploy → purge → warm → PSI (`HOW_TO.md`). | Recurring site maintenance days. | `portable-web-toolkit` |
 | **`wcag-auditor`** | `core` | **Accessibility evidence**: `Web_Toolkit/wcag_auditor` wrapper + WCAGate from GitHub + Playwright Chromium. Never `AI/`. | A11y evidence gate on toolkit sites. | None |
 | **`pagespeed-diagnostics`** | `core` | **Google PSI** via toolkit CLI (`GOOGLE_PAGESPEED_API_KEY`). | CWV / PSI after deploy or in maintenance. | None |
-| **`discovery-doctor`** | `core` | **Discovery layer** robots/sitemap/llms/JSON-LD on `dist` or live URL. | Pre-deploy and post-prod discovery pass. | None |
+| **`discovery-doctor`** | `core` | **Policy-driven discovery layer**: semantic robots/sitemap/llms/security/JSON-LD plus public REST/MCP checks on `dist` or live URL. | Pre-deploy and post-prod discovery pass. | None |
 | **`toolkit-update`** | `core` | **Reconciliation & Version Sync**. | Upgrading toolkit health. | None |
 | **`brand-doctor`** | `optional` | **Brand / favicon / OG** assets per Brand Guide. | Branding and social preview assets. | None |
 | **`image-pipeline`** | `optional` | **WebP / media** rationalization. | Photographic/raster optimization. | None |

@@ -2,7 +2,7 @@
 
 Site-profile bridge to **[WCAGate](https://github.com/imyourboyroy/WCAGate)** for Portable Web Toolkit website workflows.
 
-This module does **not** contain the evidence engine. Agents and CLIs must call `Web_Toolkit/wcag_auditor` (this wrapper), never `AI/wcag-auditor`. The engine lands in `Web_Toolkit/node_modules/@imyourboyroy/wcagate`.
+This module does **not** contain the evidence engine. Agents and CLIs must call `Web_Toolkit/wcag_auditor` (this wrapper), never `AI/wcag-auditor`. The engine lands in `Web_Toolkit/node_modules/@imyourboyroy/wcagate` and is refreshed from the public `main` head by the toolkit freshness preflight at most once per 24 hours.
 
 **Not a WCAG conformance certificate** — evidence gate only.
 
