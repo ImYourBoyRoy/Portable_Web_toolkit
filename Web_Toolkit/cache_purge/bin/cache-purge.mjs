@@ -2,14 +2,18 @@
 // ./Web_Toolkit/cache_purge/bin/cache-purge.mjs
 /**
  * Portable Astro-oriented cache purge utility for Cloudflare-backed sites.
+ *
+ * Run: node ./Web_Toolkit/cache_purge/bin/cache-purge.mjs --site-profile <profile> [--apply]
+ *      node ./Web_Toolkit/cache_purge/bin/cache-purge.mjs warm --site-profile <profile> [--apply]
+ * Logic lives in ../src (commands/purge.mjs, commands/warm.mjs, lib/urls.mjs, lib/cloudflare.mjs);
+ * this file only parses arguments, prints help, and dispatches.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
 import process from 'node:process';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { loadSiteProfileContext, resolvePortableRoot } from '../../shared/lib/context.mjs';
 import { runCacheWarm } from '../src/commands/warm.mjs';
+import { runPurge } from '../src/commands/purge.mjs';
 
 const portableRoot = resolvePortableRoot(import.meta.url, 2);
 
@@ -51,7 +55,10 @@ function printHelp() {
       { name: '--project-root <path>', description: 'Override the project root from the site profile.' },
       { name: '--environment <production|development>', description: 'Select which profile hosts should be purged. Defaults from the site profile.' },
       { name: '--mode <url|hostname|prefix|everything>', description: 'Choose the purge strategy. URL is safest and preferred.' },
-      { name: '--urls <csv>', description: 'Explicit URL list for URL or prefix purges. Otherwise dist/ is sampled automatically.' },
+      { name: '--urls <csv>', description: 'Explicit URL list for URL or prefix purges. Otherwise the built public folder is sampled (dist/client for the Astro Workers adapter, else dist/).' },
+      { name: '--batch-size <n>', description: 'Items per Cloudflare request (default 100, max 500). Also cloudflare.cachePurge.batchSize or CF_CACHE_PURGE_BATCH_SIZE.' },
+      { name: '--include-assets', description: 'Also purge content-hashed /_astro/ files (skipped by default: their names change with their content).' },
+      { name: '--no-variants', description: 'Do not add the slashless twin of each directory URL (/about/ and /about).' },
       { name: '--apply', description: 'Actually submit the purge. Without this flag the tool stays in dry-run mode.' }
     ],
     examples: [
@@ -62,71 +69,16 @@ function printHelp() {
     ],
     notes: [
       'Live Cloudflare credentials should come from the project root .env when possible.',
-      'Dry-run is the default for safety.'
+      'Dry-run is the default for safety.',
+      'Large purges are split into batches; HTTP 429 is retried after Cloudflare\'s Retry-After delay (Free plan: 5 purge requests per minute).',
+      'SSR or API routes are not in dist/: list them in cloudflare.cachePurge.extraPaths in the site profile, or pass --urls.',
+      'Prefix mode sends host/path prefixes without a scheme; a bare-host prefix purges the whole host.'
     ],
     exitCodes: [
       { name: '0', description: 'Dry-run or purge completed successfully.' },
-      { name: '1', description: 'Unhandled failure.' }
+      { name: '1', description: 'Nothing to purge, zone not resolved, Cloudflare rejected a batch, or unhandled failure.' }
     ]
   });
-}
-
-function collectDistUrls(projectRoot, hosts) {
-  const distRoot = path.join(projectRoot, 'dist');
-  if (!fs.existsSync(distRoot)) return [];
-  const urls = [];
-  const queue = [distRoot];
-  while (queue.length > 0) {
-    const current = queue.pop();
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        queue.push(fullPath);
-        continue;
-      }
-      const relative = path.relative(distRoot, fullPath).replace(/\\/g, '/');
-      if (relative.endsWith('.map')) continue;
-      const routePath = relative === 'index.html'
-        ? '/'
-        : `/${relative.replace(/index\.html$/, '')}`.replace(/\/+/g, '/');
-      for (const host of hosts) {
-        urls.push(`https://${host}${routePath}`);
-      }
-    }
-  }
-  return [...new Set(urls)];
-}
-
-async function resolveZoneId(token, zoneName) {
-  try {
-    const response = await fetch(`https://api.cloudflare.com/client/v4/zones?name=${encodeURIComponent(zoneName)}&per_page=50`, {
-      headers: { Authorization: `Bearer ${token}`, 'content-type': 'application/json' }
-    });
-    const payload = await response.json();
-    const zone = Array.isArray(payload?.result) ? payload.result[0] : null;
-
-    if (!response.ok || !zone?.id) {
-      console.warn(`[warn] Unable to resolve zone "${zoneName}". Skipping purge.`);
-      return null;
-    }
-    return zone.id;
-  } catch (error) {
-    console.warn(`[warn] Zone resolution failed: ${error.message}`);
-    return null;
-  }
-}
-
-async function purge(token, zoneId, body) {
-  const response = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload?.success === false) {
-    throw new Error(JSON.stringify(payload?.errors || payload || {}, null, 2));
-  }
-  return payload;
 }
 
 async function main() {
@@ -142,52 +94,7 @@ async function main() {
   }
 
   const site = loadSiteProfileContext({ portableRoot, flags });
-  const environment = String(flags.environment || site.profile.cloudflare?.cachePurge?.defaultEnvironment || 'production').toLowerCase();
-  const mode = String(flags.mode || site.profile.cloudflare?.cachePurge?.defaultMode || site.env.CF_CACHE_PURGE_MODE || 'url').toLowerCase();
-  const apply = ['1', 'true', 'yes', 'on'].includes(String(flags.apply || 'false').toLowerCase());
-  const hosts = environment === 'development' ? site.developmentHosts : site.productionHosts;
-  const token = String(site.env.CLOUDFLARE_API_TOKEN || '').trim();
-  const zoneName = site.profile.zone.name;
-  const urls = String(flags.urls || '').trim()
-    ? String(flags.urls).split(',').map((entry) => entry.trim()).filter(Boolean)
-    : collectDistUrls(site.projectRoot, hosts).slice(0, 100);
-
-  const body = mode === 'everything'
-    ? { purge_everything: true }
-    : mode === 'hostname'
-      ? { hosts }
-      : mode === 'prefix'
-        ? { prefixes: urls.map((entry) => entry.replace(/\/[^/]*$/, '/')) }
-        : { files: urls };
-
-  console.log('\ncache-purge');
-  console.log(`- Profile: ${site.profile.siteId}`);
-  console.log(`- Project root: ${site.projectRoot}`);
-  console.log(`- Environment: ${environment}`);
-  console.log(`- Mode: ${mode}`);
-  console.log(`- Apply: ${apply ? 'yes' : 'no (dry-run)'}`);
-  if (mode === 'url') {
-    console.log(`- URLs prepared: ${urls.length}`);
-  }
-
-  if (!apply) {
-    console.log('- Preview body:');
-    console.log(JSON.stringify(body, null, 2));
-    return 0;
-  }
-
-  if (!token) {
-    throw new Error('Missing CLOUDFLARE_API_TOKEN in the project root .env, Web_Toolkit/.env, or shell env.');
-  }
-
-  const zoneId = await resolveZoneId(token, zoneName);
-  if (zoneId) {
-    await purge(token, zoneId, body);
-    console.log(`- Purge submitted successfully for zone ${zoneName} (${zoneId})`);
-  } else {
-    console.log(`- Skipping purge: No active zone found for ${zoneName}.`);
-  }
-  return 0;
+  return runPurge({ site, flags });
 }
 
 main().then((code) => process.exit(code)).catch((error) => {

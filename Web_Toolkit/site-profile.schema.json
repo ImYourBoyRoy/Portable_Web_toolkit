@@ -649,7 +649,30 @@
           "type": "object"
         },
         "cachePurge": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "defaultMode": {
+              "enum": ["url", "prefix", "hostname", "everything"]
+            },
+            "defaultEnvironment": {
+              "enum": ["production", "development"]
+            },
+            "distSubdir": {
+              "type": "string",
+              "description": "Subdirectory under dist/ holding the public site (e.g. client for the Astro Workers adapter). Falls back to cloudflare.headers.distSubdir, then auto-detects dist/client."
+            },
+            "batchSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Items per Cloudflare purge request. Default 100 (Free/Pro/Business limit); Enterprise single-file purge allows up to 500."
+            },
+            "extraPaths": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Public paths that are not in dist/ (SSR or API routes such as /api/content.json) to purge on every host alongside the built pages."
+            }
+          }
         },
         "headers": {
           "type": "object",

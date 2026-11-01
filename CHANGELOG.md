@@ -5,6 +5,19 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **cache-purge** now finds the public site for the Astro Cloudflare Workers adapter: it uses `cloudflare.cachePurge.distSubdir` or `cloudflare.headers.distSubdir`, or auto-detects `dist/client` beside `dist/server`. Previously it walked `dist/` and produced `/client/...` and `/server/...` URLs that were never cached.
+- **cache-purge** splits URL, prefix, and host purges into batches (default 100 per request, the Free/Pro/Business limit; `--batch-size`, `cloudflare.cachePurge.batchSize`, or `CF_CACHE_PURGE_BATCH_SIZE`, max 500). A bigger site no longer fails with Cloudflare error 1094, and `CF_CACHE_PURGE_BATCH_SIZE` is finally honored.
+- **cache-purge** retries HTTP 429 using `Retry-After` (Free plan: 5 purge requests per minute) and, on a rejected batch, reports how many items were already purged.
+- **cache-purge** now exits non-zero when the zone cannot be resolved or there is nothing to purge, instead of printing a warning and exiting 0.
+- **cache-purge** prefix mode sends `host/path` prefixes without a scheme, query, or trailing slash, as Cloudflare requires, and warns when a prefix is a bare host (purges the whole host).
+
+### Added
+
+- `cache-purge` skips content-hashed `/_astro/` assets by default (`--include-assets` restores them), adds slashless twins of directory URLs (`--no-variants` disables), and supports profile `cloudflare.cachePurge.extraPaths` for SSR/API routes outside `dist/`.
+- `cache-purge` is split into `src/commands/purge.mjs`, `src/lib/urls.mjs`, and `src/lib/cloudflare.mjs` with offline tests (`npm run test:cache`, included in `npm test`).
+
 ## [0.4.0] - 2026-10-26
 
 ### Added
