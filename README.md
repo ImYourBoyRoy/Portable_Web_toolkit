@@ -7,10 +7,10 @@
 |---|---|---|
 | **Toolkit Release** | `v0.4.0` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
-| **Node.js Runtime Pin** | `26.7.0` | [`.node-version`](./.node-version) |
-| **Astro Framework** | `^7.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **@astrojs/cloudflare** | `^14.2.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **Cloudflare Wrangler** | `^4.120.1` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Node.js Runtime Pin** | `26.13.0` | [`.node-version`](./.node-version) |
+| **Astro Framework** | `^7.4.4` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.4.3` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.156.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·

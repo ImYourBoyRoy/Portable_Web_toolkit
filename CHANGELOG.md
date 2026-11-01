@@ -5,6 +5,16 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Version defaults refreshed** from the npm registry and Node release index (checked 2026-11-01): `.node-version` and `site-starter/.node-version` 26.7.0 → 26.13.0 (current LTS); starter pins `astro` ^7.4.4, `@astrojs/cloudflare` ^14.4.3, `vite` ^8.3.5, `wrangler` ^4.156.0, `@cloudflare/workers-types` ^5.20261101.1, `@types/node` ^26.6.6, `@astrojs/check` ^0.9.12, `@astrojs/upgrade` ^0.8.1, `playwright` ^1.64.1, `yaml` ^2.9.1, `yaml-language-server` ^2.0.0. `typescript` stays `^6.0.3` (latest is 7.0.2, but `@astrojs/check` still peers on `^5 || ^6`).
+- Starter `compatibility_date` 2026-07-18 → 2026-10-23 (accepted by Wrangler 4.156.0 / workerd 1.20261023.1 with no warnings).
+- Setup bootstrap manifest Node tarballs v26.7.0 → v26.13.0.
+
+### Removed
+
+- Starter templates no longer depend on `rimraf` or `cross-env`. `rimraf` pulled vulnerable `glob`/`minimatch` (3 moderate `npm audit` findings, even at its latest 6.1.3); `cross-env` was unused. The starter `clean` script now runs `Web_Toolkit/scripts/clean-local-cache.mjs`. Both templates now audit clean.
+
 ### Fixed
 
 - **cache-purge** now finds the public site for the Astro Cloudflare Workers adapter: it uses `cloudflare.cachePurge.distSubdir` or `cloudflare.headers.distSubdir`, or auto-detects `dist/client` beside `dist/server`. Previously it walked `dist/` and produced `/client/...` and `/server/...` URLs that were never cached.
