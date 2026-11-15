@@ -1,4 +1,10 @@
 // ./src/lib/site-config.ts
+export type PublicApi = {
+  path: string;
+  label: string;
+  description?: string;
+};
+
 export type PublicDiscoveryLink = {
   label: string;
   path: string;
@@ -25,4 +31,19 @@ export const siteConfig = {
   publicDiscovery: [] as PublicDiscoveryLink[],
   /** Schema.org primary entity: Organization | Person | LocalBusiness */
   schemaType: 'Organization' as 'Organization' | 'Person' | 'LocalBusiness',
+  /** Optional full or legal name, emitted as schema.org alternateName when it differs from `name`. */
+  legalName: '',
+  /** Public profile URLs (GitHub, LinkedIn, ...) emitted as schema.org sameAs. */
+  sameAs: [] as string[],
+  /**
+   * AI crawler policy declared in robots.txt (Content-Signal) and ai.txt. Decide deliberately:
+   * search = appear in search results, aiInput = be retrieved and quoted in AI answers, aiTrain = be used for model training.
+   */
+  aiPolicy: { search: true, aiInput: true, aiTrain: true },
+  /** Public, unauthenticated JSON APIs to list in /.well-known/api-catalog (RFC 9727). Never user-scoped routes. */
+  apis: [] as PublicApi[],
+  /** Paths crawlers should skip (form handlers, redirect routes). Repeated in every robots.txt group. */
+  crawlerDisallow: [] as string[],
+  /** Optional absolute-path OpenAPI description (for example '/api/openapi.json') linked from the catalog and Link headers. */
+  openapiPath: '',
 };

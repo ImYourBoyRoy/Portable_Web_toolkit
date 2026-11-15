@@ -41,123 +41,70 @@ import { runStack as runHeadersStack } from '../../headers_deploy/src/commands/s
 import { runScaffoldPublic } from '../../headers_deploy/src/commands/scaffold-public.mjs';
 import { runWriteDeploy } from '../../headers_deploy/src/commands/write-deploy.mjs';
 import { runAudit as runHeadersAudit } from '../../headers_deploy/src/commands/audit.mjs';
+import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 
 function printHelp() {
-  console.log(`
-cf-agent — Portable Cloudflare automation assistant
-
-Usage:
-  cf-agent <command> [subcommand] [--flags]
-
-Commands:
-  init
-      Explain the preferred single-.env workflow (project root .env first).
-
-  doctor [--json] [--offline] [--zone <name>]
-      Check local runtime + optional auth/token/zone connectivity.
-
-  wrangler <install|update|status|version> [--global]
-      Install/update Wrangler and inspect status.
-
-  auth <login|status|logout|wipe|token-guide> [--profile persistent|permanent|temporary] [--ttl 24h]
-      Manage wrangler auth sessions and local credential cleanup.
-
-  permissions <audit|repair> [--site-profile <path>] [--apply]
-      Audit or self-repair API token permissions using the active site profile.
-
-  site <audit|harden> [--site-profile <path>] [--apply]
-      Combined site audit or baseline hardening using the active site profile.
-
-  dns <audit|fix> [--site-profile <path>] [--apply] [--create-missing]
-      Audit DNS expectations or apply low-risk proxied-state fixes. Missing records require --create-missing with --apply.
-
-  dns public [--site-profile <path>]
-      Compare Cloudflare DNS records to public/local resolver views.
-
-  deploy <dev|prod|pages|workers> [--site-profile <path>] [--apply]
-      Run setup verification, then deploy (profile command, Pages, or Workers).
-
-  deployment audit [--site-profile <path>]
-      Account-level Pages/Worker/URL audit (no production zone required).
-
-  cache purge [--site-profile <path>] [--apply]
-      Run the portable Astro cache purge helper for the active site profile.
-
-  workers verify [--site-profile <path>]
-      Verify expected Cloudflare worker routes from the site profile.
-
-  rules audit [--site-profile <path>]
-      Audit redirect/cache/header/origin/WAF rule coverage for the site.
-
-  performance audit [--site-profile <path>]
-      AI-agent JSON-only audit of Cloudflare performance switches and config rules.
-
-  email audit [--site-profile <path>]
-      Audit email-related DNS posture (MX/SPF/DMARC/DKIM/provider hints).
-
-  robots <audit|fix> [--site-profile <path>] [--apply]
-      Audit or fix Cloudflare managed robots.txt/content-signal posture.
-
-  headers <stack|scaffold-public|write-deploy|audit> [--site-profile <path>] [--project-root <path>] [--environment production|development] [--apply]
-      Manage Cloudflare Pages _headers baseline, deploy merge, and audits (delegates to headers-deploy).
-
-  env sync
-      Legacy no-op. The toolkit now reads the target project root .env directly.
-
-  audit token [--zone <name>] [--output-dir <dir>]
-      Legacy alias for permissions audit.
-
-  audit zone [--zone <name>] [--hosts a.com,b.com] [--output-dir <dir>]
-      Legacy alias for zone-only audit.
-
-  harden zone [--zone <name>] [--dry-run] [--apply] [--hosts a.com,b.com] [--output-dir <dir>]
-      Legacy alias for zone-only hardening. Dry-run is the default unless --apply is passed.
-
-  test minify [--zone <name>] [--hosts a.com,b.com] [--output-dir <dir>]
-      Smoke-test whether origin HTML/CSS/JS assets are minified.
-
-  scaffold astro-analytics [--project-root <dir>] [--ga4-id G-XXXX] [--posthog-key phc_xxx]
-      Create/patch Astro analytics files (ga4.astro, posthog.astro, CSP middleware, env keys).
-      Optional: --apply --force --layout-path src/layouts/BaseLayout.astro --write-env false
-
-  pages list [--zone <name>]
-      List all Pages projects in the account.
-
-  pages domains [--project <name>] [--zone <name>]
-      List custom domains attached to a Pages project.
-
-  pages add-domain --domain <d> [--project <name>] [--zone <name>] [--apply]
-      Add a single custom domain to a project (dry-run unless --apply).
-
-  pages setup [--domains d1,d2] [--project <name>] [--zone <name>] [--cleanup-dns] [--apply]
-      Add configured custom domains + optionally remove stale Squarespace DNS records (dry-run unless --apply).
-
-Examples:
-  npm run start -- doctor
-  npm run start -- auth login --profile temporary --ttl 12h
-  npm run start -- permissions audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- site audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- dns audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- site harden --site-profile ../site-profiles/example-workers.json
-  npm run start -- site harden --site-profile ../site-profiles/example-workers.json --apply
-  npm run start -- deploy dev --site-profile ../site-profiles/example-workers.json
-  npm run start -- deploy dev --site-profile ../site-profiles/example-workers.json --apply
-  npm run start -- deploy pages --site-profile ../site-profiles/example-workers.json --apply
-  npm run start -- cache purge --site-profile ../site-profiles/example-workers.json
-  npm run start -- dns public --site-profile ../site-profiles/example-workers.json
-  npm run start -- rules audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- performance audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- email audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- robots audit --site-profile ../site-profiles/example-workers.json
-  npm run start -- robots fix --site-profile ../site-profiles/example-workers.json --apply
-  npm run start -- workers verify --site-profile ../site-profiles/example-workers.json
-  npm run start -- test minify --zone example.com
-  npm run start -- scaffold astro-analytics --project-root C:/sites/app --ga4-id G-XXXX --posthog-key phc_xxx
-  npm run start -- pages list
-  npm run start -- pages setup
-  npm run start -- pages setup --apply --cleanup-dns
-  npm run start -- env sync
-`.trim());
+  return printStandardHelp({
+    name: 'cf-agent',
+    summary: 'Portable Cloudflare automation assistant',
+    usage: ['cf-agent <command> [subcommand] [--flags]'],
+    commands: [
+      { name: 'init', description: 'Explain the project-root .env workflow.' },
+      { name: 'doctor [--json] [--offline] [--zone <name>]', description: 'Check local runtime and optional auth/token/zone connectivity.' },
+      { name: 'wrangler <install|update|status|version> [--global]', description: 'Install/update Wrangler and inspect status.' },
+      { name: 'auth <login|status|logout|wipe|token-guide> [--profile persistent|permanent|temporary] [--ttl 24h]', description: 'Manage Wrangler auth sessions and local credential cleanup.' },
+      { name: 'permissions <audit|repair> --site-profile <path> [--apply]', description: 'Audit or repair API token permissions using the site profile.' },
+      { name: 'site <audit|harden> --site-profile <path> [--apply]', description: 'Audit or harden the site using its profile.' },
+      { name: 'dns <audit|fix|public> --site-profile <path> [--apply] [--create-missing]', description: 'Audit DNS, inspect public resolver views, or apply DNS fixes.' },
+      { name: 'deploy <dev|prod|pages|workers> --site-profile <path> [--apply]', description: 'Verify setup, then preview or apply a profile/Pages/Workers deployment.' },
+      { name: 'deployment audit', description: 'Audit account-level Pages, Worker, and URL state.' },
+      { name: 'cache purge', description: 'Preview or apply a cache purge for the active site profile.' },
+      { name: 'workers verify', description: 'Verify expected Worker routes from the site profile.' },
+      { name: 'rules audit', description: 'Audit redirect/cache/header/origin/WAF rule coverage.' },
+      { name: 'performance audit', description: 'Emit JSON findings for Cloudflare performance switches and config rules.' },
+      { name: 'email audit', description: 'Audit MX/SPF/DMARC/DKIM and provider hints.' },
+      { name: 'robots <audit|fix>', description: 'Audit or fix managed robots.txt/content-signal posture.' },
+      { name: 'headers <stack|scaffold-public|write-deploy|audit> [--site-profile <path>] [--project-root <path>] [--environment production|development] [--apply]', description: 'Manage the Pages _headers baseline and deploy merge.' },
+      { name: 'env sync', description: 'Legacy no-op; project-root .env is read directly.' },
+      { name: 'audit token|zone', description: 'Legacy aliases for permission and zone audits.' },
+      { name: 'harden zone [--zone <name>] [--hosts <list>] [--dry-run] [--apply] [--output-dir <dir>]', description: 'Legacy zone hardening; dry-run unless --apply.' },
+      { name: 'test minify', description: 'Smoke-test origin HTML/CSS/JS minification.' },
+      { name: 'scaffold astro-analytics [--project-root <dir>] [--ga4-id <id>] [--posthog-key <key>] [--apply]', description: 'Preview or apply Astro analytics, CSP, and env scaffolding.' },
+      { name: 'pages list|domains|add-domain|setup [--zone <name>] [--project <name>] [--apply]', description: 'Inspect Pages projects/domains or preview/apply domain changes.' }
+    ],
+    flags: [
+      { name: '--site-profile <path>', description: 'Select target site configuration for site-scoped commands.' },
+      { name: '--project-root <path>', description: 'Select target project root for local file operations.' },
+      { name: '--apply', description: 'Apply mutations; commands that support changes preview by default.' },
+      { name: '--json', description: 'Emit JSON where supported (doctor and performance audit).' },
+      { name: '--offline', description: 'Keep doctor checks local; do not probe remote services.' },
+      { name: '--create-missing', description: 'Allow DNS fix to create missing records when combined with --apply.' },
+      { name: '--cleanup-dns', description: 'Allow Pages setup to remove stale DNS records when combined with --apply.' },
+      { name: '--force', description: 'Allow documented overwrite behavior for supported scaffolds.' },
+      { name: '--dry-run', description: 'Force preview mode for zone hardening.' },
+      { name: '--zone <name>', description: 'Select a Cloudflare zone when a command does not use a site profile.' },
+      { name: '--hosts <list>', description: 'Supply comma-separated hosts for zone-scoped checks.' },
+      { name: '--output-dir <path>', description: 'Override the directory for supported audit reports.' }
+    ],
+    examples: [
+      'cf-agent doctor --json --offline',
+      'cf-agent permissions audit --site-profile ../site-profiles/example-workers.json',
+      'cf-agent site harden --site-profile ../site-profiles/example-workers.json',
+      'cf-agent deploy dev --site-profile ../site-profiles/example-workers.json',
+      'cf-agent pages setup --domains www.example.com,example.com --project my-site'
+    ],
+    notes: [
+      'Read-only audits do not need --apply; supported mutations preview first and require --apply.',
+      'DNS record creation additionally requires --create-missing. Pages setup DNS cleanup requires --cleanup-dns.',
+      'Production deploys are consequential: inspect the preview and obtain authorization before applying.',
+      'Site-scoped commands read secrets from the target project .env and shell environment; never put secret values in profiles or reports.'
+    ],
+    exitCodes: [
+      { name: '0', description: 'Command completed successfully.' },
+      { name: '1', description: 'Usage, configuration, or unhandled command failure.' },
+      { name: '2', description: 'An audit/gate reported failed checks (command dependent).' }
+    ]
+  });
 }
 
 function ensureEnvTemplate() {

@@ -66,6 +66,7 @@ None of these override safety policy or explicit repository constraints.
 - **Workers-over-external:** prefer Cloudflare Workers/bindings (KV, D1, R2, Vectorize) before adding SaaS.
 - **Version truth:** verify Astro/Wrangler/Node from repo + registry — never trust stale model memory.
 - **Automatic freshness:** toolkit entrypoints perform a throttled update check; only a clean public `main` checkout may fast-forward, while WCAGate follows its unpinned public `main` dependency. Dirty or unmanaged state is reported and preserved.
+- **Agent CLI contract:** every packaged CLI must use the shared parser/help helpers, document examples, flags, side effects/safety, and exit codes, and offer structured output when agents need to consume findings. `toolkit-verify` checks this contract for every package `bin` entry.
 
 ## Canonical sequence (summary)
 

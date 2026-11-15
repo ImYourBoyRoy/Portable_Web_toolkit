@@ -1,0 +1,11 @@
+{
+  "name": "preview-check",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "Roy Dawson IV",
+  "license": "MIT",
+  "bin": {
+    "preview-check": "./bin/preview-check.mjs"
+  }
+}

@@ -9,8 +9,7 @@ import { siteConfig } from '../../lib/site-config';
 export const prerender = true;
 
 export const GET: APIRoute = ({ site }) => {
-  const buildDate = new Date().toISOString().split('T')[0];
-  const routes = getPublicPageRoutes(buildDate);
+  const routes = getPublicPageRoutes();
   const baseUrl = resolveBaseUrl(site);
 
   const payload = {
@@ -21,6 +20,7 @@ export const GET: APIRoute = ({ site }) => {
     routes: routes.map((route) => ({
       ...route,
       ...(baseUrl ? { url: new URL(route.path, `${baseUrl}/`).href } : {}),
+      ...(baseUrl && route.markdownPath ? { markdownUrl: new URL(route.markdownPath, `${baseUrl}/`).href } : {}),
     })),
   };
 

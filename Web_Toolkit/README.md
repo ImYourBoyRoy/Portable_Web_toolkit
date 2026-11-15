@@ -19,7 +19,9 @@ unmanaged repositories are left untouched. WCAGate follows its unpinned GitHub
 Reports are printed for the agent and saved to
 `.runtime/toolkit-auto-update.json`. Set `PORTABLE_TOOLKIT_AUTO_UPDATE=0` to
 disable the behavior, or set `PORTABLE_TOOLKIT_UPDATE_INTERVAL_HOURS` to change
-the interval. Run `npm run auto-update -- --force --json` for an explicit check.
+the interval. The preflight is skipped for `--help`, `--version`, and `--apply`
+invocations (set `PORTABLE_TOOLKIT_AUTO_UPDATE_ON_APPLY=1` to opt in). Run
+`npm run auto-update -- --force --json` for an explicit check.
 
 ## The Brain: `site-profile.json`
 
@@ -73,6 +75,9 @@ Automate high-fidelity branding and asset generation.
 - **[Image Pipeline](./image_pipeline/README.md)**: Astro Image posture audit + gap-fill WebP/AVIF for leftover `public/` rasters (not the primary content-photo path).
 - **[Vectorize Pipeline](./vectorize_pipeline/README.md)**: Creates clean SVG wordmarks from licensed fonts or traces authorized raster artwork with VTracer.
 - **[Stylesheet Check](./stylesheet_check/README.md)**: Segregated CSS size/duplication/token hygiene + Astro `tokens.css` / `global.css` / Layout ownership checks.
+- **[Preview Check](./preview_check/README.md)**: Pre-deploy Lighthouse, responsive-overflow and motion-policy checks against a local preview or any URL.
+- **[Site Snapshots](./site_snapshots/README.md)**: Capture and verify up-to-date screenshots of live pages (client work, products) for portfolio sections; reports stale or drifted images.
+- **[Cinematic templates](./templates/cinematic/README.md)**: Copy-ready scroll-driven motion, page-system CSS and an optional WebGL hero that stays PageSpeed-safe.
 
 ---
 
@@ -136,6 +141,20 @@ node .\privacy_check\bin\privacy-check.mjs scan --root . --json
 - **Toolkit runtime reports**: `Web_Toolkit/.runtime/` for toolkit self-checks, exports, sessions, and Cloudflare-agent operational reports.
 - **Generated site assets**: written into the target project only when a command is explicitly applied, for example `--apply`.
 - **Exported toolkit copies**: created under `.runtime/exports/` by default and sanitized before sharing.
+
+## Agent CLI contract
+
+Every packaged CLI uses the shared parser and help renderer. Run `<tool> --help`
+before invoking an unfamiliar command; help documents usage, flags, examples,
+operational notes, and exit codes. Read-only findings should be emitted as
+structured JSON on stdout or written to a clearly reported JSON artifact.
+Commands that write project assets or change Cloudflare state document their
+effects and require an explicit action or `--apply` gate as appropriate.
+
+Run `node ./toolkit_verify/bin/toolkit-verify.mjs` to smoke-check every binary
+declared by `package.json`; the verifier fails if any command cannot render the
+shared help sections. `discovery-doctor --json` and
+`instagram-clone audit --json` provide machine-readable stdout reports.
 
 ## MCP Direction
 

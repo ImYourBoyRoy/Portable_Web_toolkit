@@ -7,31 +7,16 @@
  * exports, runtime reports, caches, session files, and Python bytecode.
  */
 
-import fs from 'node:fs';
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import path from 'node:path';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
-import { resolvePortableRoot, resolveRuntimePath } from '../../shared/lib/context.mjs';
+import { resolvePortableRoot } from '../../shared/lib/context.mjs';
+import { bytesFor, collectTargets, removeTarget } from '../src/lib/targets.mjs';
 
 const PORTABLE_ROOT = resolvePortableRoot(import.meta.url, 2);
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 
@@ -54,6 +39,7 @@ function printHelp() {
     ],
     notes: [
       'This command preserves source code, docs, shared examples, and site profiles.',
+      'Symlinks are never followed or deleted through, and node_modules/.git are never scanned.',
       'Use it before zipping or sharing the portable toolkit.'
     ],
     exitCodes: [
@@ -63,76 +49,10 @@ function printHelp() {
   });
 }
 
-function walk(root, predicate) {
-  const matches = [];
-  const queue = [root];
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!fs.existsSync(current)) continue;
-    const stat = fs.statSync(current);
-    if (predicate(current, stat)) {
-      matches.push(current);
-      if (stat.isDirectory()) continue;
-    }
-    if (stat.isDirectory()) {
-      for (const entry of fs.readdirSync(current)) {
-        queue.push(path.join(current, entry));
-      }
-    }
-  }
-  return matches;
-}
-
-function bytesFor(targetPath) {
-  if (!fs.existsSync(targetPath)) return 0;
-  const stat = fs.statSync(targetPath);
-  if (stat.isFile()) return stat.size;
-  return walk(targetPath, (_current, currentStat) => currentStat.isFile()).reduce((sum, filePath) => sum + fs.statSync(filePath).size, 0);
-}
-
 function formatBytes(value) {
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function isGeneratedDirectory(current, stat, portableRoot) {
-  if (!stat.isDirectory()) return false;
-  const name = path.basename(current);
-  const relative = path.relative(portableRoot, current).replace(/\\/g, '/');
-
-  if (['.runtime', '.cf-agent', '__pycache__', '.pytest_cache'].includes(name)) return true;
-  if ((name === 'output' || name === 'dist') && (relative === name || relative.endsWith(`/${name}`))) {
-    const parent = path.dirname(current);
-    if (path.resolve(parent) === path.resolve(portableRoot)) return true;
-    const parentName = path.basename(parent);
-    if (!parentName.startsWith('.') && !['node_modules', 'src', 'shared'].includes(parentName)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isGeneratedFile(current, stat) {
-  if (!stat.isFile()) return false;
-  const name = path.basename(current);
-  if (name === 'doctor.txt' || name === 'EXPORT-METADATA.json') return true;
-  if (current.endsWith('.pyc') || current.endsWith('.zip')) return true;
-  return false;
-}
-
-function cleanupTargets() {
-  const dynamicTargets = walk(PORTABLE_ROOT, (current, stat) => isGeneratedDirectory(current, stat, PORTABLE_ROOT) || isGeneratedFile(current, stat));
-  return [...new Set(dynamicTargets)].sort((left, right) => left.length - right.length);
-}
-
-function removeTarget(targetPath) {
-  const stat = fs.statSync(targetPath);
-  if (stat.isDirectory()) {
-    fs.rmSync(targetPath, { recursive: true, force: true });
-    return;
-  }
-  fs.rmSync(targetPath, { force: true });
 }
 
 async function main() {
@@ -143,7 +63,7 @@ async function main() {
     return 0;
   }
 
-  const targets = cleanupTargets();
+  const targets = collectTargets(PORTABLE_ROOT);
   const totalBytes = targets.reduce((sum, targetPath) => sum + bytesFor(targetPath), 0);
   const apply = ['1', 'true', 'yes', 'on'].includes(String(flags.apply || 'false').toLowerCase());
 
@@ -161,8 +81,7 @@ async function main() {
   }
 
   for (const targetPath of targets) {
-    if (!fs.existsSync(targetPath)) continue;
-    removeTarget(targetPath);
+    removeTarget(PORTABLE_ROOT, targetPath);
   }
   console.log('- Mode: applied');
   return 0;

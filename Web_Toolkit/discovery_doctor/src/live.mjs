@@ -102,7 +102,7 @@ function rpcPayload(method, id, options = {}) {
 }
 
 async function requestJsonRpc(urlInput, payload, options = {}) {
-  const url = assertPublicHttpUrl(urlInput, 'MCP endpoint');
+  const url = assertPublicHttpUrl(urlInput, 'MCP endpoint', { allowLoopback: options.allowLoopback });
   const fetchImpl = options.fetchImpl || globalThis.fetch;
   const headers = {
     Accept: 'application/json, text/event-stream',
@@ -364,6 +364,9 @@ function isMcpLink(link, policy) {
       return false;
     }
   })) return true;
+  // Static discovery files that live under /mcp/ (the standard /.well-known/mcp/server-card.json) are documents, not endpoints.
+  // POSTing a JSON-RPC initialize to one returns 405, so they are fetched like any other link instead.
+  if (/\/server-card\.json$/i.test(link.url.pathname)) return false;
   return /(?:^|\/)(?:mcp|mcp\.json)(?:\/|$)/i.test(link.url.pathname);
 }
 
@@ -372,7 +375,7 @@ function isMcpLink(link, policy) {
  * URI templates are reported as informational rather than fetched.
  */
 export async function checkDiscoveryLinks(options = {}) {
-  const base = assertPublicHttpUrl(options.baseUrl, 'base URL');
+  const base = assertPublicHttpUrl(options.baseUrl, 'base URL', { allowLoopback: options.allowLoopback });
   const links = Array.isArray(options.links) ? options.links : [];
   const policy = options.policy || {};
   const maxLinks = Math.max(0, Math.min(Number(options.maxLinks || policy.maxLinks || 40), 200));
@@ -402,6 +405,7 @@ export async function checkDiscoveryLinks(options = {}) {
         fetchImpl,
         protocolVersion: policy.mcpProtocolVersion,
         timeoutMs: policy.timeoutMs,
+        allowLoopback: options.allowLoopback,
       });
       if (mcp.ok) results.push({ status: 'pass', label: `MCP: ${link.label}`, detail: `${mcp.era} discovery + lists OK (${mcp.tools.length} tools)` });
       else results.push({ status: 'fail', label: `MCP: ${link.label}`, detail: mcp.errors.join('; ') });
@@ -414,6 +418,7 @@ export async function checkDiscoveryLinks(options = {}) {
         label: `discovery link ${link.href}`,
         fetchOptions: { method: 'GET' },
         fetchImpl,
+        allowLoopback: options.allowLoopback,
       });
       if (!sameOrigin(response.url ? new URL(response.url) : link.url, base)) {
         results.push({ status: 'fail', label: `Discovery link: ${link.label}`, detail: `redirected off origin to ${response.url}` });
@@ -425,7 +430,9 @@ export async function checkDiscoveryLinks(options = {}) {
       }
       const typeCheck = contentTypeMatches(response.headers, link.url.pathname.endsWith('.json') || link.url.pathname.startsWith('/api/')
         ? ['application/json', 'application/*+json']
-        : ['text/html', 'text/plain', 'text/markdown', 'application/xhtml+xml', 'application/json', 'application/*+json']);
+        : link.url.pathname.endsWith('.xml')
+          ? ['application/xml', 'text/xml', 'application/*+xml']
+          : ['text/html', 'text/plain', 'text/markdown', 'application/xhtml+xml', 'application/json', 'application/*+json']);
       if (!typeCheck.ok) {
         results.push({ status: 'warn', label: `Discovery link: ${link.label}`, detail: `unexpected content type ${typeCheck.actual}` });
       } else if ((link.url.pathname.endsWith('.json') || link.url.pathname.startsWith('/api/')) && !looksLikeJson(response.body)) {

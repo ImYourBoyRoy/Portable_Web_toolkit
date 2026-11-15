@@ -40,6 +40,12 @@ function mockFetch(url, init = {}) {
   if (new URL(url).pathname.endsWith('.json')) {
     return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } }));
   }
+  if (new URL(url).pathname.endsWith('.xml')) {
+    return Promise.resolve(new Response('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
+      status: 200,
+      headers: { 'content-type': 'application/xml' },
+    }));
+  }
   return Promise.resolve(new Response('<html><body>ok</body></html>', { status: 200, headers: { 'content-type': 'text/html' } }));
 }
 
@@ -169,5 +175,37 @@ describe('discovery policy and links', () => {
     assert.equal(result.results.some((entry) => entry.status === 'pass' && /API/.test(entry.label)), true);
     assert.equal(result.results.some((entry) => entry.status === 'pass' && /MCP/.test(entry.label)), true);
     assert.equal(result.results.some((entry) => entry.status === 'info' && /external/i.test(entry.detail)), true);
+  });
+
+  it('accepts XML discovery links with XML content types', async () => {
+    const policy = createDiscoveryPolicy();
+    const result = await checkDiscoveryLinks({
+      baseUrl: 'https://example.com/',
+      policy,
+      fetchImpl: mockFetch,
+      links: [
+        { label: 'XML sitemap', href: '/sitemap.xml', valid: true, url: new URL('https://example.com/sitemap.xml') },
+      ],
+    });
+    assert.deepEqual(result.results, [{ status: 'pass', label: 'Discovery link: XML sitemap', detail: 'GET 200' }]);
+  });
+});
+
+describe('MCP server card link', () => {
+  it('fetches /.well-known/mcp/server-card.json as a document instead of POSTing an MCP handshake to it', async () => {
+    const methods = [];
+    const fetchImpl = (url, init = {}) => {
+      methods.push(init.method || 'GET');
+      if ((init.method || 'GET') === 'POST') return Promise.resolve(new Response('method not allowed', { status: 405 }));
+      return Promise.resolve(new Response(JSON.stringify({ remotes: [] }), { status: 200, headers: { 'content-type': 'application/json' } }));
+    };
+    const result = await checkDiscoveryLinks({
+      baseUrl: 'https://example.com/',
+      policy: createDiscoveryPolicy(),
+      fetchImpl,
+      links: [{ label: 'MCP server card', href: '/.well-known/mcp/server-card.json', valid: true, url: new URL('https://example.com/.well-known/mcp/server-card.json') }],
+    });
+    assert.equal(methods.includes('POST'), false);
+    assert.equal(result.results.some((entry) => entry.status === 'fail'), false);
   });
 });

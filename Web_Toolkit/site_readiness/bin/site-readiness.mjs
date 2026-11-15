@@ -4,27 +4,12 @@
  * Sandbox-aware run-all readiness pass for client Astro sites.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { runSiteReadiness } from '../src/commands/run.mjs';
 
 function parseCliArgs(argv = []) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 

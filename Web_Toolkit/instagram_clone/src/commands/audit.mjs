@@ -14,7 +14,7 @@ function assetExists(projectRoot, urlOrPath) {
   return fs.existsSync(path.join(projectRoot, 'public', relative));
 }
 
-export function runAudit({ projectRoot }) {
+export function runAudit({ projectRoot, json = false }) {
   const feedPath = path.join(projectRoot, 'src', 'data', 'instagram', 'feed.json');
   const issues = [];
 
@@ -60,16 +60,18 @@ export function runAudit({ projectRoot }) {
     issues,
   };
 
-  console.log('[instagram-clone] Audit summary');
-  console.log(`  feed: ${feedPath}`);
-  console.log(`  username: ${summary.username || '(unknown)'}`);
-  console.log(`  posts: ${summary.posts}, slides: ${summary.slides}`);
-  console.log(`  status: ${summary.ok ? 'PASS' : 'FAIL'}`);
-
-  if (issues.length) {
+  if (json) {
+    process.stdout.write(`${JSON.stringify(summary)}\n`);
+  } else {
+    console.log('[instagram-clone] Audit summary');
+    console.log(`  feed: ${feedPath}`);
+    console.log(`  username: ${summary.username || '(unknown)'}`);
+    console.log(`  posts: ${summary.posts}, slides: ${summary.slides}`);
+    console.log(`  status: ${summary.ok ? 'PASS' : 'FAIL'}`);
     for (const issue of issues) console.log(`  - ${issue}`);
-    process.exitCode = 1;
   }
+
+  if (issues.length) process.exitCode = 1;
 
   return summary;
 }

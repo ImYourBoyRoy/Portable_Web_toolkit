@@ -1,0 +1,10 @@
+/* ./src/styles/tokens/page-wide.css
+ * Layout tokens for "ledger and light" pages (scoped to `.page-wide` on <main>).
+ * Colors, fonts and radii stay in the site's theme tokens.
+ */
+.page-wide {
+  --gut: clamp(1.25rem, 4vw, 3rem);
+  --wrap: min(1320px, calc(100% - 2 * var(--gut)));
+  --rule: var(--border-hover);
+  --section-y: clamp(5rem, 11vw, 10rem);
+}

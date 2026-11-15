@@ -42,6 +42,13 @@ export const DEFAULT_DISCOVERY_POLICY = Object.freeze({
     securityTxt: true,
     headers: true,
     jsonLd: true,
+    // Agent-readiness surfaces: optional by default (absent = INFO). Present-but-malformed is always a failure.
+    apiCatalog: false,
+    markdownTwins: false,
+    linkHeaders: false,
+    mcpServerCard: false,
+    aiPolicy: false,
+    canonicalConsistency: false,
   }),
   sitemapCandidates: DEFAULT_SITEMAP_CANDIDATES,
   endpoints: DEFAULT_ENDPOINTS,
@@ -49,6 +56,8 @@ export const DEFAULT_DISCOVERY_POLICY = Object.freeze({
   maxLinks: 40,
   timeoutMs: 10000,
   mcpProtocolVersion: '2026-07-28',
+  agentSampleSize: 12,
+  allowLoopback: false,
 });
 
 function asBoolean(value, fallback) {
@@ -149,6 +158,11 @@ export function createDiscoveryPolicy(config = {}, overrides = {}) {
       discovery.mcpProtocolVersion || DEFAULT_DISCOVERY_POLICY.mcpProtocolVersion,
     ),
     privatePathSegments,
+    agentSampleSize: Number.isFinite(Number(discovery.agentSampleSize)) && Number(discovery.agentSampleSize) > 0
+      ? Math.min(Math.floor(Number(discovery.agentSampleSize)), 60)
+      : DEFAULT_DISCOVERY_POLICY.agentSampleSize,
+    // CLI-only opt-in (--allow-loopback). A committed profile can never turn it on.
+    allowLoopback: overrides.allowLoopback === true,
   };
 }
 

@@ -1,0 +1,19 @@
+<script>
+  // Put at the end of the page that has the hero. Waits for `load` and an idle moment so the field never competes
+  // with LCP, and skips touch devices, reduced motion, data saver and low-memory machines.
+  const hero = document.querySelector<HTMLElement>('.hero');
+  const host = hero?.querySelector<HTMLElement>('.hero-field');
+  const wide = window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const lowEnd = ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) < 4;
+
+  if (hero && host && wide.matches && !connection?.saveData && !lowEnd) {
+    const start = () => {
+      const run = () => import('../scripts/hero-field').then((m) => m.mountField(host, hero)).catch(() => {});
+      if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 3000 });
+      else setTimeout(run, 1200);
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+  }
+</script>

@@ -18,7 +18,8 @@ export async function runScan(flags = {}) {
   const report = scanStylesheets(root, {
     maxInlineLines: parseLimit(flags['max-inline-lines'], 15),
     maxFileLines: parseLimit(flags['max-file-lines'], 500),
-    minDuplicateRuleLines: parseLimit(flags['min-duplicate-rule-lines'], 4)
+    minDuplicateRuleLines: parseLimit(flags['min-duplicate-rule-lines'], 4),
+    exclude: flags.exclude === true ? '' : flags.exclude
   });
 
   if (flags['json-out']) {
@@ -35,6 +36,7 @@ export async function runScan(flags = {}) {
   console.log('\nStylesheet check');
   console.log(`- Root: ${report.root}`);
   console.log(`- Scanned: ${report.scanned.componentFiles} component files, ${report.scanned.stylesheetFiles} stylesheets`);
+  if (report.excluded?.length) console.log(`- Excluded: ${report.excluded.join(', ')}`);
   console.log(`- Limits: inline ${report.limits.maxInlineLines} lines, file ${report.limits.maxFileLines} lines`);
   console.log(`- Findings: ${report.summary.total} (${report.summary.errors} errors, ${report.summary.warnings} warnings)`);
 

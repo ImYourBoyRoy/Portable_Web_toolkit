@@ -73,3 +73,15 @@ Refer to `Web_Toolkit/site-profile.schema.json` for the full machine-readable sp
 **Created by**: Roy Dawson IV  
 **GitHub**: [https://github.com/imyourboyroy](https://github.com/imyourboyroy)  
 **PyPi**: [https://pypi.org/user/example-site/](https://pypi.org/user/example-site/)
+
+## Per-page Open Graph cards (`og-pages`)
+
+`brand-doctor og-pages --project-root <path> [--apply]` renders one 1200x630 card per route from `og.spec.json`
+`pages` and writes the route map (`src/data/og-images.json`: `"/about/": "/assets/og/about.png?v=<hash>"`). The site layout
+reads that map to choose `og:image` and `twitter:image`; routes not in the map keep the site-wide card from `generate-og`.
+
+- Card copy lives in the spec, never in code. Add `pages_module` (a project `.mjs` default-exporting a function that returns
+  more cards) for pages derived from data, for example one card per product, optionally with a `screenshot` path.
+- Needs `playwright` (Chromium) and `sharp` resolvable from the project root. Writes nothing without `--apply`.
+- Layout wiring: import the map JSON and fall back to the site card, for example
+  `const ogImage = ogImageProp ?? map[routeKey] ?? '/assets/og-image.png'`.

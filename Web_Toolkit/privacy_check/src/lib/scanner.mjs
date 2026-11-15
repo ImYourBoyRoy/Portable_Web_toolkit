@@ -7,17 +7,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { FINDING_PATTERNS } from './patterns.mjs';
 
-function isTextFile(filePath) {
-  return /\.(md|txt|json|mjs|cjs|js|ts|tsx|toml|yml|yaml|env|example|bat|command)$/i.test(filePath);
+/** Files above this size are not read (generated bundles, lockfiles, media). */
+const MAX_SCAN_BYTES = 5 * 1024 * 1024;
+
+const BINARY_EXTENSIONS = /\.(png|jpe?g|gif|webp|avif|ico|bmp|tiff?|woff2?|ttf|otf|eot|zip|gz|tgz|xz|bz2|7z|rar|tar|pdf|mp[34]|mov|webm|wasm|so|dll|exe|dylib|pyc|sqlite|db)$/i;
+
+/**
+ * Scan every non-binary file, not an extension allowlist: secrets live in
+ * extensionless or unusual files (.dev.vars, .env.local, .astro, .sh, .ps1, .pem).
+ */
+function readScannableText(filePath, size) {
+  if (BINARY_EXTENSIONS.test(filePath) || size > MAX_SCAN_BYTES) return null;
+  const buffer = fs.readFileSync(filePath);
+  if (buffer.subarray(0, 8192).includes(0)) return null;
+  return buffer.toString('utf8');
 }
 
+/** Generated/vendored folders skipped at any depth (mirrors export-portable-toolkit). */
+const SKIPPED_SEGMENTS = new Set(['.git', 'node_modules', '.astro', '.runtime', '.wrangler', '.cf-agent', 'output', 'dist']);
+
 function shouldSkip(relativePath) {
-  if (['.git', 'node_modules', '.astro', '.runtime'].some((entry) => relativePath.includes(`${entry}/`) || relativePath === entry)) {
-    return true;
-  }
-  if (relativePath === 'output' || relativePath.startsWith('output/')) return true;
-  if (relativePath === 'dist' || relativePath.startsWith('dist/')) return true;
-  return false;
+  return relativePath.split('/').some((segment) => SKIPPED_SEGMENTS.has(segment));
 }
 
 function redact(match) {
@@ -33,8 +43,17 @@ function isReservedExampleEmail(value) {
     );
 }
 
+const PLACEHOLDER_HOME_USERS = new Set(['user', 'username', 'you', 'me', 'name', 'example', 'yourname', 'your-name', 'your_user', 'runner', 'ubuntu', 'node', 'app', 'deploy', 'project', 'alice', 'bob', 'foo']);
+
+function isPlaceholderHomePath(value) {
+  const user = String(value).split('/').at(-1)?.toLowerCase() || '';
+  return PLACEHOLDER_HOME_USERS.has(user);
+}
+
 function shouldIgnoreMatch(definition, value) {
-  return definition.label === 'Email address' && isReservedExampleEmail(value);
+  if (definition.label === 'Email address') return isReservedExampleEmail(value);
+  if (definition.label === 'Linux home path') return isPlaceholderHomePath(value);
+  return false;
 }
 
 function dynamicFindings(relativePath) {
@@ -71,9 +90,9 @@ function dynamicFindings(relativePath) {
   return findings;
 }
 
-function scanFile(filePath, relativePath) {
-  if (!isTextFile(filePath)) return dynamicFindings(relativePath);
-  const content = fs.readFileSync(filePath, 'utf8');
+function scanFile(filePath, relativePath, size) {
+  const content = readScannableText(filePath, size);
+  if (content === null) return dynamicFindings(relativePath);
   const findings = [...dynamicFindings(relativePath)];
   for (const definition of FINDING_PATTERNS) {
     const flags = definition.pattern.flags.includes('g')
@@ -103,10 +122,13 @@ export function scanRoot(rootPath) {
     const current = queue.shift();
     let stat;
     try {
-      stat = fs.statSync(current);
-    } catch {
-      continue;
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if (error?.code === 'ENOENT') continue;
+      throw error;
     }
+    // Never follow symlinks: they can loop or point outside the scan root.
+    if (stat.isSymbolicLink()) continue;
     const relativePath = path.relative(rootPath, current).replace(/\\/g, '/');
     if (relativePath && shouldSkip(relativePath)) continue;
     if (stat.isDirectory()) {
@@ -115,7 +137,7 @@ export function scanRoot(rootPath) {
       }
       continue;
     }
-    findings.push(...scanFile(current, relativePath || path.basename(current)));
+    findings.push(...scanFile(current, relativePath || path.basename(current), stat.size));
   }
   return findings;
 }

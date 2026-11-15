@@ -8,18 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PORTABLE_ROOT, loadEnv, outputPaths, resolveProfile, resolveProjectRoot } from '../lib/paths.mjs';
-
-async function requestRawPageSpeed(url, strategy, apiKey) {
-  const endpoint = new URL('https://www.googleapis.com/pagespeedonline/v5/runPagespeed');
-  endpoint.searchParams.set('url', url);
-  endpoint.searchParams.set('strategy', strategy);
-  for (const category of ['performance', 'accessibility', 'best-practices', 'seo']) {
-    endpoint.searchParams.append('category', category);
-  }
-  if (apiKey) endpoint.searchParams.set('key', apiKey);
-  const response = await fetch(endpoint);
-  return response.json();
-}
+import { requestPageSpeed } from './run.mjs';
 
 export async function runRawPageSpeed(flags = {}) {
   const resolved = resolveProfile(flags);
@@ -31,7 +20,7 @@ export async function runRawPageSpeed(flags = {}) {
   const strategy = String(flags.strategy || 'mobile').toLowerCase();
 
   console.log(`[raw-psi] Fetching raw PageSpeed data for ${url} (${strategy})...`);
-  const payload = await requestRawPageSpeed(url, strategy, apiKey);
+  const payload = await requestPageSpeed(url, strategy, apiKey);
 
   const paths = outputPaths(projectRoot, resolved.profile.siteId);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -48,5 +37,5 @@ export async function runRawPageSpeed(flags = {}) {
     console.log('Use high-level "run" command for a summarized Markdown report.');
   }
 
-  return rawPath;
+  return 0;
 }

@@ -7,6 +7,7 @@
  * Never resolves AI/ sibling checkouts. Missing engine: npm install in Web_Toolkit/.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -24,24 +25,8 @@ function toBool(value, fallback = false) {
   return fallback;
 }
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (token.startsWith('--')) {
-      const key = token.slice(2);
-      const next = argv[index + 1];
-      if (!next || next.startsWith('--')) {
-        flags[key] = true;
-      } else {
-        flags[key] = next;
-        index += 1;
-      }
-    } else {
-      command.push(token);
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 

@@ -18,7 +18,18 @@ function isBlockedIpv4(hostname) {
   return false;
 }
 
-export function assertPublicHttpUrl(input, label = 'URL') {
+function isLoopbackHost(hostname) {
+  if (hostname === 'localhost' || hostname === '::1') return true;
+  const parts = hostname.split('.').map((part) => Number(part));
+  return parts.length === 4 && parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255) && parts[0] === 127;
+}
+
+/**
+ * Reject non-public targets (SSRF guard).
+ * `options.allowLoopback` is an explicit operator opt-in for testing a local server (localhost, 127.0.0.0/8, ::1) only;
+ * private LAN ranges, link-local and metadata hosts stay blocked.
+ */
+export function assertPublicHttpUrl(input, label = 'URL', options = {}) {
   const raw = String(input || '').trim();
   if (!raw) throw new Error(`Missing ${label}.`);
 
@@ -36,6 +47,8 @@ export function assertPublicHttpUrl(input, label = 'URL') {
   const hostname = url.hostname.replace(/^\[/, '').replace(/\]$/, '').toLowerCase();
   if (!hostname) throw new Error(`${label} is missing a hostname.`);
 
+  if (options.allowLoopback === true && isLoopbackHost(hostname)) return url;
+
   if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local')) {
     throw new Error(`${label} must not target localhost or local-only hosts.`);
   }
@@ -52,7 +65,7 @@ export function assertPublicHttpUrl(input, label = 'URL') {
 }
 
 export async function fetchPublicText(urlInput, options = {}) {
-  const url = assertPublicHttpUrl(urlInput, options.label || 'URL');
+  const url = assertPublicHttpUrl(urlInput, options.label || 'URL', { allowLoopback: options.allowLoopback });
   const fetchImpl = options.fetchImpl || globalThis.fetch;
   const timeoutMs = Number(options.timeoutMs || 15000);
   const maxBytes = Number(options.maxBytes || 8 * 1024 * 1024);

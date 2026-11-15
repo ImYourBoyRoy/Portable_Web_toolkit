@@ -31,7 +31,8 @@ import { loadSiteProfileContext } from '../shared/lib/context.mjs';
 import { mergeEnvFiles } from '../shared/lib/env.mjs';
 
 // Cloudflare API (reuse existing toolkit)
-import { resolveZoneByName, safeCloudflareRequest, cloudflareRequest, listAllDnsRecords } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
+import { isBooleanFlag } from '../shared/lib/cli.mjs';
+import { ZoneNotFoundError, resolveZoneByName, safeCloudflareRequest, cloudflareRequest, listAllDnsRecords } from '../cloudflare-agent-toolkit/src/lib/cloudflare-api.mjs';
 import { resolveCloudflareCredential } from '../cloudflare-agent-toolkit/src/lib/auth.mjs';
 import { apexHasMx, evaluateMxGate } from './mx-gate.mjs';
 
@@ -87,7 +88,7 @@ function parseCliArgs(argv) {
         flags[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
       } else {
         const next = argv[index + 1];
-        if (next && !next.startsWith('-')) {
+        if (next && !next.startsWith('-') && !isBooleanFlag(trimmed, ['allow-missing-email', 'all'])) {
           flags[trimmed] = next;
           index += 1;
         } else {
@@ -159,13 +160,11 @@ async function cmdPing(flags) {
 
   console.log(`  ✓ Credentials valid`);
   console.log(`  ✓ Caller IP: ${result.ip}`);
-  console.log(`  ✓ API key prefix: ${apiKey.slice(0, 12)}...`);
 
   const reportPath = writeReport(`ping-${utcStamp()}.json`, {
     checkedAt: new Date().toISOString(),
     valid: true,
-    callerIp: result.ip,
-    apiKeyPrefix: apiKey.slice(0, 12)
+    callerIp: result.ip
   });
   console.log(`  Report: ${reportPath}`);
   return 0;
@@ -263,8 +262,13 @@ async function cmdNsAudit(flags) {
     console.log(`        CF zone: ${zone.name} (${zone.id}) — status: ${zoneStatus}`);
     console.log(`        CF nameservers: ${cloudflareNs.join(', ')}`);
   } catch (err) {
-    console.log(`        ⚠ Cloudflare zone not found or not accessible: ${err.message}`);
-    console.log(`        → Run: registrar zone ensure --site-profile <path> to add it`);
+    if (err instanceof ZoneNotFoundError) {
+      console.log(`        ⚠ Cloudflare zone not found: ${err.message}`);
+      console.log(`        → Run: registrar zone ensure --site-profile <path> to add it`);
+    } else {
+      // Auth/permission/5xx errors must not read as "zone missing" (which suggests creating one).
+      throw err;
+    }
   }
 
   // Step 3: Compare
@@ -429,7 +433,8 @@ async function cmdZoneEnsure(flags) {
     }
 
     return 0;
-  } catch {
+  } catch (err) {
+    if (!(err instanceof ZoneNotFoundError)) throw err;
     console.log('        Zone not found — needs to be created');
   }
 

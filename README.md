@@ -8,9 +8,9 @@
 | **Toolkit Release** | `v0.4.0` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.13.0` | [`.node-version`](./.node-version) |
-| **Astro Framework** | `^7.4.4` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **@astrojs/cloudflare** | `^14.4.3` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **Cloudflare Wrangler** | `^4.156.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Astro Framework** | `^7.4.7` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.4.6` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.158.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·
@@ -73,6 +73,12 @@ node /path/to/Portable_Web_toolkit/scripts/manage-project-skills.mjs link --proj
 ```
 
 The agent follows [`docs/agent-skills/SKILL_INDEX.md`](./docs/agent-skills/SKILL_INDEX.md). Running `git pull` in `Portable_Web_toolkit` updates all symlinked client skills live. Toolkit commands also perform a guarded, once-daily freshness preflight by default; see [`Web_Toolkit/README.md`](./Web_Toolkit/README.md#automatic-freshness).
+
+Toolkit CLIs share an agent-oriented help contract with examples, flags,
+operational notes, and exit codes. Use `--help` to discover a command before
+running it; read-only diagnostics expose structured results as JSON or report
+files where supported. `toolkit-verify` checks the help contract for every
+packaged CLI.
 
 ### Working on a site
 

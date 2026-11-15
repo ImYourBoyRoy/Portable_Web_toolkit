@@ -18,6 +18,29 @@ function runDoctor(target) {
 }
 
 describe('discovery-doctor CLI', () => {
+  it('prints the shared agent help contract', () => {
+    const result = spawnSync(process.execPath, [bin, '--help'], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.match(result.stdout, /Examples:/);
+    assert.match(result.stdout, /Exit codes:/);
+    assert.match(result.stdout, /--json/);
+  });
+
+  it('emits one parseable JSON report without human log noise', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dd-json-'));
+    const result = spawnSync(process.execPath, [bin, dir, '--json'], {
+      encoding: 'utf8',
+      cwd: path.resolve(__dirname, '../../..')
+    });
+    const report = JSON.parse(result.stdout);
+    assert.equal(result.status, 2);
+    assert.equal(report.schemaVersion, 1);
+    assert.equal(report.target, dir);
+    assert.equal(report.exitCode, 2);
+    assert.ok(report.counts.fail > 0);
+    assert.ok(report.results.length > 0);
+  });
+
   it('exits 2 on empty dist', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dd-empty-'));
     const result = runDoctor(dir);

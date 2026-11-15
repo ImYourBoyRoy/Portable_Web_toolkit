@@ -26,8 +26,8 @@ const DEFAULT_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const FAILURE_RETRY_MS = 60 * 60 * 1000;
 const TEST_ARGUMENTS = new Set(['--test', '--test-only', '--experimental-test-coverage']);
 
-function boolEnv(name, fallback) {
-  const value = String(process.env[name] || '').trim().toLowerCase();
+function boolEnv(name, fallback, env = process.env) {
+  const value = String(env[name] || '').trim().toLowerCase();
   if (!value) return fallback;
   if (['1', 'true', 'yes', 'on'].includes(value)) return true;
   if (['0', 'false', 'no', 'off'].includes(value)) return false;
@@ -103,6 +103,20 @@ function canonicalGitRemote(value) {
 
 function isExpectedToolkitRemote(value) {
   return canonicalGitRemote(value) === TOOLKIT_REPOSITORY;
+}
+
+const SKIP_INVOCATION_ARGUMENTS = new Set(['--help', '-h', 'help', '--version', '--apply']);
+
+/**
+ * Help/version output must stay instant and side-effect free, and `--apply`
+ * mutations (deploys, purges, DNS) must not run against source that was just
+ * fast-forwarded underneath them. Opt back in with PORTABLE_TOOLKIT_AUTO_UPDATE_ON_APPLY=1.
+ */
+export function shouldSkipForInvocation(argv = process.argv.slice(2), env = process.env) {
+  const hit = argv.find((arg) => SKIP_INVOCATION_ARGUMENTS.has(String(arg)));
+  if (!hit) return '';
+  if (hit === '--apply' && boolEnv('PORTABLE_TOOLKIT_AUTO_UPDATE_ON_APPLY', false, env)) return '';
+  return hit;
 }
 
 function isTestProcess() {
@@ -325,6 +339,9 @@ export function maybeAutoUpdate({ portableRoot, force = false, json = false } = 
   if (isTestProcess() && !boolEnv('PORTABLE_TOOLKIT_AUTO_UPDATE_IN_TESTS', false)) {
     return { status: 'disabled', reason: 'Automatic updates are disabled during Node tests.' };
   }
+
+  const skippedFor = force ? '' : shouldSkipForInvocation();
+  if (skippedFor) return { status: 'disabled', reason: `Skipped for ${skippedFor} invocation.` };
 
   const filePath = statePath(root);
   const previous = readState(filePath);

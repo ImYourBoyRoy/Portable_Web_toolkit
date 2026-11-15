@@ -1,12 +1,18 @@
 ---
 // ./src/components/Schema.astro
-/** JSON-LD: WebSite, primary entity, WebPage, BreadcrumbList — customize site-config.ts */
+/**
+ * JSON-LD for every page as one @graph with stable @id references: primary entity (siteConfig.schemaType),
+ * WebSite, WebPage and BreadcrumbList. Only claims what site-config.ts declares. Customize site-config.ts.
+ * Extend the graph per page type (ItemList, Service/Offer, SoftwareApplication, FAQPage) only with content the page shows.
+ */
 import { siteConfig } from '../lib/site-config';
+import { canonicalPagePath, canonicalUrl } from '../lib/discovery/site';
+import { getPublicPageRoutes } from '../lib/discovery/routes';
 
 interface Props {
   title?: string;
   description?: string;
-  schemaType?: 'WebPage' | 'Organization' | 'Person' | 'LocalBusiness';
+  schemaType?: 'WebPage' | 'AboutPage' | 'ContactPage' | 'CollectionPage' | 'ProfilePage';
 }
 
 const {
@@ -16,56 +22,68 @@ const {
 } = Astro.props;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
-const canonicalURL = siteUrl ? new URL(Astro.url.pathname, `${siteUrl}/`).href : Astro.url.href;
-const entityType = siteConfig.schemaType;
+const base = siteUrl ? `${siteUrl}/` : '';
+const pagePath = canonicalPagePath(Astro.url.pathname);
+const pageUrl = base ? new URL(pagePath, base).href : Astro.url.href;
+const ids = {
+  entity: `${base}#entity`,
+  website: `${base}#website`,
+  page: `${pageUrl}#webpage`,
+  breadcrumb: `${pageUrl}#breadcrumb`,
+};
 
-const entitySchema = {
-  '@context': 'https://schema.org',
-  '@type': entityType,
-  '@id': siteUrl ? `${siteUrl}#entity` : undefined,
+const lastmod = getPublicPageRoutes().find((route) => route.path === pagePath)?.lastmod ?? null;
+
+const entity: Record<string, unknown> = {
+  '@type': siteConfig.schemaType,
+  '@id': ids.entity,
   name: siteConfig.name,
   description: siteConfig.description,
-  ...(siteUrl ? { url: siteUrl } : {}),
+  ...(base ? { url: base } : {}),
+  ...(siteConfig.legalName && siteConfig.legalName !== siteConfig.name ? { alternateName: siteConfig.legalName } : {}),
+  ...(siteConfig.sameAs.length ? { sameAs: siteConfig.sameAs } : {}),
 };
 
-const websiteSchema = siteUrl
-  ? {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      '@id': `${siteUrl}#website`,
-      name: siteConfig.name,
-      url: siteUrl,
-      publisher: { '@id': `${siteUrl}#entity` },
-    }
-  : null;
+const website = {
+  '@type': 'WebSite',
+  '@id': ids.website,
+  name: siteConfig.name,
+  description: siteConfig.description,
+  inLanguage: 'en',
+  ...(base ? { url: base } : {}),
+  publisher: { '@id': ids.entity },
+};
 
-const pageSchema = {
-  '@context': 'https://schema.org',
+const segments = pagePath.split('/').filter(Boolean);
+const breadcrumb = {
+  '@type': 'BreadcrumbList',
+  '@id': ids.breadcrumb,
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: base || '/' },
+    ...segments.map((segment, index) => ({
+      '@type': 'ListItem',
+      position: index + 2,
+      name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
+      item: canonicalUrl(siteUrl, `/${segments.slice(0, index + 1).join('/')}/`),
+    })),
+  ],
+};
+
+const page = {
   '@type': schemaType,
+  '@id': ids.page,
+  url: pageUrl,
   name: title,
   description,
-  url: canonicalURL,
-  ...(siteUrl ? { isPartOf: { '@id': `${siteUrl}#website` } } : {}),
+  inLanguage: 'en',
+  isPartOf: { '@id': ids.website },
+  about: { '@id': ids.entity },
+  breadcrumb: { '@id': ids.breadcrumb },
+  ...(lastmod ? { dateModified: lastmod } : {}),
 };
 
-const pathSegments = Astro.url.pathname.split('/').filter(Boolean);
-const breadcrumbSchema = siteUrl
-  ? {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-        ...pathSegments.map((segment, index) => ({
-          '@type': 'ListItem',
-          position: index + 2,
-          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
-          item: new URL(`/${pathSegments.slice(0, index + 1).join('/')}`, `${siteUrl}/`).href,
-        })),
-      ],
-    }
-  : null;
-
-const combinedSchema = [entitySchema, websiteSchema, pageSchema, breadcrumbSchema].filter(Boolean);
+const graph = { '@context': 'https://schema.org', '@graph': [entity, website, page, breadcrumb] };
+const json = JSON.stringify(graph).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 ---
 
-<script type="application/ld+json" is:inline set:html={JSON.stringify(combinedSchema)} />
+<script type="application/ld+json" is:inline set:html={json} />

@@ -39,7 +39,9 @@ node "$TOOLKIT/scripts/link-web-toolkit.mjs" \
   --toolkit-path "$TOOLKIT/Web_Toolkit" \
   --project-root "$SITE"
 
-# Copy discovery layer — see Web_Toolkit/templates/discovery/README.md
+# Copy discovery layer (sitemap, llms.txt, robots with AI policy, JSON-LD, Markdown twins, API catalog, optional MCP)
+# — see Web_Toolkit/templates/discovery/README.md for the copy map. Package scripts already run the post-build steps.
+mkdir -p ./scripts/lib ./src/data   # the copy map lists scripts/ and the optional MCP files
 # Edit src/lib/site-config.ts, astro.config site URL, package.json placeholders
 
 npm install

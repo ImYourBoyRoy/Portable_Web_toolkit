@@ -1,0 +1,20 @@
+/* ./src/styles/hero-field.css
+ * CSS poster and canvas fade-in for the optional WebGL hero field (scripts/hero-field.ts).
+ * The poster is the first frame everywhere and the only frame on mobile, reduced motion and software renderers.
+ * Markup: <section class="hero"><div class="hero-field" aria-hidden="true"><div class="hero-poster"></div></div> ... </section>
+ */
+.hero { position: relative; isolation: isolate; overflow: clip; }
+.hero-field { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.hero-poster {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(55% 70% at 76% 32%, hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.16), transparent 70%),
+    radial-gradient(40% 50% at 12% 96%, hsla(var(--accent-h), 30%, 45%, 0.1), transparent 70%),
+    repeating-radial-gradient(circle at 76% 32%, transparent 0 52px, color-mix(in srgb, var(--accent) 9%, transparent) 52px 53px);
+  -webkit-mask-image: radial-gradient(70% 80% at 76% 32%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(70% 80% at 76% 32%, #000 10%, transparent 75%);
+}
+.hero-field-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.4s var(--ease-out, ease-out); }
+.hero-field-canvas.is-live { opacity: 1; }
+.hero-field:has(.hero-field-canvas.is-live) .hero-poster { opacity: 0.35; transition: opacity 1.4s var(--ease-out, ease-out); }

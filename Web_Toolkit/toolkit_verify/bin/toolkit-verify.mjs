@@ -8,6 +8,7 @@
  * for the supplied site profile using the target project's root .env.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,24 +17,8 @@ import { resolvePortableRoot, resolveRuntimePath } from '../../shared/lib/contex
 
 const PORTABLE_ROOT = resolvePortableRoot(import.meta.url, 2);
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 
@@ -87,13 +72,19 @@ function toolkitScript(relativePath) {
   return path.join(PORTABLE_ROOT, relativePath);
 }
 
+function toolkitCliHelpSteps() {
+  const packagePath = toolkitScript('package.json');
+  const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+  return Object.entries(packageData.bin || {}).map(([name, entrypoint]) => ({
+    name: `${name} help contract`,
+    args: [toolkitScript(entrypoint.replace(/^\.\//, '')), '--help'],
+    validateHelp: true
+  }));
+}
+
 function verifySteps(flags = {}, exportRoot) {
   const shared = quotedArgs(flags);
   const steps = [
-    {
-      name: 'cf-agent help',
-      args: [toolkitScript('cloudflare-agent-toolkit/bin/cf-agent.mjs'), 'help']
-    },
     {
       name: 'cf-agent init',
       args: [toolkitScript('cloudflare-agent-toolkit/bin/cf-agent.mjs'), 'init']
@@ -103,20 +94,8 @@ function verifySteps(flags = {}, exportRoot) {
       args: [toolkitScript('cloudflare-agent-toolkit/bin/cf-agent.mjs'), 'env', 'sync']
     },
     {
-      name: 'site-doctor help',
-      args: [toolkitScript('site_doctor/bin/site-doctor.mjs'), 'help']
-    },
-    {
-      name: 'wcag-auditor help',
-      args: [toolkitScript('wcag_auditor/bin/wcag-auditor.mjs'), 'help']
-    },
-    {
       name: 'wcag-auditor core-path',
       args: [toolkitScript('wcag_auditor/bin/wcag-auditor.mjs'), 'core-path']
-    },
-    {
-      name: 'sourcing-doctor help',
-      args: [toolkitScript('sourcing_doctor/bin/sourcing-doctor.mjs'), 'help']
     },
     {
       name: 'export portable toolkit',
@@ -127,6 +106,8 @@ function verifySteps(flags = {}, exportRoot) {
       args: [toolkitScript('privacy_check/bin/privacy-check.mjs'), 'scan', '--root', exportRoot, '--json']
     }
   ];
+
+  steps.unshift(...toolkitCliHelpSteps());
 
   if (shared.length > 0) {
     const projectRoot = flags['project-root'] ? path.resolve(String(flags['project-root'])) : process.cwd();
@@ -186,9 +167,13 @@ async function main() {
   const results = [];
   for (const step of steps) {
     const result = runNode(step.args, { cwd: PORTABLE_ROOT });
+    const helpContractOk = !step.validateHelp ||
+      ['Usage:', 'Flags:', 'Examples:', 'Notes:', 'Exit codes:']
+        .every((section) => (result.stdout || '').includes(section));
     results.push({
       name: step.name,
-      status: result.status,
+      status: result.status === 0 ? (helpContractOk ? 0 : 1) : (result.status ?? 1),
+      helpContractOk: step.validateHelp ? helpContractOk : undefined,
       stdout: result.stdout || '',
       stderr: result.stderr || ''
     });

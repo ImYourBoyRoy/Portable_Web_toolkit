@@ -150,7 +150,7 @@ export async function runBrowserDiagnostics(flags = {}) {
     if (report.lighthouse.reportPath) console.log(`- Lighthouse report: ${report.lighthouse.reportPath}`);
   }
 
-  if (!pythonReport) return 1;
+  if (!pythonReport || summary.overall === 'fail') return 1;
   return summary.overall === 'warn' ? 2 : 0;
 }
 

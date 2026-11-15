@@ -80,7 +80,7 @@ function requestedUrls(flags, profile) {
 async function canonicalizeUrl(url, enabled = true) {
   if (!enabled) return { input: url, url, redirected: false };
   try {
-    const response = await fetch(url, { method: 'HEAD', redirect: 'manual' });
+    const response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(15_000) });
     if (![301, 302, 307, 308].includes(response.status)) {
       return { input: url, url, redirected: false, status: response.status };
     }
@@ -105,15 +105,25 @@ async function canonicalizeUrl(url, enabled = true) {
   }
 }
 
-function defaultThresholds(profile, flags = {}) {
+/** Parse a threshold strictly: a typo like `--min-score abc` must fail, not silently pass everything. */
+export function parseThreshold(name, raw, fallback) {
+  const value = raw === undefined || raw === null ? fallback : raw;
+  const parsed = typeof value === 'boolean' ? NaN : Number(String(value).trim());
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid --${name} value "${String(value)}": expected a non-negative number.`);
+  }
+  return parsed;
+}
+
+export function defaultThresholds(profile, flags = {}) {
   const browser = profile?.diagnostics?.browserDiagnostics || {};
   return {
-    minScore: Number(flags['min-score'] ?? 1),
-    maxFcpMs: Number(flags['max-fcp-ms'] ?? browser.maxFcpMs ?? 1800),
-    maxLcpMs: Number(flags['max-lcp-ms'] ?? browser.maxLcpMs ?? 2500),
-    maxSpeedIndexMs: Number(flags['max-speed-index-ms'] ?? 3400),
-    maxTbtMs: Number(flags['max-tbt-ms'] ?? 200),
-    maxCls: Number(flags['max-cls'] ?? browser.maxCls ?? 0.1)
+    minScore: parseThreshold('min-score', flags['min-score'], 1),
+    maxFcpMs: parseThreshold('max-fcp-ms', flags['max-fcp-ms'], browser.maxFcpMs ?? 1800),
+    maxLcpMs: parseThreshold('max-lcp-ms', flags['max-lcp-ms'], browser.maxLcpMs ?? 2500),
+    maxSpeedIndexMs: parseThreshold('max-speed-index-ms', flags['max-speed-index-ms'], 3400),
+    maxTbtMs: parseThreshold('max-tbt-ms', flags['max-tbt-ms'], 200),
+    maxCls: parseThreshold('max-cls', flags['max-cls'], browser.maxCls ?? 0.1)
   };
 }
 
@@ -147,8 +157,18 @@ function scoreIssues(url, strategy, result, thresholds) {
     }));
 }
 
-function thresholdIssues(url, strategy, result, thresholds) {
+export function thresholdIssues(url, strategy, result, thresholds) {
   const issues = [];
+  for (const metric of result.missingMetrics || []) {
+    issues.push({
+      severity: 'fail',
+      url,
+      strategy,
+      code: `metric-${metric.toLowerCase()}-missing`,
+      summary: `${metric} was not reported by Lighthouse, so it cannot be checked against its target.`,
+      evidence: { metric }
+    });
+  }
   if (Number(result.fcpMs) > thresholds.maxFcpMs) {
     issues.push(metricIssue({ url, strategy, metric: 'FCP', value: result.fcpMs, threshold: thresholds.maxFcpMs }));
   }

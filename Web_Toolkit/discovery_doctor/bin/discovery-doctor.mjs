@@ -21,9 +21,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolvePortableRoot } from '../../shared/lib/context.mjs';
+import { parseCliArgs } from '../../shared/lib/cli.mjs';
+import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { assertPublicHttpUrl, fetchPublicText } from '../../shared/lib/url-safety.mjs';
 import { auditDistTree } from '../../headers_deploy/src/lib/audit-lib.mjs';
 import { addResult, createReport, exitCodeForReport } from '../src/report.mjs';
+import { checkAgentReadinessLive, checkAgentReadinessLocal } from '../src/agent-checks.mjs';
 import { checkDiscoveryLinks, checkMcpEndpoint } from '../src/live.mjs';
 import { createDiscoveryPolicy } from '../src/policy.mjs';
 import {
@@ -41,41 +44,49 @@ import {
 resolvePortableRoot(import.meta.url, 2);
 
 function parseArgs(argv) {
-  const positionals = [];
-  const flags = {};
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i];
-    if (token.startsWith('--')) {
-      const key = token.slice(2);
-      const next = argv[i + 1];
-      if (!next || next.startsWith('--')) flags[key] = true;
-      else {
-        flags[key] = next;
-        i += 1;
-      }
-    } else positionals.push(token);
-  }
-  return { positionals, flags };
+  const { command, flags } = parseCliArgs(argv, {
+    booleanFlags: ['require-llms', 'require-llms-full', 'skip-link-checks', 'allow-loopback']
+  });
+  return { positionals: command, flags };
 }
 
 function printHelp() {
-  console.log('discovery-doctor — Audit discovery files, APIs, and AI-readable endpoints');
-  console.log('');
-  console.log('Usage:');
-  console.log('  discovery-doctor <url|dist_path> [--site-profile <profile>] [--policy <json>]');
-  console.log('  discovery-doctor <url|dist_path> [--environment production|development] [--strict]');
-  console.log('');
-  console.log('Policy flags:');
-  console.log('  --require-llms       Force /llms.txt to be required for this run');
-  console.log('  --require-llms-full  Force /llms-full.txt to be required for this run');
-  console.log('  --skip-link-checks   Do not fetch same-origin links advertised by llms.txt');
-  console.log('  --site-profile       Read discovery settings from profile.discovery or profile.diagnostics.discovery');
-  console.log('  --policy             Read a standalone discovery policy JSON file');
-  console.log('');
-  console.log('Exit codes:');
-  console.log('  0  no failures (warnings OK unless --strict)');
-  console.log('  1  usage error');
-  console.log('  2  one or more check failures');
+  return printStandardHelp({
+    name: 'discovery-doctor',
+    summary: 'Audit discovery files, APIs, and AI-readable endpoints',
+    usage: [
+      'discovery-doctor <url|dist_path> [--site-profile <profile>] [--policy <json>]',
+      'discovery-doctor <url|dist_path> [--environment production|development] [--strict]'
+    ],
+    flags: [
+      { name: '--site-profile <path>', description: 'Read discovery settings from profile.discovery or profile.diagnostics.discovery.' },
+      { name: '--policy <path>', description: 'Read a standalone discovery policy JSON file.' },
+      { name: '--environment <name>', description: 'Apply production or development default requirements.' },
+      { name: '--strict', description: 'Treat warnings as failures for exit status.' },
+      { name: '--require-llms', description: 'Force /llms.txt to be required for this run.' },
+      { name: '--require-llms-full', description: 'Force /llms-full.txt to be required for this run.' },
+      { name: '--skip-link-checks', description: 'Skip same-origin links advertised by llms.txt.' },
+      { name: '--allow-loopback', description: 'Permit a localhost/127.0.0.1 target for testing a local Worker or preview server. Private LAN and metadata hosts stay blocked.' },
+      { name: '--json', description: 'Write a machine-readable report to stdout.' }
+    ],
+    examples: [
+      'discovery-doctor ./dist --json',
+      'discovery-doctor https://example.com --site-profile ./site.site-profile.json --json',
+      'discovery-doctor ./dist --policy ./discovery-policy.json --strict',
+      'discovery-doctor http://127.0.0.1:8788 --allow-loopback --site-profile ./site.site-profile.json'
+    ],
+    notes: [
+      'Read-only audit; live checks fetch public same-origin resources and do not send credentials or call MCP tools.',
+      'Agent-readiness checks (API catalog, Markdown twins, Link headers, MCP server card, AI crawler policy, sitemap/canonical agreement) report absent surfaces as INFO unless the policy marks them required.',
+      'Production requires core discovery artifacts by default; a site profile or policy may explicitly relax requirements.',
+      'With --json, stdout contains one JSON object with schemaVersion, target, counts, results, and exitCode.'
+    ],
+    exitCodes: [
+      { name: '0', description: 'No failures (warnings allowed unless --strict).' },
+      { name: '1', description: 'Usage error or missing target.' },
+      { name: '2', description: 'Check failure, or strict-mode warning.' }
+    ]
+  });
 }
 
 function readJsonFile(filePath, label) {
@@ -97,6 +108,7 @@ function loadPolicy(flags) {
     requireLlms: Boolean(flags['require-llms']),
     requireLlmsFull: Boolean(flags['require-llms-full']),
     checkLinks: flags['skip-link-checks'] ? false : undefined,
+    allowLoopback: Boolean(flags['allow-loopback']),
   });
 }
 
@@ -203,6 +215,7 @@ function missingDetail(item, local = false) {
 }
 
 function logPolicy(policy) {
+  if (policy.quiet) return;
   const state = (value) => value ? 'required' : 'optional';
   console.log([
     `Policy: environment=${policy.environment}`,
@@ -241,7 +254,7 @@ async function checkLiveResource(baseUrl, item, report, policy, linkSources) {
         addResult(report, 'info', item.label, 'POST endpoint is policy-declared; no generic POST schema validator is configured');
         return;
       }
-      const mcp = await checkMcpEndpoint(fullUrl, { protocolVersion: item.protocolVersion || policy.mcpProtocolVersion });
+      const mcp = await checkMcpEndpoint(fullUrl, { protocolVersion: item.protocolVersion || policy.mcpProtocolVersion, allowLoopback: policy.allowLoopback });
       if (mcp.ok) addResult(report, 'pass', item.label, `MCP ${mcp.era} discovery + lists OK (${mcp.tools.length} tools)`);
       else if (!item.required && /HTTP (?:404|405)\b/.test(mcp.errors.join('; '))) addResult(report, 'info', item.label, 'optional MCP endpoint is not present');
       else addResult(report, 'fail', item.label, mcp.errors.join('; '));
@@ -249,7 +262,7 @@ async function checkLiveResource(baseUrl, item, report, policy, linkSources) {
       return;
     }
 
-    const result = await fetchPublicText(fullUrl, { label: item.label, timeoutMs: policy.timeoutMs });
+    const result = await fetchPublicText(fullUrl, { label: item.label, timeoutMs: policy.timeoutMs, allowLoopback: policy.allowLoopback });
     if (!responseStayedOnOrigin(result, baseUrl)) {
       addResult(report, 'fail', item.label, `redirected off origin to ${result.url}`);
       return;
@@ -303,7 +316,7 @@ async function checkLiveSitemap(baseUrl, policy, report) {
     }
     const fullUrl = new URL(candidate, baseUrl).href;
     try {
-      const result = await fetchPublicText(fullUrl, { label: 'sitemap', timeoutMs: policy.timeoutMs, maxBytes: 52 * 1024 * 1024 });
+      const result = await fetchPublicText(fullUrl, { label: 'sitemap', timeoutMs: policy.timeoutMs, maxBytes: 52 * 1024 * 1024, allowLoopback: policy.allowLoopback });
       if (!responseStayedOnOrigin(result, baseUrl)) {
         invalid.push(`${candidate}: redirected off origin to ${result.url}`);
         continue;
@@ -328,16 +341,18 @@ async function checkLiveSitemap(baseUrl, policy, report) {
 }
 
 async function checkLive(baseUrl, report, policy) {
-  console.log(`\nDiscovery Doctor: live posture at ${baseUrl}`);
-  console.log('--------------------------------------------------');
-  logPolicy(policy);
+  if (!report.quiet) {
+    console.log(`\nDiscovery Doctor: live posture at ${baseUrl}`);
+    console.log('--------------------------------------------------');
+  }
+  logPolicy({ ...policy, quiet: report.quiet });
   await checkLiveSitemap(baseUrl, policy, report);
 
   const linkSources = [];
   for (const item of resourceItems(policy)) await checkLiveResource(baseUrl, item, report, policy, linkSources);
 
   try {
-    const result = await fetchPublicText(baseUrl, { label: 'homepage', timeoutMs: policy.timeoutMs });
+    const result = await fetchPublicText(baseUrl, { label: 'homepage', timeoutMs: policy.timeoutMs, allowLoopback: policy.allowLoopback });
     if (!responseStayedOnOrigin(result, baseUrl)) throw new Error(`homepage redirected off origin to ${result.url}`);
     if (!result.ok) throw new Error(`HTTP ${result.status}`);
     const jsonLd = analyzeJsonLd(result.body || '');
@@ -362,6 +377,7 @@ async function checkLive(baseUrl, report, policy) {
       links: linkSources,
       policy,
       maxLinks: policy.maxLinks,
+      allowLoopback: policy.allowLoopback,
       skipPaths: resourceItems(policy).map((item) => {
         try {
           const url = new URL(item.path, baseUrl);
@@ -373,6 +389,8 @@ async function checkLive(baseUrl, report, policy) {
     });
     for (const result of linkReport.results) addResult(report, result.status, result.label, result.detail);
   }
+
+  await checkAgentReadinessLive(baseUrl, report, policy);
 }
 
 function checkLocalResource(distPath, item, report, policy, linkSources) {
@@ -413,9 +431,11 @@ function checkLocalSitemap(distPath, policy, report) {
 }
 
 function checkLocal(distPath, report, policy) {
-  console.log(`\nDiscovery Doctor: local build at ${distPath}`);
-  console.log('--------------------------------------------------');
-  logPolicy(policy);
+  if (!report.quiet) {
+    console.log(`\nDiscovery Doctor: local build at ${distPath}`);
+    console.log('--------------------------------------------------');
+  }
+  logPolicy({ ...policy, quiet: report.quiet });
   if (!fs.existsSync(distPath)) {
     addResult(report, 'fail', 'Build directory', `Not found at ${distPath}`);
     return;
@@ -448,23 +468,27 @@ function checkLocal(distPath, report, policy) {
   else addResult(report, 'warn', 'Breadcrumb Schema', 'Not on homepage (OK if nested routes use it)');
 
   if (linkSources.length) addResult(report, 'info', 'Discovery link checks', 'Deferred to live URL; local dist cannot prove deployed routes');
+
+  checkAgentReadinessLocal(distPath, report, policy);
 }
 
 const { positionals, flags } = parseArgs(process.argv.slice(2));
 const target = positionals[0];
 const strict = Boolean(flags.strict);
 
-if (!target || ['help', '--help', '-h'].includes(String(target).toLowerCase())) {
+const helpRequested = Boolean(flags.help || flags.h) || ['help', '-h'].includes(String(target || '').toLowerCase());
+if (helpRequested || !target) {
   printHelp();
-  process.exit(target ? 0 : 1);
+  process.exit(helpRequested ? 0 : 1);
 }
 
-const report = createReport();
+const jsonMode = Boolean(flags.json);
+const report = createReport({ quiet: jsonMode });
 
 try {
   const policy = loadPolicy(flags);
   if (/^https?:\/\//i.test(target)) {
-    await checkLive(assertPublicHttpUrl(target, 'base URL').href, report, policy);
+    await checkLive(assertPublicHttpUrl(target, 'base URL', { allowLoopback: policy.allowLoopback }).href, report, policy);
   } else {
     await checkLocal(path.resolve(process.cwd(), target), report, policy);
   }
@@ -472,6 +496,18 @@ try {
   addResult(report, 'fail', 'Discovery Doctor', error instanceof Error ? error.message : String(error));
 }
 
-console.log('--------------------------------------------------');
-console.log(`Summary: pass=${report.counts.pass || 0} fail=${report.counts.fail || 0} warn=${report.counts.warn || 0} info=${report.counts.info || 0}`);
 process.exitCode = exitCodeForReport(report, { strict });
+if (jsonMode) {
+  process.stdout.write(`${JSON.stringify({
+    schemaVersion: 1,
+    checkedAt: new Date().toISOString(),
+    target,
+    ok: process.exitCode === 0,
+    exitCode: process.exitCode,
+    counts: report.counts,
+    results: report.results
+  }, null, 2)}\n`);
+} else {
+  console.log('--------------------------------------------------');
+  console.log(`Summary: pass=${report.counts.pass || 0} fail=${report.counts.fail || 0} warn=${report.counts.warn || 0} info=${report.counts.info || 0}`);
+}

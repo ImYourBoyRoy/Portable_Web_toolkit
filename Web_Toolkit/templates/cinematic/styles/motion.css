@@ -1,0 +1,105 @@
+/* ./src/styles/motion.css
+ * Shared cinematic motion primitives (motion policy v2, see BRAND_GUIDE.md section 6).
+ *
+ * Rules this file keeps:
+ * - Everything is progressive enhancement. Without `animation-timeline` support, or with
+ *   `prefers-reduced-motion: reduce`, every element is simply in its final, visible state.
+ * - Only compositor properties move: transform, opacity, clip-path.
+ * - Scroll-linked effects use CSS timelines, no scroll listeners.
+ * - Mobile gets short opacity/translate reveals only; wipes, scrubbed zooms and pinning are desktop.
+ */
+
+/* ── Page-to-page View Transitions (cross-document) ── */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+.aurora { view-transition-name: aurora; }
+::view-transition-group(site-nav),
+::view-transition-group(aurora) { animation-duration: 0s; }
+::view-transition-old(root) { animation: vt-out 160ms var(--ease-out) both; }
+::view-transition-new(root) { animation: vt-in 340ms var(--ease-out) both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+
+/* ── Scroll-driven primitives ── */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Short rise: safe everywhere, including mobile. */
+    .rise {
+      animation: mx-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    @keyframes mx-rise {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* A hairline that draws itself as it enters. */
+    .draw {
+      transform-origin: left center;
+      animation: mx-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+    @keyframes mx-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+    /* Headline lines rise through a mask. Markup: <span class="ln"><span>text</span></span> */
+    .ln > span {
+      animation: mx-line linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 70%;
+    }
+    @keyframes mx-line { from { transform: translateY(105%); } to { transform: none; } }
+
+    /* Numbers roll up into place. Markup: <span class="roll"><span>17+</span></span> */
+    .roll > span {
+      animation: mx-line linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+  }
+}
+
+/* Line mask boxes need to exist in every state so layout never moves. */
+.ln, .roll { display: block; overflow: clip; overflow-clip-margin: 0.08em; }
+.ln > span, .roll > span { display: block; will-change: auto; }
+
+/* Desktop-only cinematic effects. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 821px) {
+  @supports (animation-timeline: view()) {
+    /* Image wipe with a settling zoom: mx-wipe reveals downward, -r from the right edge, -l from the left. */
+    .wipe {
+      animation: mx-wipe linear both;
+      animation-timeline: view();
+      animation-range: entry 4% entry 90%;
+    }
+    @keyframes mx-wipe   { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+    @keyframes mx-wipe-r { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+    @keyframes mx-wipe-l { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+    .wipe > :is(picture, img) {
+      animation: mx-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 55%;
+    }
+    @keyframes mx-settle { from { transform: scale(1.16); } to { transform: scale(1); } }
+  }
+}
+
+/* ── Cursor glow: desktop fine pointer only (element lives in Layout.astro) ── */
+@media (hover: none), (pointer: coarse) {
+  .cursor-glow { display: none; }
+}
+
+/* ── Scroll progress bar: pure CSS where scroll-driven animations exist (Layout.astro falls back to JS) ── */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    transition: none;
+    animation: mx-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+  @keyframes mx-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress { animation: none; transform: scaleX(0); }
+}

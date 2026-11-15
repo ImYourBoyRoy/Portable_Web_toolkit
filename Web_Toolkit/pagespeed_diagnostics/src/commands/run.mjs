@@ -202,6 +202,11 @@ export function summarizeOne(strategy, payload) {
     accessibility: categoryScore(payload, 'accessibility'),
     bestPractices: categoryScore(payload, 'best-practices'),
     seo: categoryScore(payload, 'seo'),
+    // Audits Lighthouse did not report (renamed, errored, or run failed). Callers must
+    // treat these as failures instead of reading the 0 default as a passing value.
+    missingMetrics: Object.entries(METRIC_AUDIT_IDS)
+      .filter(([, auditId]) => !Number.isFinite(Number(audit(payload, auditId)?.numericValue)))
+      .map(([metric]) => metric),
     speedIndexMs: Number(audit(payload, 'speed-index')?.numericValue ?? 0),
     fcpMs: Number(audit(payload, 'first-contentful-paint')?.numericValue ?? 0),
     lcpMs: Number(audit(payload, 'largest-contentful-paint')?.numericValue ?? 0),
@@ -226,7 +231,23 @@ export function summarizeOne(strategy, payload) {
   };
 }
 
-export async function requestPageSpeed(url, strategy, apiKey) {
+/** Lighthouse audit ids behind each threshold-checked metric. */
+export const METRIC_AUDIT_IDS = {
+  speedIndexMs: 'speed-index',
+  fcpMs: 'first-contentful-paint',
+  lcpMs: 'largest-contentful-paint',
+  tbtMs: 'total-blocking-time',
+  cls: 'cumulative-layout-shift'
+};
+
+/** PageSpeed runs a full Lighthouse pass server-side; allow for slow pages but never hang. */
+export const PAGESPEED_TIMEOUT_MS = 180_000;
+
+/**
+ * Call the PageSpeed Insights v5 API. Throws on timeout, non-2xx responses, or
+ * a non-JSON body. The error text never includes the request URL (it carries the API key).
+ */
+export async function requestPageSpeed(url, strategy, apiKey, { timeoutMs = PAGESPEED_TIMEOUT_MS, fetchImpl = fetch } = {}) {
   const endpoint = new URL('https://www.googleapis.com/pagespeedonline/v5/runPagespeed');
   endpoint.searchParams.set('url', url);
   endpoint.searchParams.set('strategy', strategy);
@@ -234,8 +255,26 @@ export async function requestPageSpeed(url, strategy, apiKey) {
     endpoint.searchParams.append('category', category);
   }
   if (apiKey) endpoint.searchParams.set('key', apiKey);
-  const response = await fetch(endpoint);
-  return response.json();
+
+  let response;
+  try {
+    response = await fetchImpl(endpoint, { signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    const reason = error?.name === 'TimeoutError' ? `timed out after ${Math.round(timeoutMs / 1000)}s` : (error?.message || String(error));
+    throw new Error(`PageSpeed request for ${url} (${strategy}) failed: ${reason}`);
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`PageSpeed API returned a non-JSON response (HTTP ${response.status}) for ${url} (${strategy}).`);
+  }
+  if (!response.ok) {
+    const detail = payload?.error?.message ? `: ${payload.error.message}` : '';
+    throw new Error(`PageSpeed API HTTP ${response.status} for ${url} (${strategy})${detail}`);
+  }
+  return payload;
 }
 
 export async function runPageSpeed(flags = {}) {

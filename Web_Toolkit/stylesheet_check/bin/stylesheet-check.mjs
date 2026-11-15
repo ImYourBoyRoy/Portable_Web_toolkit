@@ -30,6 +30,7 @@ function printHelp() {
       { name: '--max-inline-lines <n>', description: 'Max meaningful lines allowed in a component <style> block. Default: 15.' },
       { name: '--max-file-lines <n>', description: 'Max meaningful lines allowed in one stylesheet file. Default: 500.' },
       { name: '--min-duplicate-rule-lines <n>', description: 'Minimum rule body size to consider for duplicate-rule detection. Default: 4.' },
+      { name: '--exclude <paths>', description: 'Comma-separated project-relative folders/files to skip (archives or reference material that is not built), e.g. resume_reference,reference_files.' },
       { name: '--json', description: 'Emit machine-readable JSON to stdout.' },
       { name: '--json-out <path>', description: 'Also write the JSON report to a file path.' }
     ],

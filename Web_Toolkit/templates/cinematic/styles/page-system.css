@@ -1,0 +1,95 @@
+/* ./src/styles/components/page-system.css
+ * Shared "ledger and light" page primitives for redesigned pages (homepage, open source; roll out to the rest).
+ * Layout tokens live in tokens/home.css and apply to `.home` and `.page-wide`.
+ * Pages opt in by putting `page-wide` on <main> and importing this file.
+ */
+.page-wide { position: relative; z-index: 10; }
+.h-wrap { width: var(--wrap); margin-inline: auto; }
+
+/* Mono section index with a short accent rule: "02 Work". Replaces pill badges. */
+.h-index {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.h-index::before {
+  content: '';
+  width: 2.25rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* Heading scale: keep it calm (oversized headings read as machine-made); hero h1 about 3.5rem, section h2 about 2.4rem. */
+.h-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-size: clamp(1.75rem, 3.2vw, 2.4rem);
+  color: var(--text-primary);
+}
+.h-title--page { font-size: clamp(2.1rem, 4.4vw, 3.1rem); }
+
+/* Flat pill buttons, no glow. */
+.page-wide .btn { border-radius: var(--radius-full); padding: 0.95rem 1.9rem; font-size: 0.95rem; }
+.page-wide .btn-primary { box-shadow: none; }
+.page-wide .btn-primary:hover { box-shadow: none; transform: none; background: var(--accent-hover); }
+.page-wide .btn svg { transition: transform var(--transition-base); }
+.page-wide .btn:hover svg { transform: translateX(3px); }
+
+/* Text link with an accent underline. */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.98rem;
+  color: var(--accent-contrast);
+  border-bottom: 1px solid var(--accent-border);
+  transition: border-color var(--transition-fast), gap var(--transition-base);
+}
+.link-arrow:hover { border-color: var(--accent-contrast); gap: 0.9rem; }
+
+/* Typographic ledger: any number of figures, one hairline-ruled row. */
+.ledger {
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  border-top: 1px solid var(--rule);
+}
+.ledger li { position: relative; padding: 1.75rem 1.5rem 0 0; }
+.ledger li + li { padding-left: 1.5rem; border-left: 1px solid var(--border); }
+.ledger-fig {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.4vw, 2.9rem);
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  color: var(--text-primary);
+}
+.ledger-fig .u { color: var(--accent-contrast); }
+.ledger-label { display: block; margin-top: 0.75rem; max-width: 15ch; font-size: 0.92rem; line-height: 1.4; color: var(--text-secondary); }
+
+@media (max-width: 960px) {
+  .ledger { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); }
+  .ledger li, .ledger li + li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.15rem 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ledger-label { margin-top: 0; max-width: none; text-align: right; }
+  .ledger-fig { font-size: clamp(1.8rem, 7vw, 2.4rem); }
+}

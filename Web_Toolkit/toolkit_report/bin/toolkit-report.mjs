@@ -7,6 +7,7 @@
  * missing, and what should happen next for a target website project.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -19,24 +20,8 @@ const CANONICAL_DOCS = ['README.md', 'AGENTS.md', 'OPERATIONS.md', 'ARCHITECTURE
 const REPO_ROOT_DOCS = new Set(['MEMORY.md']);
 const CORE_TOOLS = ['Setup_agent_environment', 'Setup_astro_environment', 'cloudflare-agent-toolkit', 'site_doctor', 'site_quality_smoke', 'browser_diagnostics', 'integration_doctor', 'cache_purge', 'toolkit_purge', 'toolkit_verify'];
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 

@@ -68,11 +68,19 @@ export async function tokenDetails(token, tokenId) {
   return cloudflareRequest(token, `/user/tokens/${tokenId}`);
 }
 
+export class ZoneNotFoundError extends Error {
+  constructor(zoneName) {
+    super(`No zone found for "${zoneName}".`);
+    this.name = 'ZoneNotFoundError';
+    this.zoneName = zoneName;
+  }
+}
+
 export async function resolveZoneByName(token, zoneName) {
   const payload = await cloudflareRequest(token, `/zones?name=${encodeURIComponent(zoneName)}&per_page=50`);
   const zones = Array.isArray(payload?.result) ? payload.result : [];
   if (zones.length === 0) {
-    throw new Error(`No zone found for "${zoneName}".`);
+    throw new ZoneNotFoundError(zoneName);
   }
   return zones[0];
 }

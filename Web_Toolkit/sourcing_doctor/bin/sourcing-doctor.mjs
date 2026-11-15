@@ -12,6 +12,7 @@
  */
 
 import { printHelp } from '../../shared/lib/help.mjs';
+import { parseCliArgs } from '../../shared/lib/cli.mjs';
 import { loadSiteProfileContext, resolvePortableRoot } from '../../shared/lib/context.mjs';
 import { runExtract } from '../src/commands/extract.mjs';
 import { runWixExtract } from '../src/commands/extract-wix.mjs';
@@ -19,23 +20,7 @@ import { assertPublicHttpUrl } from '../../shared/lib/url-safety.mjs';
 import { fetchWixHtml, normalizeOrigin } from '../src/lib/wix/client.mjs';
 
 function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (token.startsWith('--')) {
-      const key = token.slice(2);
-      const next = argv[index + 1];
-      if (!next || next.startsWith('--')) {
-        flags[key] = true;
-      } else {
-        flags[key] = next;
-        index += 1;
-      }
-    } else {
-      command.push(token);
-    }
-  }
+  const { command, flags } = parseCliArgs(argv);
   return { command, flags };
 }
 
@@ -108,9 +93,10 @@ async function main() {
   const { command, flags } = parseArgs(process.argv.slice(2));
   const primary = String(command[0] || '').toLowerCase();
 
-  if (!primary || ['help', '--help', '-h'].includes(primary)) {
+  const helpRequested = Boolean(flags.help || flags.h) || ['help', '-h'].includes(primary);
+  if (helpRequested || !primary) {
     showHelp();
-    process.exit(primary ? 0 : 1);
+    process.exit(helpRequested ? 0 : 1);
   }
 
   const portableRoot = resolvePortableRoot(import.meta.url, 2);

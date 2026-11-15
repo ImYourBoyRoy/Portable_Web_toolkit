@@ -8,6 +8,8 @@
  * - keyed values (`--zone example.com`, `--ttl=24h`)
  */
 
+import { isBooleanFlag } from '../../../shared/lib/cli.mjs';
+
 export function parseCliArgs(argv) {
   const command = [];
   const flags = {};
@@ -31,7 +33,7 @@ export function parseCliArgs(argv) {
         flags[key] = value;
       } else {
         const next = argv[index + 1];
-        if (next && !next.startsWith('-')) {
+        if (next && !next.startsWith('-') && !isBooleanFlag(trimmed)) {
           flags[trimmed] = next;
           index += 1;
         } else {

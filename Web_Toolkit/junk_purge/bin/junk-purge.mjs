@@ -4,6 +4,7 @@
  * Safe transient-file cleanup utility for Astro/Vite/Cloudflare project roots.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -12,24 +13,8 @@ import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 const SAFE_DIRS = ['.astro', 'dist', '.wrangler', '.wrangler-state'];
 const AGGRESSIVE_DIRS = ['.vite', '.cache'];
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 

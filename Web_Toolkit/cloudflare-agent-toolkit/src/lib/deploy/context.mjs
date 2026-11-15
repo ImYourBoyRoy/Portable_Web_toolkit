@@ -3,24 +3,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseCliArgs } from '../../../../shared/lib/cli.mjs';
 import { mergeEnvFiles } from '../../../../shared/lib/env.mjs';
 import { loadSiteProfile, resolveProfilePath } from '../profile.mjs';
 
 export function parseDeployFlags(argv) {
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
-  return flags;
+  return parseCliArgs(argv).flags;
 }
 
 export function readJson(filePath) {

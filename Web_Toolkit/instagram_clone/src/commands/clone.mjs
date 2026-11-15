@@ -41,8 +41,8 @@ async function localizeSlide(slide, projectRoot, shortcode, index) {
   return { ...slide, imageUrl, videoUrl };
 }
 
-export async function runClone({ projectRoot, username, limit = 24, downloadMedia = true }) {
-  console.log(`[instagram-clone] Fetching @${username} (limit ${limit})…`);
+export async function runClone({ projectRoot, username, limit = 24, downloadMedia = true, log = console.log }) {
+  log(`[instagram-clone] Fetching @${username} (limit ${limit})…`);
   const { nodes, profile: rawProfile } = await fetchPublicProfile(username, { limit });
   const normalized = normalizeNodes(nodes);
 
@@ -64,7 +64,7 @@ export async function runClone({ projectRoot, username, limit = 24, downloadMedi
       '/assets/instagram/profile.jpg',
     );
     profile = { ...rawProfile, profileImageUrl: localProfile };
-    console.log(`[instagram-clone] Profile photo → ${localProfile}`);
+    log(`[instagram-clone] Profile photo → ${localProfile}`);
   }
 
   const items = [];
@@ -106,7 +106,7 @@ export async function runClone({ projectRoot, username, limit = 24, downloadMedi
   await writeFile(feedPath, `${JSON.stringify(feed, null, 2)}\n`, 'utf8');
 
   const slideCount = items.reduce((sum, post) => sum + post.slides.length, 0);
-  console.log(`[instagram-clone] Wrote ${items.length} posts (${slideCount} media files) → ${feedPath}`);
+  log(`[instagram-clone] Wrote ${items.length} posts (${slideCount} media files) → ${feedPath}`);
 
   return { feedPath, count: items.length, slideCount };
 }

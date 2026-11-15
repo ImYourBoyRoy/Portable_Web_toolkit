@@ -10,8 +10,13 @@
  *        [--include-site-profile client-a.json,client-b.json]
  *        [--include-all-site-profiles]
  *
- * Inputs: optional export flags.
+ * Inputs: optional export flags (`--force` lets --to replace a non-empty
+ * folder that was not created by a previous export).
  * Outputs: sanitized folder copy, optional zip, and export metadata.
+ * Safety: refuses --to targets that are, contain, or sit inside the toolkit
+ * (outside the runtime dir), the home directory, or a filesystem root;
+ * only replaces a non-empty folder that carries EXPORT-METADATA.json; skips
+ * symlinks and secret-shaped files (.env*, .dev.vars*, *.pem, *.key) at any depth.
  */
 
 import fs from 'node:fs';
@@ -23,7 +28,7 @@ import { resolveRuntimePath } from '../shared/lib/context.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const portableRoot = path.resolve(__dirname, '..');
+export const portableRoot = path.resolve(__dirname, '..');
 const defaultExportRoot = resolveRuntimePath(portableRoot, 'exports', 'portable-toolkit');
 
 function parseArgs(argv) {
@@ -52,6 +57,17 @@ function toBool(value, fallback = false) {
   return fallback;
 }
 
+/** Directory names never exported at any depth. */
+const SKIPPED_SEGMENTS = new Set(['.runtime', '.git', '.astro', '.wrangler', '.cf-agent']);
+
+/** .env / .env.* (except templates), .dev.vars*, private keys and certs. */
+export function isSecretShapedFile(basename) {
+  const name = basename.toLowerCase();
+  if (name === '.env' || (name.startsWith('.env.') && !/\.(example|sample|template)$/.test(name))) return true;
+  if (name === '.dev.vars' || name.startsWith('.dev.vars.')) return true;
+  return /\.(pem|key|p12|pfx)$/.test(name);
+}
+
 function normalizedRelative(root, target) {
   return path.relative(root, target).replace(/\\/g, '/');
 }
@@ -62,7 +78,7 @@ function includedProfiles(flags) {
   return new Set(raw.split(',').map((entry) => entry.trim()).filter(Boolean));
 }
 
-function shouldSkip(relativePath, flags) {
+export function shouldSkip(relativePath, flags = {}) {
   const normalized = relativePath.replace(/\\/g, '/');
   const basename = path.basename(normalized);
   const allowedProfiles = includedProfiles(flags);
@@ -70,6 +86,8 @@ function shouldSkip(relativePath, flags) {
   if (!normalized) return false;
   if (normalized === '.runtime' || normalized === '.git' || normalized === 'dist' || normalized === 'output' || normalized === 'MEMORY.md' || normalized === 'RED_TEAM_REPORT.md') return true;
   if (normalized === '.env') return true;
+  if (isSecretShapedFile(basename)) return true;
+  if (normalized.split('/').some((segment) => SKIPPED_SEGMENTS.has(segment))) return true;
   if (basename === '.DS_Store' || basename === 'Thumbs.db' || basename === 'doctor.txt') return true;
   if (normalized.startsWith('.runtime/')) return true;
   if (normalized.startsWith('.git/')) return true;
@@ -92,11 +110,17 @@ function shouldSkip(relativePath, flags) {
   return false;
 }
 
+const skippedSymlinks = [];
+
 function copyRecursive(source, destination, flags) {
   const relativePath = normalizedRelative(portableRoot, source);
   if (shouldSkip(relativePath, flags)) return;
 
-  const stat = fs.statSync(source);
+  const stat = fs.lstatSync(source);
+  if (stat.isSymbolicLink()) {
+    skippedSymlinks.push(relativePath);
+    return;
+  }
   if (stat.isDirectory()) {
     fs.mkdirSync(destination, { recursive: true });
     for (const entry of fs.readdirSync(source)) {
@@ -131,7 +155,8 @@ function writeMetadata(targetRoot, flags) {
         'dist/',
         'output/',
         'node_modules/',
-        'nested .env files',
+        'nested .env / .env.* / .dev.vars files, *.pem / *.key',
+        'symlinks',
         'runtime logs',
         'non-example site profiles unless explicitly requested',
         'MEMORY.md'
@@ -152,17 +177,50 @@ function zipExport(targetRoot) {
 
   if (process.platform === 'win32') {
     const command = `Compress-Archive -Path "${targetRoot}\\*" -DestinationPath "${zipPath}" -Force`;
-    const result = spawnSync('powershell', ['-NoProfile', '-Command', command], { encoding: 'utf8' });
-    return result.status === 0 ? zipPath : null;
+    const result = spawnSync('pwsh', ['-NoLogo', '-NoProfile', '-Command', command], { encoding: 'utf8' });
+    return result.status === 0 ? { zipPath } : { error: (result.stderr || result.error?.message || 'Compress-Archive failed').trim() };
   }
 
   const result = spawnSync('zip', ['-qr', zipPath, '.'], { cwd: targetRoot, encoding: 'utf8' });
-  return result.status === 0 ? zipPath : null;
+  if (result.error?.code === 'ENOENT') return { error: 'zip utility not found on PATH' };
+  return result.status === 0 ? { zipPath } : { error: (result.stderr || `zip exited ${result.status}`).trim() };
+}
+
+function isInside(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+/**
+ * Refuse export targets that could delete the toolkit, its parent, the home
+ * directory, or an unrelated non-empty folder. Throws on unsafe targets.
+ */
+export function assertSafeExportTarget(targetRoot, { root = portableRoot, runtimeDir = resolveRuntimePath(root), force = false } = {}) {
+  const target = path.resolve(targetRoot);
+  const resolvedRoot = path.resolve(root);
+
+  if (target === path.parse(target).root) throw new Error(`Refusing export target that is a filesystem root: ${target}`);
+  if (target === path.resolve(os.homedir())) throw new Error(`Refusing export target that is the home directory: ${target}`);
+  if (target === resolvedRoot || isInside(target, resolvedRoot)) {
+    throw new Error(`Refusing export target that is or contains the toolkit itself: ${target}`);
+  }
+  if (isInside(resolvedRoot, target) && !isInside(path.resolve(runtimeDir), target)) {
+    throw new Error(`Refusing export target inside the toolkit (only the runtime folder is allowed): ${target}`);
+  }
+
+  if (!fs.existsSync(target)) return;
+  const stat = fs.lstatSync(target);
+  if (stat.isSymbolicLink()) throw new Error(`Refusing export target that is a symlink: ${target}`);
+  if (!stat.isDirectory()) throw new Error(`Export target exists and is not a directory: ${target}`);
+  if (fs.readdirSync(target).length === 0) return;
+  if (fs.existsSync(path.join(target, 'EXPORT-METADATA.json')) || force) return;
+  throw new Error(`Refusing to replace non-empty folder not created by a previous export: ${target} (pass --force to override)`);
 }
 
 function main() {
   const flags = parseArgs(process.argv.slice(2));
   const targetRoot = path.resolve(String(flags.to || defaultExportRoot));
+  assertSafeExportTarget(targetRoot, { force: toBool(flags.force, false) });
   if (fs.existsSync(targetRoot)) {
     fs.rmSync(targetRoot, { recursive: true, force: true });
   }
@@ -173,20 +231,30 @@ function main() {
   }
 
   writeMetadata(targetRoot, flags);
-  const zipPath = toBool(flags.zip, false) ? zipExport(targetRoot) : null;
+  const wantsZip = toBool(flags.zip, false);
+  const zipResult = wantsZip ? zipExport(targetRoot) : null;
 
   console.log('\n[portable-export] complete');
   console.log(`- export: ${targetRoot}`);
   const examples = includedExampleProfiles(targetRoot);
   console.log(`- example site profiles included: ${examples.length > 0 ? examples.join(', ') : 'none'}`);
   console.log(`- non-example site profiles included: ${toBool(flags['include-all-site-profiles'], false) || includedProfiles(flags).size > 0 ? 'selected' : 'no'}`);
-  if (zipPath) {
-    console.log(`- zip: ${zipPath}`);
-  } else if (toBool(flags.zip, false)) {
-    console.log('- zip: skipped (zip utility unavailable on this host)');
+  if (skippedSymlinks.length > 0) {
+    console.warn(`- WARNING: skipped ${skippedSymlinks.length} symlink(s): ${skippedSymlinks.join(', ')}`);
+  }
+  if (zipResult?.zipPath) {
+    console.log(`- zip: ${zipResult.zipPath}`);
+  } else if (zipResult) {
+    console.error(`- zip: FAILED (${zipResult.error})`);
+    process.exitCode = 1;
   }
 }
 
-main();
-
-
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename)) {
+  try {
+    main();
+  } catch (error) {
+    console.error(`\n[portable-export] failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
+}

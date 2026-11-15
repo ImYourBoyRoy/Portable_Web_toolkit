@@ -9,6 +9,7 @@
  * this file only parses arguments, prints help, and dispatches.
  */
 
+import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import process from 'node:process';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 import { loadSiteProfileContext, resolvePortableRoot } from '../../shared/lib/context.mjs';
@@ -17,24 +18,8 @@ import { runPurge } from '../src/commands/purge.mjs';
 
 const portableRoot = resolvePortableRoot(import.meta.url, 2);
 
-function parseArgs(argv) {
-  const command = [];
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      command.push(token);
-      continue;
-    }
-    const key = token.slice(2);
-    const next = argv[index + 1];
-    if (next && !next.startsWith('--')) {
-      flags[key] = next;
-      index += 1;
-    } else {
-      flags[key] = true;
-    }
-  }
+function parseArgs(argv = []) {
+  const { command, flags } = sharedParseCliArgs(argv);
   return { command, flags };
 }
 

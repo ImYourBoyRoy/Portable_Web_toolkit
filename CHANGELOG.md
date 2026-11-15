@@ -5,10 +5,23 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+### Added
+
+- **discovery-doctor agent-readiness checks** (additive; absent surfaces report INFO, so existing sites keep their exit codes): `API catalog (RFC 9727)` (linkset shape, descriptions, `application/linkset+json`), `Markdown twins` (`<page>/index.md` per sitemap page, no raw HTML, canonical mention) with live `Accept: text/markdown` negotiation and `Vary: Accept`, `Link headers (RFC 8288)` (`rel=api-catalog`, markdown alternate; local `_headers` rules or live responses), `MCP server card` (`/.well-known/mcp/server-card.json` or `mcp.json`, plus a live probe of its same-origin endpoint), `AI crawler policy` (robots.txt `Content-Signal`, named AI crawler groups, and named groups that drop the `*` Disallow rules), and `Sitemap/canonical agreement` (WARN on mismatches such as no-slash sitemap URLs versus trailing-slash canonicals). Any surface can be made a failure when missing with `required.apiCatalog|markdownTwins|linkHeaders|mcpServerCard|aiPolicy|canonicalConsistency` in the discovery policy; a present-but-malformed surface always fails. `agentSampleSize` (default 12) bounds live page sampling.
+- **Discovery template v2** (`Web_Toolkit/templates/discovery/`, wired into `site-starter/*.package.json`): sitemap, content.json, search.json, llms.txt and JSON-LD now use trailing-slash canonical page URLs (`canonicalPagePath`), so the sitemap agrees with `<link rel="canonical">` (the old template listed `/about` while pages declared `/about/`; both URLs still work because Cloudflare redirects the slash-less form). Dates come from git (`scripts/refresh-page-lastmod.mjs` writes `src/data/page-lastmod.json`) and unknown dates are omitted instead of using the build clock; the sitemap drops `changefreq`/`priority` and excludes `/500`. New agent layer: `Schema.astro` as one `@graph` with stable `@id`s, `robots.txt` AI crawler policy from `siteConfig.aiPolicy` (Content-Signal, named crawler groups; training/AI-input crawlers are blocked when the policy says no) plus `ai.txt`, RFC 9727 `/.well-known/api-catalog`, Markdown twins and a whole-site bundle (`/site.md`, `/api/site.json`) plus per-page `Link`/`Vary` header rules from `scripts/discovery-postbuild.mjs`, `Accept: text/markdown` negotiation (`src/worker.ts`, `lib/negotiate.ts`, Workers only), per-IP rate limiting (`lib/ratelimit.ts`), `scripts/discovery-check.mjs`, and an optional read-only MCP server (`optional/mcp/`). Server-rendered pages (`prerender = false`) are skipped gracefully. Covered by `tests/discovery-template.test.mjs`.
+- **discovery-doctor `--allow-loopback`** (and `assertPublicHttpUrl(url, label, { allowLoopback })` in `shared/lib/url-safety.mjs`): permits `localhost`, `127.0.0.0/8` and `::1` only, for testing a local Worker or preview server. Private LAN ranges, link-local and metadata hosts stay blocked, default behavior is unchanged, and it is CLI-only (a committed profile cannot enable it).
+- **preview-check** (new tool): `lighthouse` (compact JSON scores, metrics and failing audits for a local preview or any URL, mobile and desktop), `layout` (horizontal overflow at 375/768/1440 with named offenders) and `motion` (reduced motion leaves no scroll-driven or infinite animation and no canvas, no above-the-fold text gated by opacity, no canvas on a phone viewport, real content with JavaScript off). Exit 2 on a failed check. Needs `playwright` in the project for `layout` and `motion`.
+- **brand-doctor `og-pages`**: renders one 1200x630 Open Graph card per route from `og.spec.json` `pages` (plus an optional `pages_module` for data-driven pages such as one card per product, with optional screenshots) and writes the route map the layout reads for `og:image` and `twitter:image`. Dry run unless `--apply`.
+- **templates/cinematic**: copy-ready motion and layout primitives (View Transitions, scroll-driven reveals, CSS scroll progress, ledger and index-label page system, optional WebGL2 hero field that refuses software renderers) with the performance contract that keeps pages at 100 on PageSpeed.
+- **stylesheet-check `motion-reduced-guard`**: errors on `animation-timeline` or `@view-transition` in a stylesheet with no `prefers-reduced-motion` guard (a global `animation-duration` reset does not stop either).
+- **site-snapshots** (new tool): `capture` photographs each page from a JSON list (reduced motion, consent banners dismissed or hidden, only visibly changed pages rewritten, failed captures keep the old image) and writes optimizable images plus a manifest; `check` reports missing, stale and drifted snapshots with exit 2. Configured by one `site-snapshots.config.json`; public hosts only unless `--allow-loopback`.
+- **preview-check `contrast`**: resolves every visible text node against its real background (translucent layers composited, gradient stops evaluated) in dark and light schemes, optionally after a click such as opening the mobile menu, and lists WCAG AA failures. Added because axe/WCAGate report translucent and gradient backgrounds only as `cantTell`, which let white text on a pale gold button pass the gate.
+- **templates/cinematic `circuit-trace.ts`**: cursor-driven circuit-board canvas (traces, pads, chips revealed around the pointer with travelling pulses); zero cost until the first mouse move and when idle.
+
 ### Changed
 
-- **Version defaults refreshed** from the npm registry and Node release index (checked 2026-11-01): `.node-version` and `site-starter/.node-version` 26.7.0 → 26.13.0 (current LTS); starter pins `astro` ^7.4.4, `@astrojs/cloudflare` ^14.4.3, `vite` ^8.3.5, `wrangler` ^4.156.0, `@cloudflare/workers-types` ^5.20261101.1, `@types/node` ^26.6.6, `@astrojs/check` ^0.9.12, `@astrojs/upgrade` ^0.8.1, `playwright` ^1.64.1, `yaml` ^2.9.1, `yaml-language-server` ^2.0.0. `typescript` stays `^6.0.3` (latest is 7.0.2, but `@astrojs/check` still peers on `^5 || ^6`).
-- Starter `compatibility_date` 2026-07-18 → 2026-10-23 (accepted by Wrangler 4.156.0 / workerd 1.20261023.1 with no warnings).
+- **Version defaults refreshed** from the npm registry and Node release index (checked 2026-11-05): `.node-version` and `site-starter/.node-version` 26.7.0 → 26.13.0 (current LTS); starter pins `astro` ^7.4.7, `@astrojs/cloudflare` ^14.4.6, `vite` ^8.3.6, `wrangler` ^4.158.0, `@cloudflare/workers-types` ^5.20261104.1, `@types/node` ^26.6.6, `@astrojs/check` ^0.9.12, `@astrojs/upgrade` ^0.8.1, `playwright` ^1.65.0, `yaml` ^2.9.1, `yaml-language-server` ^2.0.0. `typescript` stays `^6.0.3` because `@astrojs/check` peers only on TypeScript 5 or 6.
+- Starter `compatibility_date` 2026-07-18 → 2026-10-23 (accepted by Wrangler 4.156.0 / workerd 1.20261023.1 with no warnings); the date remains intentionally fixed until compatibility behavior is reviewed.
 - Setup bootstrap manifest Node tarballs v26.7.0 → v26.13.0.
 
 ### Removed
@@ -22,6 +35,28 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 - **cache-purge** retries HTTP 429 using `Retry-After` (Free plan: 5 purge requests per minute) and, on a rejected batch, reports how many items were already purged.
 - **cache-purge** now exits non-zero when the zone cannot be resolved or there is nothing to purge, instead of printing a warning and exiting 0.
 - **cache-purge** prefix mode sends `host/path` prefixes without a scheme, query, or trailing slash, as Cloudflare requires, and warns when a prefix is a bare host (purges the whole host).
+
+### Fixed (toolkit review)
+
+- **Agent CLI contract**: all 28 packaged commands now pass a `toolkit-verify` help check requiring Usage, Flags, Examples, Notes, and Exit codes. Discovery Doctor and Instagram Clone now offer clean JSON stdout; Instagram Clone's no-argument invocation now succeeds with help instead of returning a usage error.
+
+- **toolkit-purge** never follows symlinks, skips `node_modules` and `.git`, scopes `output`/`dist`/`.zip` removal, and refuses any target that resolves outside the toolkit root.
+- **export-portable-toolkit `--to`** refuses the toolkit root, its parent, `/`, `$HOME`, and non-empty directories it did not create (unless `--force`), and never copies `.env*`, `.dev.vars*`, `*.pem`, or `*.key`.
+- **privacy-check** scans every non-binary text file (not an extension allowlist) and detects `.dev.vars`/`.env.local` secrets, JSON/YAML assignments, Cloudflare (`cfut_`/`cfat_`/`cfk_`) and GitHub tokens, PEM private keys, and `/home/<user>` paths.
+- **pagespeed-diagnostics** `raw-psi` exits 0 on success (it crashed on a string exit code), PSI requests time out after 180 s, API errors never echo the request URL (which carries the key), thresholds reject typos/NaN, and missing Lighthouse audits are reported instead of counted as 0.
+- **stylesheet-check** fails when `--root` is missing or not a directory, never follows symlinks (a project's `Web_Toolkit` link was being scanned), and warns when it scans nothing.
+- **stylesheet-check** accepts a `src/styles/tokens/` folder (not only `tokens.css`) as the token source, recognizes tokens imported from `global.css` or another top-level sheet such as `critical.css`, and gains `--exclude <paths>` to skip unbuilt archive/reference folders.
+- **browser-diagnostics** now fails (exit 1) on production routes that return HTTP >= 400, time out, or when no routes were checked; development-host route errors warn.
+- **Shared CLI parser** (`Web_Toolkit/shared/lib/cli.mjs`) replaces about two dozen hand-rolled copies. Boolean flags (`--skip-*`, `--no-*`, `--dry-run`, `--apply`, `--json`, ...) no longer swallow the next token (`site-doctor --skip-cloudflare run` used to print help and exit 0), and `--key=value` now works everywhere.
+- `--help` exits 0 for **discovery-doctor** and **sourcing-doctor**; **cf-deploy-pages/workers** gained `--help` (previously `--help` ran the deploy command).
+- **zone-harden** mutates only with an explicit `--apply`; `--dry-run=false` alone no longer applies changes, and `--dry-run` always wins.
+- **registrar** `zone ensure` only creates a zone on a genuine "zone not found" (`ZoneNotFoundError`); auth/permission/5xx errors now fail instead of triggering creation. `registrar ping` no longer prints or saves any part of the API key.
+- **Auto-update preflight** is skipped for `--help`, `--version`, and `--apply` invocations (`PORTABLE_TOOLKIT_AUTO_UPDATE_ON_APPLY=1` opts back in).
+
+### Changed (tooling)
+
+- PostHog Astro template `defaults` `2026-01-30` -> `2026-08-30` (latest in `@posthog/types` 's `CONFIG_DEFAULTS_DATES`, checked 2026-11-01).
+- `npm test` runs every suite (`tests/*.test.mjs` and `Web_Toolkit/*/tests/*.test.mjs`): 158 tests pass in the 2026-11-05 validation run.
 
 ### Added
 

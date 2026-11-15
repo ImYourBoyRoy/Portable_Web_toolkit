@@ -19,6 +19,7 @@ node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist/client
 node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs https://example.com
 node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs https://example.com --site-profile ./site.site-profile.json
 node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist --policy ./discovery-policy.json
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs ./dist --json
 ```
 
 Useful flags:
@@ -34,7 +35,41 @@ Useful flags:
 --skip-link-checks    Do not fetch same-origin links advertised by llms.txt.
 --site-profile PATH   Read profile.diagnostics.discovery (or profile.discovery).
 --policy PATH         Read a standalone discovery policy JSON object.
+--json                Emit one machine-readable report on stdout.
 ```
+
+JSON output has `schemaVersion`, `checkedAt`, `target`, `ok`, `exitCode`,
+`counts`, and a `results` array. It is safe to parse directly from stdout; the
+command does not mix human progress logs into JSON mode.
+
+## Agent-readiness checks
+
+These cover the surfaces AI agents and modern search read beyond the classic files. They are additive and safe to run on
+any site: an absent surface is INFO, a present-but-incomplete one is WARN, a present-but-malformed one is FAIL. Mark a
+surface required in the discovery policy to make absence a failure.
+
+| Check | What it validates | Policy key (`required.*`) |
+|---|---|---|
+| `API catalog (RFC 9727)` | `/.well-known/api-catalog` is a linkset with absolute anchors and service-desc/service-doc links; served as `application/linkset+json` | `apiCatalog` |
+| `Markdown twins` | each sitemap page has `<page>/index.md` (or `<page>.md`), non-empty, no raw HTML, mentions its canonical URL | `markdownTwins` |
+| `Accept: text/markdown negotiation` (live) | pages that have twins answer `Accept: text/markdown` with `text/markdown` and `Vary: Accept` | n/a (reported when twins exist) |
+| `Link headers (RFC 8288)` | pages declare `rel=api-catalog` and a `text/markdown` alternate, with `Vary: Accept`; local audit evaluates `_headers` rules per sitemap page | `linkHeaders` |
+| `MCP server card` | `/.well-known/mcp/server-card.json` (or `mcp.json`) has a name and remotes; a same-origin remote is probed like any MCP endpoint | `mcpServerCard` |
+| `AI crawler policy` | robots.txt `Content-Signal` values, named AI crawler groups (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, ...), crawlers explicitly blocked, and named groups that omit the `*` Disallow rules (a crawler matching its own group ignores `*`); notes `/ai.txt` | `aiPolicy` |
+| `Sitemap/canonical agreement` | every sampled sitemap URL equals its page's `<link rel="canonical">` (catches no-slash sitemap URLs versus trailing-slash canonicals) | `canonicalConsistency` (WARN unless required) |
+
+Live runs sample at most `agentSampleSize` sitemap pages (default 12, max 60) with GET requests only.
+
+### Testing a local Worker or preview server
+
+```bash
+node ./Web_Toolkit/discovery_doctor/bin/discovery-doctor.mjs http://127.0.0.1:8788 --allow-loopback --site-profile ./site.site-profile.json
+```
+
+`--allow-loopback` permits `localhost`, `127.0.0.0/8` and `::1` only. Private LAN ranges, link-local addresses and cloud
+metadata hosts stay blocked, and a committed profile cannot enable the flag. When a local server returns a production build,
+its absolute URLs name the real domain; the doctor fetches those pages by path from the local server and compares against
+the advertised URL.
 
 ## Exit codes
 

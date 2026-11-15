@@ -52,20 +52,36 @@ function countMeaningfulLines(text) {
     .length;
 }
 
-function walkFiles(root, predicate) {
+function isExcluded(relativePath, excludes) {
+  if (!relativePath || excludes.length === 0) return false;
+  return excludes.some((prefix) => relativePath === prefix || relativePath.startsWith(`${prefix}/`));
+}
+
+export function normalizeExcludes(value) {
+  const list = Array.isArray(value) ? value : String(value || '').split(',');
+  return list
+    .map((entry) => String(entry).trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''))
+    .filter(Boolean);
+}
+
+function walkFiles(root, predicate, excludes = []) {
   const matches = [];
   const queue = [root];
   while (queue.length > 0) {
     const current = queue.shift();
     const relative = normalizeRelative(root, current);
-    if (relative && shouldSkipDir(relative)) continue;
+    if (relative && (shouldSkipDir(relative) || isExcluded(relative, excludes))) continue;
 
     let stat;
     try {
-      stat = fs.statSync(current);
-    } catch {
-      continue;
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if (error?.code === 'ENOENT') continue;
+      throw error;
     }
+    // Symlinks (notably a project's Web_Toolkit link) are never followed: they would
+    // pull toolkit source into a client scan and can form cycles.
+    if (stat.isSymbolicLink()) continue;
 
     if (stat.isDirectory()) {
       for (const entry of fs.readdirSync(current)) {
@@ -138,13 +154,31 @@ function pushFinding(findings, entry) {
   findings.push(entry);
 }
 
+const TOKENS_FILE_IMPORT_RE = /@import\s+(?:url\()?\s*['"]?[^'")\s]*tokens\.css/;
+const TOKENS_DIR_IMPORT_RE = /@import\s+(?:url\()?\s*['"]?[^'")\s]*tokens\/[^'")\s]*\.css/;
+
+/** True when global.css (or, for a tokens/ folder, any top-level sheet such as critical.css) imports the tokens. */
+function stylesImportTokens(stylesDir, globalPath, hasTokensDir) {
+  const importsTokens = (text) => TOKENS_FILE_IMPORT_RE.test(text) || (hasTokensDir && TOKENS_DIR_IMPORT_RE.test(text));
+  if (importsTokens(fs.readFileSync(globalPath, 'utf8'))) return true;
+  if (!hasTokensDir) return false;
+  return fs.readdirSync(stylesDir)
+    .filter((name) => STYLESHEET_EXTENSIONS.has(path.extname(name).toLowerCase()))
+    .some((name) => importsTokens(fs.readFileSync(path.join(stylesDir, name), 'utf8')));
+}
+
 function checkAstroStyleArchitecture(root, findings) {
   const stylesDir = path.join(root, 'src', 'styles');
   if (!fs.existsSync(stylesDir)) return;
 
   const tokensPath = path.join(stylesDir, 'tokens.css');
   const globalPath = path.join(stylesDir, 'global.css');
-  const hasTokens = fs.existsSync(tokensPath);
+  const tokensDir = path.join(stylesDir, 'tokens');
+  const hasTokensFile = fs.existsSync(tokensPath);
+  const hasTokensDir = fs.existsSync(tokensDir)
+    && fs.statSync(tokensDir).isDirectory()
+    && fs.readdirSync(tokensDir).some((name) => STYLESHEET_EXTENSIONS.has(path.extname(name).toLowerCase()));
+  const hasTokens = hasTokensFile || hasTokensDir;
   const hasGlobal = fs.existsSync(globalPath);
 
   if (!hasTokens) {
@@ -154,7 +188,7 @@ function checkAstroStyleArchitecture(root, findings) {
       file: 'src/styles/',
       line: 1,
       label: 'Missing tokens.css',
-      excerpt: 'Create src/styles/tokens.css as the single custom-property source (Brand Guide → brand-doctor sync-tokens).'
+      excerpt: 'Create src/styles/tokens.css (or a src/styles/tokens/ folder of .css files) as the single custom-property source (Brand Guide → brand-doctor sync-tokens).'
     });
   }
   if (!hasGlobal) {
@@ -167,15 +201,14 @@ function checkAstroStyleArchitecture(root, findings) {
       excerpt: 'Prefer src/styles/global.css that @imports tokens then base/shared layers; import once from Layout.'
     });
   } else {
-    const globalText = fs.readFileSync(globalPath, 'utf8');
-    if (hasTokens && !/@import\s+['"].*tokens\.css['"]/.test(globalText) && !/@import\s+url\([^)]*tokens\.css/.test(globalText)) {
+    if (hasTokens && !stylesImportTokens(stylesDir, globalPath, hasTokensDir)) {
       pushFinding(findings, {
         category: 'architecture',
         severity: 'warn',
         file: 'src/styles/global.css',
         line: 1,
         label: 'global.css does not import tokens.css',
-        excerpt: 'Add `@import \"./tokens.css\";` (or equivalent) at the top of global.css.'
+        excerpt: 'Add `@import \"./tokens.css\";` (or equivalent) at the top of global.css, or import tokens from another top-level sheet such as critical.css.'
       });
     }
   }
@@ -243,9 +276,19 @@ function checkAstroStyleArchitecture(root, findings) {
 
 export function scanStylesheets(rootPath, options = {}) {
   const root = path.resolve(String(rootPath || process.cwd()));
+  let rootStat = null;
+  try {
+    rootStat = fs.statSync(root);
+  } catch {
+    // handled below
+  }
+  if (!rootStat?.isDirectory()) {
+    throw new Error(`Scan root does not exist or is not a directory: ${root}`);
+  }
   const maxInlineLines = Number(options.maxInlineLines ?? 15);
   const maxFileLines = Number(options.maxFileLines ?? 500);
   const minDuplicateRuleLines = Number(options.minDuplicateRuleLines ?? 4);
+  const excludes = normalizeExcludes(options.exclude);
 
   const findings = [];
   const tokenDefinitions = new Map();
@@ -253,11 +296,22 @@ export function scanStylesheets(rootPath, options = {}) {
 
   checkAstroStyleArchitecture(root, findings);
   const componentFiles = walkFiles(root, (filePath) =>
-    COMPONENT_EXTENSIONS.has(path.extname(filePath).toLowerCase())
-  );
+    COMPONENT_EXTENSIONS.has(path.extname(filePath).toLowerCase()),
+  excludes);
   const stylesheetFiles = walkFiles(root, (filePath) =>
-    STYLESHEET_EXTENSIONS.has(path.extname(filePath).toLowerCase())
-  );
+    STYLESHEET_EXTENSIONS.has(path.extname(filePath).toLowerCase()),
+  excludes);
+
+  if (componentFiles.length === 0 && stylesheetFiles.length === 0) {
+    pushFinding(findings, {
+      category: 'scope',
+      severity: 'warn',
+      file: '.',
+      line: 1,
+      label: 'No component or stylesheet files found',
+      excerpt: `Nothing to scan under ${root}. Check --root; an empty scan must not read as a clean result.`
+    });
+  }
 
   for (const filePath of componentFiles) {
     const relativePath = normalizeRelative(root, filePath);
@@ -376,6 +430,8 @@ export function scanStylesheets(rootPath, options = {}) {
     });
   }
 
+  checkMotionGuards(root, stylesheetFiles, findings);
+
   findings.sort((left, right) =>
     left.file.localeCompare(right.file) || left.line - right.line || left.label.localeCompare(right.label)
   );
@@ -383,6 +439,7 @@ export function scanStylesheets(rootPath, options = {}) {
   return {
     root,
     limits: { maxInlineLines, maxFileLines, minDuplicateRuleLines },
+    excluded: excludes,
     scanned: {
       componentFiles: componentFiles.length,
       stylesheetFiles: stylesheetFiles.length
@@ -397,7 +454,44 @@ export function scanStylesheets(rootPath, options = {}) {
       tokenPlacement: findings.filter((entry) => entry.category === 'token-placement').length,
       duplicateToken: findings.filter((entry) => entry.category === 'duplicate-token').length,
       duplicateRule: findings.filter((entry) => entry.category === 'duplicate-rule').length,
-      architecture: findings.filter((entry) => entry.category === 'architecture').length
+      architecture: findings.filter((entry) => entry.category === 'architecture').length,
+      motionGuard: findings.filter((entry) => entry.category === 'motion-reduced-guard').length
     }
   };
+}
+
+/**
+ * Motion policy guard: effects that a global `animation-duration` reset cannot switch off must be gated in their own
+ * file by `prefers-reduced-motion`. Scroll-driven animations ignore duration, and View Transitions are not CSS animations
+ * on the page, so each needs an explicit `no-preference` wrapper or a `reduce` override.
+ */
+function checkMotionGuards(root, stylesheetFiles, findings) {
+  const lineOf = (text, index) => text.slice(0, index).split('\n').length;
+  for (const filePath of stylesheetFiles) {
+    const text = fs.readFileSync(filePath, 'utf8');
+    const relativePath = normalizeRelative(root, filePath);
+    const guarded = /prefers-reduced-motion/.test(text);
+    const timeline = text.search(/animation-timeline\s*:/);
+    if (timeline !== -1 && !guarded) {
+      pushFinding(findings, {
+        category: 'motion-reduced-guard',
+        severity: 'error',
+        file: relativePath,
+        line: lineOf(text, timeline),
+        label: 'Scroll-driven animation without a reduced-motion guard',
+        excerpt: 'animation-timeline ignores animation-duration resets. Wrap it in @media (prefers-reduced-motion: no-preference) or add a reduce override.'
+      });
+    }
+    const viewTransition = text.search(/@view-transition\b/);
+    if (viewTransition !== -1 && !guarded) {
+      pushFinding(findings, {
+        category: 'motion-reduced-guard',
+        severity: 'error',
+        file: relativePath,
+        line: lineOf(text, viewTransition),
+        label: '@view-transition without a reduced-motion guard',
+        excerpt: 'Wrap @view-transition in @media (prefers-reduced-motion: no-preference) so reduced-motion visitors navigate without a transition.'
+      });
+    }
+  }
 }

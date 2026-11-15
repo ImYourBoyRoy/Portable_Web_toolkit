@@ -2,7 +2,9 @@
 /** Environment-aware robots.txt for Astro + Cloudflare sites. */
 
 import type { APIRoute } from 'astro';
+import { aiPolicySummary, robotsAiGroups } from '../lib/discovery/ai-policy';
 import { isIndexableSite, resolveBaseUrl } from '../lib/discovery/site';
+import { siteConfig } from '../lib/site-config';
 
 export const prerender = true;
 
@@ -12,12 +14,15 @@ export const GET: APIRoute = ({ site }) => {
 
   const body = indexable
     ? [
-        'User-agent: *',
-        'Allow: /',
+        `# ${aiPolicySummary()} Policy is set in src/lib/site-config.ts (aiPolicy).`,
+        '# Each page also has a Markdown twin at <page>/index.md. Start at /llms.txt.',
         '',
+        // Add paths no crawler needs (form handlers, download redirects) to the list below.
+        ...robotsAiGroups(siteConfig.crawlerDisallow),
         ...(baseUrl ? [`Sitemap: ${new URL('/sitemap.xml', `${baseUrl}/`).href}`] : []),
         ...(baseUrl ? [`# LLM summary: ${new URL('/llms.txt', `${baseUrl}/`).href}`] : []),
-      ].join('\n')
+        ...(baseUrl && siteConfig.apis.length ? [`# API catalog: ${new URL('/.well-known/api-catalog', `${baseUrl}/`).href}`] : []),
+      ].join('\n') + '\n'
     : [
         'User-agent: *',
         'Disallow: /',

@@ -6,7 +6,9 @@
 // After "=" only allow same-line horizontal whitespace. Using \s* here lets
 // empty KEY= lines falsely match the next line's long identifier (e.g.
 // CLOUDFLARE_API_TOKEN=\nGOOGLE_PAGESPEED_API_KEY=).
-const EQ = String.raw`[^\S\r\n]*=[^\S\r\n]*`;
+// Accepts dotenv (KEY=value), JSON ("KEY": "value"), and YAML/TOML-style
+// (KEY: value) assignments, with optional quotes around the key and value.
+const EQ = String.raw`["']?[^\S\r\n]*[=:][^\S\r\n]*["']?`;
 
 export const FINDING_PATTERNS = [
   { category: 'secret', label: 'Cloudflare token', pattern: new RegExp(String.raw`CLOUDFLARE_API_TOKEN${EQ}[A-Za-z0-9_-]{20,}`, 'ig') },
@@ -19,10 +21,14 @@ export const FINDING_PATTERNS = [
   { category: 'secret', label: 'Google Analytics ID', pattern: new RegExp(String.raw`(?:GA_MEASUREMENT_ID|PUBLIC_GA_ID|GOOGLE_ANALYTICS_ID|PUBLIC_GA_MEASUREMENT_ID)${EQ}(?:G-[A-Z0-9]+|UA-\d+-\d+)`, 'ig') },
   { category: 'secret', label: 'Turnstile secret', pattern: new RegExp(String.raw`(?:TURNSTILE_SECRET_KEY|CLOUDFLARE_TURNSTILE_SECRET)${EQ}0x[A-Za-z0-9_-]{20,}`, 'ig') },
   { category: 'secret', label: 'Turnstile site key', pattern: new RegExp(String.raw`(?:PUBLIC_TURNSTILE_SITE_KEY|TURNSTILE_SITE_KEY)${EQ}0x[A-Za-z0-9_-]{20,}`, 'ig') },
+  { category: 'secret', label: 'Cloudflare API token (prefixed)', pattern: /\bcf(?:ut|at|k)_[A-Za-z0-9]{30,}/g },
+  { category: 'secret', label: 'GitHub token (standalone)', pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,})/g },
+  { category: 'secret', label: 'Private key block', pattern: /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----/g },
   { category: 'identity', label: 'Email address', pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig },
   { category: 'path', label: 'Windows user path', pattern: /[A-Z]:\\Users\\[^\\\s"]+/ig },
   { category: 'path', label: 'Windows user path (JSON escaped)', pattern: /[A-Z]:\\\\Users\\\\[^\s"]+/ig },
   { category: 'path', label: 'POSIX home path', pattern: /\/Users\/[^\/\s"]+/ig },
+  { category: 'path', label: 'Linux home path', pattern: /(?<![\w.-])\/home\/[A-Za-z0-9._-]+/g },
   { category: 'artifact', label: 'Audit output file', pattern: /(token-audit|site-audit|dns-audit|zone-audit|zone-hardening)-[A-Za-z0-9_.-]+\.json/ig }
 ];
 

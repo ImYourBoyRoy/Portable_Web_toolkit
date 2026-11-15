@@ -42,9 +42,17 @@ node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs clone --project-root 
 # Override handle for one run
 node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs clone --project-root . --username your_handle
 
+# Emit a machine-readable clone result
+node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs clone --project-root . --username your_handle --json
+
 # Verify cloned feed + assets
 node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs audit --project-root .
+node ./Web_Toolkit/instagram_clone/bin/instagram-clone.mjs audit --project-root . --json
 ```
+
+`--help` is a successful discovery path (including with no command supplied).
+`--json` emits one result object on stdout; diagnostics and errors do not add
+human-readable log lines to that stream.
 
 ### Options
 

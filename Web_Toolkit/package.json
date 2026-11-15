@@ -17,6 +17,8 @@
     "junk-purge": "./junk_purge/bin/junk-purge.mjs",
     "package-updater": "./package_updater/bin/package-updater.mjs",
     "pagespeed-diagnostics": "./pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs",
+    "preview-check": "./preview_check/bin/preview-check.mjs",
+    "site-snapshots": "./site_snapshots/bin/site-snapshots.mjs",
     "performance-fixes": "./performance_fixes/bin/performance-fixes.mjs",
     "privacy-check": "./privacy_check/bin/privacy-check.mjs",
     "project-init": "./project_init/bin/project-init.mjs",

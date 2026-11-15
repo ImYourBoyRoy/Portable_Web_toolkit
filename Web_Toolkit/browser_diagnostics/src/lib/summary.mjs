@@ -7,10 +7,24 @@ function pushIssue(issues, condition, message) {
   if (condition) issues.push(message);
 }
 
+function isBadRoute(route = {}) {
+  const status = Number(route.status || 0);
+  return Boolean(route.error) || status === 0 || status >= 400;
+}
+
+function describeBadRoute(route = {}) {
+  const status = Number(route.status || 0);
+  const detail = route.error ? String(route.error).split('\n')[0].slice(0, 160) : `HTTP ${status}`;
+  return `${route.path || '/'} (${detail})`;
+}
+
 function hostTotals(host = {}) {
   const routes = Array.isArray(host.routes) ? host.routes : [];
+  const badRoutes = routes.filter(isBadRoute);
   return {
     checkedRoutes: routes.length,
+    badRoutes: badRoutes.length,
+    badRouteList: badRoutes.map(describeBadRoute),
     consoleErrors: routes.reduce((total, route) => total + Number(route.console?.errorCount || 0), 0),
     pageErrors: routes.reduce((total, route) => total + Number(route.pageErrors?.length || 0), 0),
     failedRequests: routes.reduce((total, route) => total + Number(route.network?.blockingFailures?.length || 0), 0),
@@ -25,8 +39,17 @@ export function summarizeReport(report = {}) {
   const production = hostTotals(report.production || {});
   const development = report.development ? hostTotals(report.development) : null;
   const issues = [];
+  const failures = [];
 
-  pushIssue(issues, report.python?.ok === false, `Python browser runtime is not healthy: ${report.python?.error || 'unknown error'}`);
+  pushIssue(failures, report.python?.ok === false, `Python browser runtime is not healthy: ${report.python?.error || 'unknown error'}`);
+  if (report.python?.ok !== false) {
+    pushIssue(failures, production.checkedRoutes === 0, 'No production routes were checked; a run that visits nothing cannot pass.');
+    pushIssue(failures, production.badRoutes > 0, `Production routes failed to load cleanly (HTTP >= 400 or navigation error): ${production.badRouteList.join(', ')}.`);
+  }
+  if (development) {
+    pushIssue(issues, development.badRoutes > 0, `Development routes failed to load cleanly: ${development.badRouteList.join(', ')}.`);
+  }
+
   pushIssue(issues, production.consoleErrors > 0, `Production browser console errors detected: ${production.consoleErrors}.`);
   pushIssue(issues, production.pageErrors > 0, `Production runtime page errors detected: ${production.pageErrors}.`);
   pushIssue(issues, production.failedRequests > 0, `Production blocking request failures detected: ${production.failedRequests}.`);
@@ -46,8 +69,9 @@ export function summarizeReport(report = {}) {
   }
 
   return {
-    overall: issues.length > 0 ? 'warn' : 'pass',
-    issues,
+    overall: failures.length > 0 ? 'fail' : issues.length > 0 ? 'warn' : 'pass',
+    failures,
+    issues: [...failures, ...issues],
     metrics: {
       production,
       development

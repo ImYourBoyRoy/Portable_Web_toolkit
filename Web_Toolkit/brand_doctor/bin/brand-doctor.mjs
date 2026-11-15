@@ -10,6 +10,7 @@ import { runGenerateOg } from '../src/commands/generate-og.mjs';
 import { runGenerateIcons } from '../src/commands/generate-icons.mjs';
 import { runRepairOg } from '../src/commands/repair-og.mjs';
 import { runOgDoctor } from '../src/commands/og-doctor.mjs';
+import { runOgPages } from '../src/commands/og-pages.mjs';
 import { runSetupEnv } from '../src/commands/setup-env.mjs';
 import { runSyncTokens } from '../src/commands/sync-tokens.mjs';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
@@ -24,6 +25,7 @@ function printHelp() {
       'brand-doctor sync-tokens --project-root <path> [--site-profile <profile>] [--apply]',
       'brand-doctor generate-og --project-root <path> [--spec <file>] [--config <file>] [--apply]',
       'brand-doctor generate-icons --project-root <path> [--spec <file>] [--config <file>] [--apply]',
+      'brand-doctor og-pages --project-root <path> [--spec <file>] [--apply]',
       'brand-doctor repair-og --project-root <path> --apply'
     ],
     commands: [
@@ -32,6 +34,7 @@ function printHelp() {
       { name: 'sync-tokens', description: 'Map Brand Guide hex colors into src/styles/tokens.css (and optional profile branding.colors). Dry-run unless --apply.' },
       { name: 'generate-og', description: 'Generate a declarative OG image from JSON spec/config or site discovery.' },
       { name: 'generate-icons', description: 'Generate site icons (Favicons, Apple, Maskable) from SVG or raster sources.' },
+      { name: 'og-pages', description: 'Render one OG card per page from og.spec.json `pages` (plus an optional `pages_module`) and write the route map the layout reads. Dry run unless --apply.' },
       { name: 'repair-og', description: 'Re-encode malformed OG assets as valid PNGs.' },
       { name: 'og-doctor', description: 'Audit and preview OpenGraph metadata for 2026 standards.' }
     ],
@@ -83,6 +86,7 @@ async function main() {
   if (primary === 'sync-tokens') return runSyncTokens(flags);
   if (primary === 'generate-og') return runGenerateOg(flags);
   if (primary === 'generate-icons') return runGenerateIcons(flags);
+  if (primary === 'og-pages') return runOgPages(flags);
   if (primary === 'repair-og') return runRepairOg(flags);
   if (primary === 'og-doctor') return runOgDoctor(flags);
   console.error(`Unknown command: ${primary}`);

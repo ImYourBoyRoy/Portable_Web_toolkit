@@ -9,7 +9,6 @@ export const prerender = false;
 
 export const GET: APIRoute = ({ site, url }) => {
   const query = url.searchParams.get('q')?.trim() ?? '';
-  const buildDate = new Date().toISOString().split('T')[0];
   const baseUrl = resolveBaseUrl(site);
 
   if (!query) {
@@ -22,11 +21,12 @@ export const GET: APIRoute = ({ site, url }) => {
     );
   }
 
-  const matches = searchRoutes(query, buildDate).map((route) => ({
+  const matches = searchRoutes(query).map((route) => ({
     title: route.title,
     description: route.description,
     path: route.path,
     ...(baseUrl ? { url: new URL(route.path, `${baseUrl}/`).href } : {}),
+    ...(baseUrl && route.markdownPath ? { markdownUrl: new URL(route.markdownPath, `${baseUrl}/`).href } : {}),
   }));
 
   return new Response(

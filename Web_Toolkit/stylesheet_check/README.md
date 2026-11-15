@@ -20,6 +20,7 @@ npm run styles:check
 | `duplicate-token` | error | Same custom property name in multiple files |
 | `duplicate-rule` | warn | Same large rule block duplicated across files |
 | `architecture` | error/warn | Astro: missing `tokens.css`; `global.css` should import tokens; Layout should import `global.css` once; warn when a flat `src/styles/` tree grows without `layout/` / `components/` |
+| `motion-reduced-guard` | error | `animation-timeline` (scroll-driven) or `@view-transition` in a stylesheet with no `prefers-reduced-motion` guard. A global `animation-duration` reset does not stop either. |
 
 ## Scope
 

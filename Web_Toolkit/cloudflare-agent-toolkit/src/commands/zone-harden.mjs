@@ -139,6 +139,13 @@ function needsSslRollback(results) {
   return results.some((entry) => [525, 526, 530].includes(entry.status));
 }
 
+export function resolveDryRun(flags = {}) {
+  const apply = toBool(flags.apply, false);
+  const dryRunFlag = flags['dry-run'];
+  const explicitDryRun = dryRunFlag === undefined ? false : toBool(dryRunFlag, true);
+  return !apply || explicitDryRun;
+}
+
 export async function runZoneHarden(flags = {}) {
   const site = flags.profile || flags['site-profile'] ? loadSiteProfile(flags) : null;
   const env = site ? mergedEnv([path.join(site.projectRoot, '.env')]) : mergedEnv();
@@ -146,7 +153,9 @@ export async function runZoneHarden(flags = {}) {
   const zoneName = String(flags.zone || site?.zoneName || envValue(env, 'CF_ZONE_NAME', '')).trim();
   if (!zoneName) throw new Error('Missing zone name. Set CF_ZONE_NAME or pass --zone.');
 
-  const dryRun = toBool(flags['dry-run'], toBool(flags.apply, false) ? false : true);
+  // Mutations require an explicit --apply; --dry-run always wins and unparseable
+  // values (e.g. --dry-run=nope) fail safe to dry-run.
+  const dryRun = resolveDryRun(flags);
   const outputDir = String(flags['output-dir'] || envValue(env, 'CF_OUTPUT_DIR', DEFAULT_OUTPUT_DIR));
   const smokeHosts = parseHosts(flags.hosts || envValue(env, 'CF_HOSTS_OF_INTEREST', ''), zoneName);
   const zone = await resolveZoneByName(token, zoneName);
