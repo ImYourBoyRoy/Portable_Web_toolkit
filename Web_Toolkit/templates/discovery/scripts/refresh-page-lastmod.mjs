@@ -7,6 +7,9 @@
  * Rules: last commit date of the route source; files with uncommitted edits (or no git history) use their mtime date.
  *   Never uses the build clock for clean files, so unchanged pages keep a stable date.
  *   `--check` exits 1 when the file would change. Pages with frontmatter `lastmod:` or `date:` keep that value instead.
+ * Baseline (optional): when a repo's first commit is only an import checkpoint, every file's last commit is that day. Add
+ *   src/data/page-lastmod-baseline.json as { "commit": "<checkpoint hash>", "pages": { "/about/": "YYYY-MM-DD" } } with the
+ *   real dates; a page whose last commit is still that checkpoint keeps its baseline date until it is edited again.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -30,11 +33,18 @@ try {
     .filter(Boolean).map((line) => line.slice(3).replace(/^"|"$/g, '')));
 } catch { hasGit = false; }
 
-const dateOf = (relFile) => {
+const baselineFile = path.join(root, 'src/data/page-lastmod-baseline.json');
+let baseline = null;
+try { baseline = JSON.parse(fs.readFileSync(baselineFile, 'utf8')); } catch { /* no baseline: use git dates */ }
+
+const dateOf = (relFile, routePath) => {
   const abs = path.join(root, relFile);
   const mtime = fs.statSync(abs).mtime.toISOString().slice(0, 10);
   if (!hasGit || dirtyFiles.has(relFile)) return mtime;
-  try { return git('log', '-1', '--format=%cs', '--', relFile) || mtime; } catch { return mtime; }
+  try {
+    if (baseline?.commit && baseline.pages?.[routePath] && git('log', '-1', '--format=%H', '--', relFile).startsWith(baseline.commit)) return baseline.pages[routePath];
+    return git('log', '-1', '--format=%cs', '--', relFile) || mtime;
+  } catch { return mtime; }
 };
 
 export function computePageLastmod() {
@@ -43,7 +53,8 @@ export function computePageLastmod() {
     const rel = path.relative(root, abs).split(path.sep).join('/');
     const route = rel.replace(/^src\/pages\//, '').replace(/\.(astro|mdx?)$/, '').replace(/(^|\/)index$/, '');
     if (route.includes('[') || route === '404' || route === '500' || route.startsWith('api/') || route.startsWith('admin/')) continue;
-    pages[route === '' ? '/' : `/${route}/`] = dateOf(rel);
+    const routePath = route === '' ? '/' : `/${route}/`;
+    pages[routePath] = dateOf(rel, routePath);
   }
   return Object.fromEntries(Object.entries(pages).sort(([a], [b]) => a.localeCompare(b)));
 }

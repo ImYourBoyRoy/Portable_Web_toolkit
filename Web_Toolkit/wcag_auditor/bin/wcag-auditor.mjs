@@ -184,6 +184,15 @@ async function runToolkitMode(argv) {
     }
 
     const config = await api.loadConfig(configPath, { cwd: projectRoot });
+    if (flags['base-url'] && !useFromProfile) {
+      // A checked-in config file has its own baseURL (often production). Honor --base-url for it too, and say so.
+      const target = String(flags['base-url']).replace(/\/$/, '');
+      let applied = 0;
+      for (const adapter of config.adapters ?? []) {
+        if (adapter && typeof adapter.baseURL === 'string') { adapter.baseURL = target; applied += 1; }
+      }
+      console.log(`[wcag-auditor] --base-url applied to ${applied} adapter(s): ${target}`);
+    }
     if (useFromProfile || flags['site-profile'] || flags.profile) {
       config.outputDirectory = paths.outputDir;
       fs.mkdirSync(paths.outputDir, { recursive: true });

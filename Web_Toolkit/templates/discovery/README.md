@@ -95,6 +95,7 @@ Every page route is emitted with a trailing slash (`/about/`): that is what Astr
 search.json, llms.txt and JSON-LD all use that form through `canonicalPagePath()`. Dates never use the build clock:
 `scripts/refresh-page-lastmod.mjs` writes `src/data/page-lastmod.json` from git history, and a page without a known date
 omits `lastmod`.
+If a repo's first commit is only an import checkpoint, add `src/data/page-lastmod-baseline.json` (`{ "commit": "<hash>", "pages": { "/about/": "YYYY-MM-DD" } }`) so unchanged pages keep their real dates instead of the checkpoint day.
 
 ### Agent layer
 

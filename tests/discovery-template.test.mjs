@@ -97,3 +97,28 @@ describe('discovery post-build and check scripts', () => {
     assert.match(bad.stdout, /Sitemap URLs are canonical/);
   });
 });
+
+describe('refresh-page-lastmod baseline', () => {
+  it('keeps baseline dates for pages whose last commit is the import checkpoint, and uses git dates after an edit', () => {
+    const { dir } = makeProject();
+    const git = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', ...args], { cwd: dir, encoding: 'utf8' });
+    const run = () => spawnSync(process.execPath, [path.join(dir, 'scripts/refresh-page-lastmod.mjs')], { cwd: dir, encoding: 'utf8' });
+    const data = () => JSON.parse(fs.readFileSync(path.join(dir, 'src/data/page-lastmod.json'), 'utf8')).pages;
+    fs.mkdirSync(path.join(dir, 'src/pages'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'src/pages/index.astro'), '---\n---\n');
+    fs.writeFileSync(path.join(dir, 'src/pages/about.astro'), '---\n---\n');
+    git('init', '-q'); git('add', 'src'); git('commit', '-q', '-m', 'checkpoint');
+    const commit = git('rev-parse', 'HEAD').stdout.trim();
+    fs.mkdirSync(path.join(dir, 'src/data'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'src/data/page-lastmod-baseline.json'), JSON.stringify({ commit, pages: { '/': '2026-08-12', '/about/': '2026-08-10' } }));
+    git('add', 'src/data'); git('commit', '-q', '-m', 'baseline');
+    assert.equal(run().status, 0);
+    assert.deepEqual(data(), { '/': '2026-08-12', '/about/': '2026-08-10' });
+    fs.writeFileSync(path.join(dir, 'src/pages/about.astro'), '---\n---\n<p>edited</p>\n');
+    git('add', 'src'); git('commit', '-q', '-m', 'edit about');
+    run();
+    assert.equal(data()['/'], '2026-08-12');
+    assert.match(data()['/about/'], /^\d{4}-\d{2}-\d{2}$/);
+    assert.notEqual(data()['/about/'], '2026-08-10');
+  });
+});

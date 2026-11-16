@@ -43,7 +43,10 @@ Verify with `preview-check` (`motion`, `layout`, `lighthouse`) against a product
 
 ## Gotchas learned the hard way
 
-- Large decorative images (a faint logo, film grain) become the LCP element when used as `background-image`. Draw them with `mask` over a solid or gradient fill: masks are never LCP candidates.
+- Large decorative images (a faint logo, film grain) become the LCP element as `background-image` AND as `mask-image` once their visible area beats the hero text block (a 360px mask on a phone dropped mobile to 97, LCP 2.4 s). Keep CSS-image artwork small, or draw large artwork as inline SVG, which is never an LCP candidate. Confirm with a `PerformanceObserver` for `largest-contentful-paint` in a 412px viewport.
+- Never scale an LCP-candidate image during load-in: the growing painted area creates later LCP candidates. Load-in stagger uses `transform: translateY` only, never opacity, clip or scale on the hero text or portrait.
+- Phones need layout work as much as motion: replace long single-column stacks with CSS scroll-snap rails (cards peek in; scale images with `animation-timeline: view(inline)`), 2x2 figure grids and compact rows. Fade only images on rails; dimming text with opacity fails `preview-check contrast`.
+- Wrapped chip lists (a marquee's reduced-motion fallback) become a ten-row wall on phones; give reduced motion swipeable rows instead.
 - Check contrast with `preview-check contrast`, not only axe/WCAGate: axe reports translucent and gradient backgrounds as `cantTell`, so white text on a pale gold button passed the gate. Never hard-code `color: #fff` on an accent background; use the site's dark foreground token.
 - A single-column grid needs `minmax(0, 1fr)`.
 
