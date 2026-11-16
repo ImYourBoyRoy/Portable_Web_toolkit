@@ -1,0 +1,15 @@
+{
+  "$comment": "Copy to src/data/site.json. origin is the production URL (astro.config `site` wins when set). themeColor is only the no-JS fallback: ThemeInit overwrites it with --color-bg. Leave twitter.site as the placeholder, or empty, to omit twitter:site. defaultOgImage must be a real 1200x630 PNG/JPG/WebP in public/.",
+  "siteName": "Site Name",
+  "tagline": "One line that says what this site is for.",
+  "defaultDescription": "A single sentence, roughly 120 to 160 characters, that describes the site for search results and link previews.",
+  "defaultOgImage": "/og-default.png",
+  "defaultOgImageAlt": "Site Name",
+  "defaultOgImageWidth": 1200,
+  "defaultOgImageHeight": 630,
+  "locale": "en_US",
+  "titleTemplate": "%s | %site",
+  "themeColor": "#ffffff",
+  "twitter": { "site": "@yourhandle" },
+  "origin": "https://example.com"
+}

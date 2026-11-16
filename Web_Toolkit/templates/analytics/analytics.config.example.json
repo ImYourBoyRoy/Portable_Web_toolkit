@@ -1,0 +1,23 @@
+{
+  "$comment": "Copy to src/data/analytics.json. Optional: every value can instead come from PUBLIC_* env vars (env wins). All values are public; never put secrets here.",
+  "enabled": true,
+  "ga4": {
+    "measurementId": ""
+  },
+  "posthog": {
+    "key": "",
+    "host": "https://us.i.posthog.com",
+    "autocapture": false,
+    "sessionRecording": false
+  },
+  "cloudflareWebAnalytics": {
+    "token": "",
+    "requireConsent": true,
+    "spa": false
+  },
+  "consent": {
+    "privacyHref": "/privacy/",
+    "heading": "Optional analytics",
+    "description": "Help us understand what is useful. Analytics stay off unless you allow them, and the site works the same either way."
+  }
+}

@@ -66,9 +66,9 @@ Do not:
 
 ### WCAGate engine (independent of toolkit VERSION)
 
-The toolkit automatically checks the unpinned public `main` head at most once
+The toolkit automatically checks WCAGate's published release tags at most once
 per 24 hours. It refreshes the ignored `Web_Toolkit/node_modules` install when
-the remote head changes and writes the result to
+a newer release satisfies the semver range in `shared/lib/engine-spec.mjs` and writes the result to
 `Web_Toolkit/.runtime/toolkit-auto-update.json`. Set
 `PORTABLE_TOOLKIT_AUTO_UPDATE=0` to disable the preflight.
 
@@ -76,12 +76,12 @@ After a toolkit `git pull`, refresh the accessibility engine without bumping too
 
 ```bash
 cd Web_Toolkit
-npm run wcagate:update
+pnpm run wcagate:update
 node ./wcag_auditor/bin/wcag-auditor.mjs core-path
 # → …/Web_Toolkit/node_modules/@imyourboyroy/wcagate
 ```
 
-Or `node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs doctor --update-engine`. That reinstalls the GitHub spec (`npm update` does not refetch unpinned git deps). npm 12+ needs `--allow-git=all` (shipped in `Web_Toolkit/.npmrc`). Do not clone `AI/wcag-auditor`.
+Or `node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs doctor --update-engine`. That reinstalls the semver-range spec (an update does not refetch git deps). A WCAGate change reaches the toolkit once it is tagged as a release. npm 12+ needs `--allow-git=all` (shipped in `Web_Toolkit/.npmrc`). Do not clone `AI/wcag-auditor`.
 
 ### Upgrading to Dynamic Symlinked Skill Architecture
 
@@ -103,3 +103,14 @@ Run:
 Report the previous and resulting versions, source commit, preserved local
 capabilities, files changed, installed skills left untouched, checks, rollback
 location, and unresolved publication work.
+
+## Site dependency upgrades (peer-aware, never pinned)
+
+```bash
+node ./Web_Toolkit/package_updater/bin/package-updater.mjs run --project-root .          # dry-run: what would change and what is held back (with reasons)
+node ./Web_Toolkit/package_updater/bin/package-updater.mjs run --project-root . --apply  # official @astrojs/upgrade, newest compatible ranges, install, check + build; restores on failure
+node ./Web_Toolkit/package_updater/bin/package-updater.mjs refresh-starters --apply      # keep the toolkit's own starters current
+node ./Web_Toolkit/package_updater/bin/package-updater.mjs doctor                        # lint starters: no exact pins, valid ranges, engine floors
+```
+
+Ranges are `^`/`~`/`>=`, never exact. A package held back (for example `typescript` on 6.x while `@astrojs/check` peers `^5 || ^6`) is printed with its reason and lifts itself once a release allows the new major. If an Astro integration has no release for a new Astro major, Astro holds on the previous major and names the laggard. The package manager is detected (pnpm is the default; an npm/yarn/bun lockfile is respected).

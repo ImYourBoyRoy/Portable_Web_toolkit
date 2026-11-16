@@ -12,6 +12,7 @@ import { PORTABLE_ROOT } from '../src/lib/paths.mjs';
 import { enforceTemporarySession } from '../src/lib/wrangler.mjs';
 import { loadSiteProfile } from '../src/lib/profile.mjs';
 import { runDoctor } from '../src/commands/doctor.mjs';
+import { runContext } from '../src/commands/context.mjs';
 import { runAuth } from '../src/commands/auth.mjs';
 import { runWranglerCommand } from '../src/commands/wrangler.mjs';
 import { runTokenAudit } from '../src/commands/token-audit.mjs';
@@ -50,6 +51,7 @@ function printHelp() {
     usage: ['cf-agent <command> [subcommand] [--flags]'],
     commands: [
       { name: 'init', description: 'Explain the project-root .env workflow.' },
+      { name: 'context --site-profile <path> [--json]', description: 'Print the Cloudflare account, zone, and token identity this site resolves to (ids/names only). Use before mixing cf-agent with a Cloudflare plugin/connector, which is one account at a time.' },
       { name: 'doctor [--json] [--offline] [--zone <name>]', description: 'Check local runtime and optional auth/token/zone connectivity.' },
       { name: 'wrangler <install|update|status|version> [--global]', description: 'Install/update Wrangler and inspect status.' },
       { name: 'auth <login|status|logout|wipe|token-guide> [--profile persistent|permanent|temporary] [--ttl 24h]', description: 'Manage Wrangler auth sessions and local credential cleanup.' },
@@ -115,7 +117,7 @@ function ensureEnvTemplate() {
 async function main() {
   const { command, flags } = parseCliArgs(process.argv.slice(2));
   const [primary = 'help', secondary = ''] = command.map((entry) => String(entry).toLowerCase());
-  const site = ['permissions', 'site', 'dns', 'deploy', 'workers', 'rules', 'performance', 'email', 'robots'].includes(primary) || (primary === 'cache' && secondary === 'purge')
+  const site = ['context', 'permissions', 'site', 'dns', 'deploy', 'workers', 'rules', 'performance', 'email', 'robots'].includes(primary) || (primary === 'cache' && secondary === 'purge')
     ? loadSiteProfile(flags)
     : null;
 
@@ -126,6 +128,10 @@ async function main() {
 
   if (primary === 'init') {
     return ensureEnvTemplate();
+  }
+
+  if (primary === 'context') {
+    return runContext(site, flags);
   }
 
   if (primary === 'doctor') {

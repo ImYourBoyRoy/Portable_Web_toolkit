@@ -4,6 +4,8 @@
  */
 
 import fs from 'node:fs';
+import { commandsFor, describe, detectPackageManager } from '../../../shared/lib/package-manager.mjs';
+import { lintManifest } from '../../../package_updater/src/commands/starters.mjs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { loadSiteProfileContext } from '../../../shared/lib/context.mjs';
@@ -83,6 +85,23 @@ function checkProjectFiles(projectRoot) {
   }
   if (!checks.agentSkillsLinked) {
     issues.push('Link required agent skills into .agents/skills/ (manage-project-skills.mjs link).');
+  }
+
+  // Toolchain hygiene: package manager, exact pins, and pnpm's build allowlist (pnpm 12 fails installs on unlisted build scripts).
+  let packageManager = null;
+  if (checks.packageJson) {
+    packageManager = detectPackageManager(projectRoot);
+    checks.packageManager = `${packageManager.name} (${packageManager.source})`;
+    try {
+      const manifest = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+      for (const problem of lintManifest(manifest, 'package.json')) issues.push(`${problem} (package-updater doctor explains the policy)`);
+    } catch {
+      issues.push('package.json is not valid JSON.');
+    }
+    if (packageManager.name !== 'pnpm') issues.push(`Package manager is ${packageManager.name}: the toolkit default is pnpm. Convert in place with: node ./Web_Toolkit/package_updater/bin/package-updater.mjs migrate --project-root . (dry-run first, --apply to convert).`);
+    if (packageManager.name === 'pnpm' && fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml')) && !fs.existsSync(path.join(projectRoot, 'pnpm-workspace.yaml'))) {
+      issues.push('Add pnpm-workspace.yaml (copy site-starter/pnpm-workspace.yaml, or run package-updater migrate): pnpm 12 needs allowBuilds for esbuild/sharp/workerd and ignores the package.json pnpm field.');
+    }
   }
 
   const status = issues.length === 0 ? 'pass' : issues.length <= 2 ? 'warn' : 'fail';
@@ -266,17 +285,17 @@ export async function runSiteReadiness(flags = {}) {
       const astroJson = parseJsonStdout(astroResult);
       const issues = [];
       if (astroJson) {
-        if (!astroJson.nodeModulesExists) issues.push('Run npm install — node_modules is missing.');
+        if (!astroJson.nodeModulesExists) issues.push('Install dependencies (pnpm install) — node_modules is missing.');
         if (!astroJson.astroConfigExists) issues.push('Add astro.config.*.');
-        if (!astroJson.hasBuildScript) issues.push('Add npm run build script to package.json.');
+        if (!astroJson.hasBuildScript) issues.push('Add a build script to package.json.');
         if (!astroJson.hasAstroDependency) issues.push('Add astro to package.json dependencies.');
       } else {
-        if (!capabilities.nodeModules) issues.push('Run npm install — node_modules is missing.');
+        if (!capabilities.nodeModules) issues.push('Install dependencies (pnpm install) — node_modules is missing.');
         if (!findAstroConfig(projectRoot)) issues.push('Add astro.config.*.');
         const pkg = fs.existsSync(path.join(projectRoot, 'package.json'))
           ? JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'))
           : null;
-        if (!pkg?.scripts?.build) issues.push('Add npm run build script to package.json.');
+        if (!pkg?.scripts?.build) issues.push('Add a build script to package.json.');
       }
       const astroStatus = astroResult.status === 2 ? 'warn' : statusFromExitCode(astroResult.status);
       steps.push(stepResult('astro-env', issues.length ? astroStatus : 'pass', issues, { report: astroJson }));
@@ -316,13 +335,14 @@ export async function runSiteReadiness(flags = {}) {
       if (!capabilities.nodeModules) {
         steps.push(skippedStep('build', 'node_modules missing'));
       } else {
-        const realBuild = spawnSync('npm', ['run', 'build'], {
+        const pm = detectPackageManager(projectRoot).name;
+        const realBuild = spawnSync(commandsFor(pm).bin, commandsFor(pm).run('build'), {
           cwd: projectRoot,
           encoding: 'utf8',
           shell: true,
           stdio: 'pipe',
         });
-        const issues = realBuild.status === 0 ? [] : ['npm run build failed — fix compile errors before deploy.'];
+        const issues = realBuild.status === 0 ? [] : [`${describe(pm, commandsFor(pm).run('build'))} failed — fix compile errors before deploy.`];
         steps.push(stepResult('build', statusFromExitCode(realBuild.status ?? 1), issues));
         if (realBuild.status === 0) {
           capabilities.distBuilt = true;
@@ -334,7 +354,7 @@ export async function runSiteReadiness(flags = {}) {
     }
 
     if (!capabilities.distBuilt) {
-      steps.push(skippedStep('discovery', 'dist/ missing — run npm run build first'));
+      steps.push(skippedStep('discovery', 'dist/ missing — run the site build first'));
     } else {
       const discoveryResult = runToolkitScript(
         'discovery_doctor/bin/discovery-doctor.mjs',

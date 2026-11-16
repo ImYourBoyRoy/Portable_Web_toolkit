@@ -10,17 +10,15 @@ import { commandAvailable, runCommand } from '../lib/exec.mjs';
 import { prettyJson, printCheck, printSection, toBool } from '../lib/format.mjs';
 import { loadProfileContext } from '../lib/profile.mjs';
 import { buildProjectEnvExample } from '../../../shared/lib/project-bootstrap.mjs';
+import { commandsFor, detectPackageManager as detectSharedPackageManager } from '../../../shared/lib/package-manager.mjs';
 
+// pnpm by default; an existing npm/yarn/bun lockfile is respected (shared/lib/package-manager.mjs).
 function detectPackageManager(projectRoot) {
-  if (fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'))) return 'pnpm';
-  if (fs.existsSync(path.join(projectRoot, 'yarn.lock'))) return 'yarn';
-  return 'npm';
+  return detectSharedPackageManager(projectRoot).name;
 }
 
 function packageManagerInstallCommand(packageManager) {
-  if (packageManager === 'pnpm') return ['pnpm', ['install']];
-  if (packageManager === 'yarn') return ['yarn', ['install']];
-  return ['npm', ['install']];
+  return [commandsFor(packageManager).bin, commandsFor(packageManager).install()];
 }
 
 function readJsonIfExists(filePath) {
@@ -94,15 +92,16 @@ export function collectChecks(flags = {}) {
 }
 
 export function previewCommand(report) {
+  const pmBin = report.packageManager || 'pnpm';
   const configuredPreview = String(report.profile?.commands?.preview || '').trim();
   const packagePreview = String(report.packageJson?.scripts?.preview || '').trim();
   const previewSources = [configuredPreview, packagePreview].filter(Boolean).join(' ');
   if (report.hasCloudflareAdapter && /\bastro\s+preview\b/i.test(previewSources) && commandScriptExists(report.packageJson, 'dev')) {
-    return 'npm run dev';
+    return `${pmBin} run dev`;
   }
   if (configuredPreview) return configuredPreview;
-  if (commandScriptExists(report.packageJson, 'preview')) return 'npm run preview';
-  if (commandScriptExists(report.packageJson, 'dev')) return 'npm run dev';
+  if (commandScriptExists(report.packageJson, 'preview')) return `${pmBin} run preview`;
+  if (commandScriptExists(report.packageJson, 'dev')) return `${pmBin} run dev`;
   return '';
 }
 

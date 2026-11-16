@@ -1,0 +1,141 @@
+/* ./src/styles/layout/footer.css — footer columns, social + legal rows, privacy-choices slot */
+
+.site-footer {
+  margin-block-start: var(--space-7);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.site-footer__inner {
+  display: grid;
+  gap: var(--space-5);
+  padding-block: var(--space-6) var(--space-5);
+}
+
+.site-footer__top {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (width >= 48rem) {
+  .site-footer__top {
+    grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr);
+    gap: var(--space-6);
+  }
+}
+
+.site-footer__name {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-footer__tagline {
+  max-width: 32ch;
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.site-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-5);
+}
+
+.site-footer__heading {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-footer__list,
+.site-footer__social,
+.site-footer__legal ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.site-footer a,
+.site-footer__privacy button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-link);
+  text-underline-offset: 0.2em;
+}
+
+.site-footer a:hover,
+.site-footer__privacy button:hover {
+  color: var(--color-text);
+}
+
+.site-footer__name {
+  text-decoration: none;
+}
+
+.site-footer a:focus-visible,
+.site-footer__privacy button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.site-footer__extra {
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border);
+}
+
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.site-footer__copy {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.site-footer__legal ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+  font-size: 0.875rem;
+}
+
+.site-footer__privacy:empty {
+  display: none;
+}
+
+/* The consent control can be a <button> or a link; style a bare button like a link so it reads as one. */
+.site-footer__privacy button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

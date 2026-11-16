@@ -11,6 +11,8 @@ import { parseCliArgs as sharedParseCliArgs } from '../../shared/lib/cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { findLatestRunFile } from '../src/toolkit/latest-run.mjs';
+import { DEFAULT_BASELINE_FILE, applyOverlays, detectEngineFeatures, engineCliArgs, finishOverlays } from '../src/toolkit/overlays.mjs';
 
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHARED_HELP = path.resolve(MODULE_ROOT, '../shared/lib/help.mjs');
@@ -26,7 +28,8 @@ function toBool(value, fallback = false) {
 }
 
 function parseArgs(argv = []) {
-  const { command, flags } = sharedParseCliArgs(argv);
+  // --sitemap takes its value only as --sitemap=<url|file>, so `wcag-auditor --sitemap run` keeps `run` as the command.
+  const { command, flags } = sharedParseCliArgs(argv, { booleanFlags: ['sitemap'] });
   return { command, flags };
 }
 
@@ -60,6 +63,7 @@ async function runToolkitMode(argv) {
   const { printHelp: printStandardHelp } = await import(pathToFileURL(SHARED_HELP).href);
   const {
     buildAstroConfigObject,
+    resolveManagedServerPort,
     writeAstroStarterFiles,
     writeEphemeralConfig
   } = await import('../src/toolkit/profile-config.mjs');
@@ -80,6 +84,7 @@ async function runToolkitMode(argv) {
         'wcag-auditor run --site-profile <profile> [--project-root <path>] [--from-profile] [--manage-server]',
         'wcag-auditor run --project-root <path> [--config <file>]',
         'wcag-auditor init --site-profile <profile> [--force]',
+        'wcag-auditor report [--site-profile <profile>] [--group g3] [--json] [--file <run.json>]',
         'wcag-auditor doctor [--site-profile <profile>]',
         'wcag-auditor validate-config --site-profile <profile>',
         'wcag-auditor list-rules',
@@ -89,6 +94,7 @@ async function runToolkitMode(argv) {
       commands: [
         { name: 'run', description: 'Run WCAGate against a toolkit-managed site.' },
         { name: 'init', description: 'Write Astro/site-profile-aware starter config + manual evidence template.' },
+        { name: 'report', description: 'Re-print the grouped, token-lean report of the newest run; --group gN drills into one cause (WCAGate with the agent report).' },
         { name: 'doctor', description: 'Diagnose engine, Node, and Playwright readiness (fail closed).' },
         { name: 'validate-config', description: 'Load and validate the accessibility configuration.' },
         { name: 'list-rules', description: 'List built-in rule metadata.' },
@@ -102,10 +108,20 @@ async function runToolkitMode(argv) {
         { name: '--from-profile', description: 'Build an ephemeral config from site-profile routes/hosts.' },
         { name: '--manage-server', description: 'Start profile commands.preview for profile-built configs.' },
         { name: '--base-url <url>', description: 'Override adapter baseURL (local preview or live URL).' },
+        { name: '--routes </a,/b>', description: 'Audit exactly these routes instead of the configured ones.' },
+        { name: '--sitemap[=<url|file>]', description: 'Audit the routes listed in sitemap.xml (default: <base-url>/sitemap.xml). Needs WCAGate 2.4+.' },
+        { name: '--max-routes <n>', description: 'Cap routes taken from the sitemap (default 50).' },
+        { name: '--color-schemes <light,dark>', description: 'Run every route in each color scheme. Needs WCAGate 2.4+.' },
+        { name: '--viewports <mobile,tablet,desktop>', description: 'Run every route at each viewport preset. Needs WCAGate 2.4+.' },
+        { name: '--baseline [file]', description: `Only findings absent from the baseline block the gate (default ${DEFAULT_BASELINE_FILE}).` },
+        { name: '--write-baseline [file]', description: 'Record current findings as the known baseline after the run.' },
         { name: '--skip-playwright-install', description: 'Do not auto-install Playwright peers/Chromium when missing.' },
         { name: '--skip-engine-install', description: 'Do not auto-npm-install WCAGate when missing (exit 2 instead).' },
         { name: '--update-engine', description: 'Reinstall github:imyourboyroy/WCAGate in Web_Toolkit/ (no toolkit VERSION bump).' },
         { name: '--force', description: 'Overwrite starter files during init.' },
+        { name: '--verbose', description: 'Print the per-finding console listing instead of the grouped agent view.' },
+        { name: '--no-compare', description: 'Skip the comparison with the previous run (since-last-run counts, NEW markers).' },
+        { name: '--group <id>', description: 'With report: full members of one cause (ids come from the report).' },
         { name: '--quiet', description: 'Reduce console reporter noise.' },
         { name: '--no-color', description: 'Disable ANSI color in console output.' }
       ],
@@ -114,6 +130,9 @@ async function runToolkitMode(argv) {
         'wcag-auditor doctor --site-profile ../site-profiles/example-workers.json',
         'wcag-auditor run --site-profile ../site-profiles/example-workers.json --base-url http://127.0.0.1:4321',
         'wcag-auditor run --site-profile ../site-profiles/example-workers.json --from-profile',
+        'wcag-auditor run --site-profile ../site-profiles/example-workers.json --base-url http://127.0.0.1:4321 --sitemap --color-schemes light,dark --viewports mobile,desktop',
+        'wcag-auditor run --project-root . --base-url http://127.0.0.1:4321 --write-baseline   # adopt on a legacy site',
+        'wcag-auditor run --project-root . --base-url http://127.0.0.1:4321 --baseline          # only new findings block',
         'wcag-auditor core-path'
       ],
       notes: [
@@ -124,6 +143,7 @@ async function runToolkitMode(argv) {
         'After run, tell the user the gate (0/1/2/3) and findings with file:line. Optional HTML: results.html (serve) — not a GUI.',
         'Never resolve AI/wcag-auditor. core-path should contain node_modules/@imyourboyroy/wcagate.',
         coreRoot ? `WCAGate engine: ${coreRoot}` : 'Run `wcag-auditor core-path` after npm install in Web_Toolkit/.',
+        'Contrast on gradients, images, and glass is measured from rendered pixels (WCAGate 2.4+), so it fails or passes instead of staying unresolved.',
         'Evidence gate only — does not certify WCAG conformance.'
       ],
       exitCodes: [
@@ -154,12 +174,18 @@ async function runToolkitMode(argv) {
 
     if (useFromProfile) {
       fs.mkdirSync(paths.outputDir, { recursive: true });
+      const managedServerPort = await resolveManagedServerPort({ profile, flags });
+      if (managedServerPort?.busy) {
+        console.log(`[wcag-auditor] port ${managedServerPort.preferred} is in use by another process (left untouched); the managed preview uses ${managedServerPort.port}`);
+      }
       const configObject = buildAstroConfigObject({
         profile,
         projectRoot,
         outputDirectory: paths.outputDir,
         flags,
-        includeManualEvidence: false
+        includeManualEvidence: false,
+        engineFeatures: detectEngineFeatures(api),
+        managedServerPort
       });
       configPath = writeEphemeralConfig(paths.ephemeralConfigPath, configObject);
       console.log(`[wcag-auditor] ephemeral config → ${configPath}`);
@@ -198,13 +224,27 @@ async function runToolkitMode(argv) {
       fs.mkdirSync(paths.outputDir, { recursive: true });
     }
 
+    const overlayLog = (message) => console.log(`[wcag-auditor] ${message}`);
+    const overlays = await applyOverlays({ api, config, flags, profile, projectRoot, log: overlayLog });
+
+    // Each profile run writes to its own timestamped folder, so hand the engine the previous run explicitly.
+    const features = detectEngineFeatures(api);
+    const previousFile = features.agent && !toBool(flags['no-compare'], false)
+      ? findLatestRunFile(projectRoot, siteId, { exclude: paths.outputDir })
+      : null;
+    const previous = previousFile ? await api.readPreviousRun(previousFile) : undefined;
+
     const run = await api.runAccessibility(config, {
       configIsNormalized: true,
+      baseline: overlays.baseline,
+      previous,
+      consoleStyle: toBool(flags.verbose, false) ? 'verbose' : undefined,
       quiet: toBool(flags.quiet, false),
       color: flags['no-color'] ? false : undefined,
       stream: process.stdout
     });
 
+    await finishOverlays({ api, run, overlays, projectRoot, log: overlayLog });
     console.log(`[wcag-auditor] engine → ${resolveCoreRoot(engineOptions(flags))}`);
     console.log(`[wcag-auditor] reports → ${config.outputDirectory}`);
     const resultsAbs = findReportFile(run, config, ['results.html', 'wcag-audit-dashboard.html']);
@@ -311,6 +351,21 @@ async function runToolkitMode(argv) {
     return cli.main(doctorArgs);
   }
 
+  if (primary === 'report') {
+    if (!detectEngineFeatures(api).agent) {
+      throw new Error(`report needs WCAGate with the agent report; the installed engine is ${api?.TOOLKIT_VERSION ?? 'unknown'}. Run \`wcag-auditor run --update-engine\` (or tag and publish WCAGate) and retry.`);
+    }
+    const resolved = resolveProfile(flags);
+    const projectRoot = resolveProjectRoot(flags, resolved);
+    const siteId = resolved?.profile?.siteId || path.basename(projectRoot);
+    const file = flags.file ? path.resolve(String(flags.file)) : findLatestRunFile(projectRoot, siteId);
+    if (!file) throw new Error(`No previous run found under ${path.join(projectRoot, 'output')}. Run \`wcag-auditor run\` first or pass --file.`);
+    const reportArgs = ['report', '--file', file];
+    for (const name of ['group', 'max-groups', 'max-elements']) if (flags[name] !== undefined && flags[name] !== true) reportArgs.push(`--${name}`, String(flags[name]));
+    if (flags.json) reportArgs.push('--json');
+    return cli.main(reportArgs);
+  }
+
   if (primary === 'prepare') {
     const resolved = resolveProfile(flags);
     const projectRoot = resolveProjectRoot(flags, resolved);
@@ -347,6 +402,7 @@ async function runToolkitMode(argv) {
     if (flags.cwd) args.push('--cwd', String(flags.cwd));
     if (flags.quiet) args.push('--quiet');
     if (flags['no-color']) args.push('--no-color');
+    args.push(...engineCliArgs(flags));
     return cli.main(args);
   }
 

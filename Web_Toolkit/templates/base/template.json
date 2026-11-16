@@ -1,0 +1,26 @@
+{
+  "name": "base",
+  "description": "Project foundations for Workers sites: tsconfig.json (astro strict + Cloudflare types), src/env.d.ts (public env vars), pnpm-workspace.yaml.",
+  "requires": [],
+  "files": [
+    {
+      "from": "tsconfig.workers.json",
+      "to": "tsconfig.json",
+      "keepExisting": true
+    },
+    {
+      "from": "env.d.ts",
+      "to": "src/env.d.ts",
+      "keepExisting": true
+    },
+    {
+      "from": "../../../site-starter/pnpm-workspace.yaml",
+      "to": "pnpm-workspace.yaml",
+      "keepExisting": true
+    }
+  ],
+  "next": [
+    "Workers sites only. Pages (static) sites do not need the Cloudflare module shims in env.d.ts; delete that block.",
+    "@cloudflare/workers-types stays a dev dependency for wrangler, but is deliberately NOT in tsconfig types: it merges into the DOM lib and breaks client code. For full binding types: pnpm exec wrangler types --include-runtime false."
+  ]
+}

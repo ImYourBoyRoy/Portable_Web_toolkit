@@ -1,0 +1,37 @@
+---
+/**
+ * Light/dark toggle for sites that ship a theme pair (src/data/themes.json -> pair.light / pair.dark).
+ * One button, keyboard and screen-reader friendly; the choice persists in localStorage and the inline
+ * theme-init script applies it before first paint.
+ */
+import themes from '../../data/themes.json';
+const { light, dark } = themes.pair;
+---
+<button type="button" class="theme-toggle" data-theme-toggle data-light={light} data-dark={dark} aria-label="Switch color theme">
+  <span class="theme-toggle__label" aria-hidden="true">Theme</span>
+</button>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  button?.addEventListener('click', () => {
+    const light = button.dataset.light!;
+    const dark = button.dataset.dark!;
+    const next = document.documentElement.getAttribute('data-theme') === dark ? light : dark;
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch { /* private mode: keep it for this page only */ }
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
+  });
+</script>
+
+<style>
+  .theme-toggle {
+    min-width: 2.75rem; min-height: 2.75rem; /* 44px target */
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    font: inherit; cursor: pointer;
+  }
+  .theme-toggle:hover { background: var(--color-surface-raised); }
+  .theme-toggle:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+</style>

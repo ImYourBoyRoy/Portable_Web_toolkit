@@ -1,0 +1,8 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "types": ["astro/client", "node", "@astrojs/cloudflare"]
+  },
+  "include": ["src/**/*", "scripts/**/*", ".astro/types.d.ts"],
+  "exclude": ["node_modules", "dist", "Web_Toolkit", "output"]
+}

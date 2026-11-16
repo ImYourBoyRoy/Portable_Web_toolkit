@@ -1,6 +1,6 @@
 {
   "name": "@imyourboyroy/web-toolkit",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "AI-agent-first portable website diagnostics, Cloudflare, PageSpeed, and publishing toolkit.",
   "type": "module",
   "license": "MIT",
@@ -10,6 +10,7 @@
     "cache-purge": "./cache_purge/bin/cache-purge.mjs",
     "cf-agent": "./cloudflare-agent-toolkit/bin/cf-agent.mjs",
     "discovery-doctor": "./discovery_doctor/bin/discovery-doctor.mjs",
+    "form-doctor": "./form_doctor/bin/form-doctor.mjs",
     "headers-deploy": "./headers_deploy/bin/headers-deploy.mjs",
     "image-pipeline": "./image_pipeline/bin/image-pipeline.mjs",
     "init-site-profile": "./init_site_profile/bin/init-site-profile.mjs",
@@ -19,6 +20,8 @@
     "pagespeed-diagnostics": "./pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs",
     "preview-check": "./preview_check/bin/preview-check.mjs",
     "site-snapshots": "./site_snapshots/bin/site-snapshots.mjs",
+    "site-templates": "./site_templates/bin/site-templates.mjs",
+    "site-theme": "./site_theme/bin/site-theme.mjs",
     "performance-fixes": "./performance_fixes/bin/performance-fixes.mjs",
     "privacy-check": "./privacy_check/bin/privacy-check.mjs",
     "project-init": "./project_init/bin/project-init.mjs",
@@ -28,6 +31,8 @@
     "sourcing-doctor": "./sourcing_doctor/bin/sourcing-doctor.mjs",
     "instagram-clone": "./instagram_clone/bin/instagram-clone.mjs",
     "stylesheet-check": "./stylesheet_check/bin/stylesheet-check.mjs",
+    "toolkit-index": "./toolkit_index/bin/toolkit-index.mjs",
+    "dev-ports": "./dev_ports/bin/dev-ports.mjs",
     "toolkit-purge": "./toolkit_purge/bin/toolkit-purge.mjs",
     "toolkit-report": "./toolkit_report/bin/toolkit-report.mjs",
     "toolkit-verify": "./toolkit_verify/bin/toolkit-verify.mjs",
@@ -37,11 +42,11 @@
     "astro-env-setup": "./Setup_astro_environment/bin/astro-env-setup.mjs"
   },
   "dependencies": {
-    "@imyourboyroy/wcagate": "github:imyourboyroy/WCAGate"
+    "@imyourboyroy/wcagate": "github:imyourboyroy/WCAGate#semver:*"
   },
   "scripts": {
     "auto-update": "node ./scripts/auto-update.mjs",
-    "wcagate:update": "npm install github:imyourboyroy/WCAGate --allow-git=all",
+    "wcagate:update": "node ./scripts/auto-update.mjs --force",
     "check:syntax": "node ./scripts/check-syntax.mjs",
     "verify": "node ./toolkit_verify/bin/toolkit-verify.mjs",
     "quality:smoke:batch": "node ./scripts/batch-quality-smoke.mjs",
@@ -51,7 +56,7 @@
     "styles:check": "node ./stylesheet_check/bin/stylesheet-check.mjs scan --root ..",
     "export": "node ./scripts/export-portable-toolkit.mjs",
     "export:zip": "node ./scripts/export-portable-toolkit.mjs --zip",
-    "prepublishOnly": "npm run check:syntax && npm run verify && npm run privacy"
+    "prepublishOnly": "pnpm run check:syntax && pnpm run verify && pnpm run privacy"
   },
   "files": [
     ".env.example",

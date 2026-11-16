@@ -1,0 +1,38 @@
+{
+  "name": "fonts",
+  "description": "Self-hosted font strategy: sync-fonts copies fontsource woff2 into public/fonts and generates @font-face with measured fallback metrics; FontPreload.astro.",
+  "requires": [],
+  "files": [
+    {
+      "from": "sync-fonts.mjs",
+      "to": "scripts/fonts/"
+    },
+    {
+      "from": "fonts-lib.mjs",
+      "to": "scripts/fonts/"
+    },
+    {
+      "from": "woff2-metrics.mjs",
+      "to": "scripts/fonts/"
+    },
+    {
+      "from": "FontPreload.astro",
+      "to": "src/components/"
+    },
+    {
+      "from": "fonts.config.example.json",
+      "to": "fonts.config.json",
+      "keepExisting": true
+    },
+    {
+      "from": "fonts.manifest.stub.json",
+      "to": "src/styles/fonts.manifest.json",
+      "keepExisting": true
+    }
+  ],
+  "cssImports": [],
+  "next": [
+    "Add the font packages (pnpm add @fontsource/<family> or @fontsource-variable/<family>), edit fonts.config.json, run node scripts/fonts/sync-fonts.mjs (replaces the empty src/styles/fonts.manifest.json stub that keeps `astro check` green before the first sync), THEN add @import './fonts.generated.css'; to src/styles/global.css (it does not exist before the sync).",
+    "Put <FontPreload /> in <head> (BaseLayout preload slot); name the families in the theme tokens (--font-display/--font-sans/--font-mono)."
+  ]
+}

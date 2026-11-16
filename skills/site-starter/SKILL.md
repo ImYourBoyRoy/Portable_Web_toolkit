@@ -26,12 +26,17 @@ portable Node commands; adapt only path and shell quoting to the active host.
 | Ask when | Need SSR, API routes, built-in forms, Turnstile/server handlers, KV/D1/R2/cron, or other edge logic | Pure marketing/static site with no server runtime |
 | Astro output | `output: 'server'` | `output: 'static'` |
 | Package | `site-starter/workers.package.json` → `package.json` | `site-starter/pages.package.json` → `package.json` |
+| pnpm settings (default package manager) | `site-starter/pnpm-workspace.yaml` → `pnpm-workspace.yaml` (build allowlist + overrides; pnpm 12 ignores the package.json `pnpm` field) | same |
 | Wrangler | `workers.wrangler.toml` → `wrangler.toml` | `pages.wrangler.toml` → `wrangler.toml` |
 | Astro config | `astro.config.workers.example.mjs` → `astro.config.mjs` | `astro.config.pages.example.mjs` → `astro.config.mjs` |
 | Profile | `"deployTarget": "workers"` | `"deployTarget": "pages"` |
 | Discovery doctor | `./dist/client` | `./dist` |
 
 Prefer **Workers** when the site will collect form submissions or need server APIs. Prefer **Pages static** only when the user confirms a static-only site.
+
+Build the common parts with `site-templates` (`add layout analytics contact styles fonts --apply`), then `site-theme apply`; see `Web_Toolkit/TOOLKIT_TEMPLATES.md`. The model's effort belongs in the content, imagery, and brand-specific design, not in re-writing header/footer/consent/forms.
+
+Package manager: **pnpm is the default** (`pnpm install`, `pnpm run <script>`); an existing npm/yarn/bun site is detected from its lockfile and left alone. Toolchain ranges are peer-aware and never pinned exactly: `package-updater run --project-root . --apply` upgrades Astro through its official upgrader, installs, verifies check+build, and restores on failure.
 
 After choosing a target, copy `.env.example` from `site-starter/` (sections A–D: required APIs, agent+user naming, recommended PostHog+GA4, optional features). User pastes section A secrets; agent proposes section B with the user; explain analytics early; do not require Porkbun.
 

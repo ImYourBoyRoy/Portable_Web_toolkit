@@ -1,0 +1,11 @@
+{
+  "name": "toolkit-index",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "Roy Dawson IV",
+  "license": "MIT",
+  "bin": {
+    "toolkit-index": "./bin/toolkit-index.mjs"
+  }
+}

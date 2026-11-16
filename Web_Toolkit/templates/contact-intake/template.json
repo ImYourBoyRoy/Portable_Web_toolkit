@@ -1,0 +1,19 @@
+{
+  "name": "contact-intake",
+  "source": "contact",
+  "description": "Optional multi-section intake handler (strict field allowlist, same honest status codes as contact) for long forms; install after contact.",
+  "requires": [
+    "contact"
+  ],
+  "files": [
+    {
+      "from": "lib/handle-intake.ts",
+      "to": "src/lib/contact/"
+    }
+  ],
+  "next": [
+    "Copy and adapt the reference route and client: Web_Toolkit/templates/contact/examples/intake-route.example.ts (to src/pages/api/) and intake-form.example.ts (to src/scripts/).",
+    "Define an IntakeSchema listing every allowed field; keep a drift test between the form markup and the schema.",
+    "Check the result: node Web_Toolkit/form_doctor/bin/form-doctor.mjs run --project-root . --spawn (after a build)."
+  ]
+}

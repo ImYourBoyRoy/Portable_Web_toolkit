@@ -1,0 +1,22 @@
+---
+/**
+ * Put this in <head> BEFORE any stylesheet so the right theme paints on the first frame (no flash).
+ * Order: saved choice -> system color scheme (via the light/dark pair) -> default. Keeps <meta name="theme-color"> in step.
+ */
+import themes from '../../data/themes.json';
+---
+<script is:inline define:vars={{ cfg: themes }}>
+  (function () {
+    try {
+      var names = (cfg.available || []).map(function (t) { return t.name; });
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var pair = cfg.pair || {};
+      var chosen = (saved && names.indexOf(saved) !== -1) ? saved : ((prefersDark ? pair.dark : pair.light) || cfg.default);
+      document.documentElement.setAttribute('data-theme', chosen);
+      var bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim();
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta && bg) meta.setAttribute('content', bg);
+    } catch (e) { /* keep the server-rendered default */ }
+  })();
+</script>

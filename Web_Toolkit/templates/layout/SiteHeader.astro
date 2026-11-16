@@ -1,0 +1,210 @@
+---
+// ./src/components/layout/SiteHeader.astro
+/**
+ * Brand link + primary navigation from src/data/nav.json (one level of children) + optional theme toggle.
+ * Without JavaScript the full link list renders inline and submenus are plain nested lists (dropdown on hover/focus
+ * on desktop). With JavaScript the inline script below (a few lines, run before first paint) turns the list into an
+ * accessible disclosure: button[aria-expanded][aria-controls], Escape closes and returns focus to the button,
+ * clicking outside closes. Active page is marked server-side with aria-current="page".
+ */
+import navData from '../../data/nav.json';
+import site from '../../data/site.json';
+import { opensNewTab, parseNavConfig, resolveNav } from '../../lib/nav';
+
+interface Props {
+  /** Defaults to Astro.url.pathname. */
+  currentPath?: string;
+  /** Stick to the top of the viewport (matches BaseLayout stickyHeader). */
+  sticky?: boolean;
+  navLabel?: string;
+  menuLabel?: string;
+  /** Screen-reader suffix for submenu buttons: "Services submenu". */
+  submenuLabel?: string;
+}
+
+const {
+  currentPath = Astro.url.pathname,
+  sticky = true,
+  navLabel = 'Primary',
+  menuLabel = 'Menu',
+  submenuLabel = 'submenu',
+} = Astro.props;
+
+const config = parseNavConfig(navData);
+const items = resolveNav(config.items, currentPath);
+const { brand, cta } = config;
+const brandName = brand.name ?? site.siteName;
+const linkAttrs = (href: string | undefined) =>
+  href && opensNewTab(href) ? { target: '_blank', rel: 'noopener noreferrer' } : href && /^[a-z][a-z0-9+.-]*:/i.test(href) ? { rel: 'noopener noreferrer' } : {};
+---
+
+<header class:list={['site-header', { 'site-header--sticky': sticky }]} data-site-header>
+  <div class="site-header__bar container">
+    <a class="site-header__brand" href={brand.href} aria-label={brand.showName ? undefined : `${brandName} home`}>
+      {brand.logo && (
+        <img class="site-header__logo" src={brand.logo} width={brand.logoWidth} height={brand.logoHeight} alt={brand.showName ? '' : brandName} decoding="async" />
+      )}
+      {brand.showName && <span class="site-header__name">{brandName}</span>}
+    </a>
+
+    <nav class="site-nav" aria-label={navLabel}>
+      <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="site-nav-panel" data-nav-toggle data-needs-js>
+        <span class="site-nav__toggle-label">{menuLabel}</span>
+        <span class="site-nav__toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+      <div class="site-nav__panel" id="site-nav-panel" data-nav-panel>
+        <ul class="site-nav__list">
+          {items.map((item, index) => {
+            const hasChildren = item.children.length > 0;
+            const submenuId = `site-submenu-${index}`;
+            return (
+              <li class="site-nav__item" data-nav-item data-has-children={hasChildren ? '' : undefined}>
+                {item.href ? (
+                  <a class="site-nav__link" href={item.href} aria-current={item.current === 'page' ? 'page' : undefined} data-current={item.current ?? undefined} {...linkAttrs(item.href)}>
+                    {item.label}
+                    {item.href && opensNewTab(item.href) && <span class="visually-hidden"> (opens in a new tab)</span>}
+                  </a>
+                ) : (
+                  <span class="site-nav__link site-nav__label" data-current={item.current ?? undefined} data-nojs-only>{item.label}</span>
+                )}
+                {hasChildren && (
+                  <button
+                    class:list={['site-nav__subtoggle', { 'site-nav__subtoggle--label': !item.href }]}
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls={submenuId}
+                    data-submenu-toggle
+                    data-needs-js
+                    data-current={!item.href ? item.current ?? undefined : undefined}
+                  >
+                    {!item.href && <span class="site-nav__subtoggle-text">{item.label}</span>}
+                    {item.href && <span class="visually-hidden">{`${item.label} ${submenuLabel}`}</span>}
+                    <svg class="site-nav__chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" /></svg>
+                  </button>
+                )}
+                {hasChildren && (
+                  <ul class="site-nav__submenu" id={submenuId} data-submenu>
+                    {item.children.map((child) => (
+                      <li>
+                        <a class="site-nav__sublink" href={child.href} aria-current={child.current === 'page' ? 'page' : undefined} {...linkAttrs(child.href)}>
+                          <span class="site-nav__sublink-label">{child.label}</span>
+                          {child.description && <span class="site-nav__sublink-desc">{child.description}</span>}
+                          {opensNewTab(child.href) && <span class="visually-hidden"> (opens in a new tab)</span>}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {cta && (
+          <a class="site-nav__cta" href={cta.href} {...linkAttrs(cta.href)}>
+            {cta.label}
+            {opensNewTab(cta.href) && <span class="visually-hidden"> (opens in a new tab)</span>}
+          </a>
+        )}
+      </div>
+    </nav>
+
+    <div class="site-header__tools"><slot name="theme-toggle" /></div>
+  </div>
+</header>
+<script is:inline>
+  (function () {
+    var script = document.currentScript;
+    var header = script && script.previousElementSibling;
+    if (!header || !header.hasAttribute('data-site-header')) header = document.querySelector('[data-site-header]');
+    if (!header) return;
+    var toggle = header.querySelector('[data-nav-toggle]');
+    var panel = header.querySelector('[data-nav-panel]');
+    if (!toggle || !panel) return;
+    // Enhance: from here on CSS collapses the menu on small screens and hides submenus until opened.
+    header.setAttribute('data-nav-ready', '');
+    var desktop = window.matchMedia('(min-width: 48rem)'); // keep in step with nav.css
+    var subs = Array.prototype.slice.call(header.querySelectorAll('[data-submenu-toggle]'));
+    var itemOf = function (button) { return button.closest('[data-nav-item]'); };
+    var menuOpen = function () { return toggle.getAttribute('aria-expanded') === 'true'; };
+    var subOpen = function (button) { return button.getAttribute('aria-expanded') === 'true'; };
+
+    function setMenu(open) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) panel.setAttribute('data-open', ''); else panel.removeAttribute('data-open');
+    }
+    function setSub(button, open) {
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var item = itemOf(button);
+      if (!item) return;
+      if (open) item.setAttribute('data-open', ''); else item.removeAttribute('data-open');
+    }
+    function closeSubs(except) {
+      subs.forEach(function (button) { if (button !== except) setSub(button, false); });
+    }
+
+    toggle.addEventListener('click', function () {
+      var open = !menuOpen();
+      setMenu(open);
+      if (!open) closeSubs();
+    });
+    subs.forEach(function (button) {
+      button.addEventListener('click', function () {
+        var open = !subOpen(button);
+        if (desktop.matches) closeSubs(button); // one dropdown at a time
+        setSub(button, open);
+      });
+    });
+    panel.addEventListener('click', function (event) {
+      if (event.target.closest && event.target.closest('a') && !desktop.matches) setMenu(false);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      var active = document.activeElement;
+      var open = subs.filter(subOpen);
+      if (open.length) {
+        var target = open.filter(function (button) { var item = itemOf(button); return item && item.contains(active); })[0] || open[0];
+        var item = itemOf(target);
+        setSub(target, false);
+        if (item && item.contains(active)) target.focus();
+        event.preventDefault();
+        return;
+      }
+      if (menuOpen() && !desktop.matches) {
+        setMenu(false);
+        if (header.contains(active)) toggle.focus();
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      var node = event.target;
+      if (!header.contains(node)) {
+        closeSubs();
+        if (menuOpen() && !desktop.matches) setMenu(false);
+        return;
+      }
+      if (desktop.matches) {
+        subs.forEach(function (button) {
+          var item = itemOf(button);
+          if (item && !item.contains(node)) setSub(button, false);
+        });
+      }
+    });
+
+    header.addEventListener('focusout', function (event) {
+      var next = event.relatedTarget;
+      if (!next) return;
+      if (desktop.matches) {
+        subs.forEach(function (button) {
+          var item = itemOf(button);
+          if (item && subOpen(button) && !item.contains(next)) setSub(button, false);
+        });
+      } else if (menuOpen() && !header.contains(next)) {
+        setMenu(false);
+      }
+    });
+
+    desktop.addEventListener('change', function () { setMenu(false); closeSubs(); });
+  })();
+</script>

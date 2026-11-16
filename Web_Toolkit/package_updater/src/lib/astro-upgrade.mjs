@@ -20,6 +20,16 @@ const ASTRO_CONFIG_CANDIDATES = [
   'astro.config.cjs'
 ];
 
+/** The command line that runs the official upgrader through the project's package manager. */
+export function upgradeCommand(packageManager, extra = []) {
+  switch (packageManager) {
+    case 'pnpm': return ['pnpm', 'dlx', '@astrojs/upgrade', ...extra];
+    case 'yarn': return ['yarn', 'dlx', '@astrojs/upgrade', ...extra];
+    case 'bun': return ['bun', 'x', '@astrojs/upgrade', ...extra];
+    default: return ['npx', '--yes', '@astrojs/upgrade', ...extra];
+  }
+}
+
 /**
  * @param {object} pkg
  * @param {string} projectRoot
@@ -38,6 +48,7 @@ export function isAstroProject(pkg, projectRoot) {
  * @param {string} options.projectRoot
  * @param {boolean} options.apply
  * @param {string} [options.tag] npm dist-tag (default latest)
+ * @param {'pnpm' | 'npm' | 'yarn' | 'bun'} [options.packageManager] pnpm uses `pnpm dlx`; npm (or unset) keeps `npx`
  * @param {typeof spawn} [options.spawnFn]
  * @param {(chunk: string) => void} [options.onStdout]
  * @param {(chunk: string) => void} [options.onStderr]
@@ -47,16 +58,16 @@ export async function runAstroUpgrade({
   projectRoot,
   apply = false,
   tag = 'latest',
+  packageManager,
   spawnFn = spawn,
   onStdout = (chunk) => process.stdout.write(chunk),
   onStderr = (chunk) => process.stderr.write(chunk)
 } = {}) {
   const root = path.resolve(projectRoot || '.');
-  const args = ['--yes', '@astrojs/upgrade'];
-  if (tag && tag !== 'latest') args.push(String(tag));
-  if (!apply) args.push('--dry-run');
-
-  const command = ['npx', ...args];
+  const extra = [];
+  if (tag && tag !== 'latest') extra.push(String(tag));
+  if (!apply) extra.push('--dry-run');
+  const command = upgradeCommand(packageManager, extra);
   const timeoutMs = apply ? 300000 : 120000;
 
   return await new Promise((resolve) => {

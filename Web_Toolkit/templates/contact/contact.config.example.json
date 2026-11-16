@@ -1,0 +1,18 @@
+{
+  "$comment": "Copy to src/data/contact.json. Optional: every key has a safe default. Public values only; recipient and sender addresses are Worker secrets (see README.md). turnstile.mode: required (default), optional, or off (honeypot, time trap, rate limit and body cap only; add Turnstile when spam appears). minFillMs is the time-to-submit trap in milliseconds (0 disables).",
+  "siteName": "Example Studio",
+  "subjectPrefix": "[Example Studio]",
+  "inquiryTypes": ["General inquiry", "Project enquiry", "Press"],
+  "minMessageLength": 10,
+  "maxLinks": 3,
+  "turnstile": {
+    "mode": "required"
+  },
+  "minFillMs": 2500,
+  "fallbackEmail": "",
+  "extraFields": [],
+  "defaultReturnPath": "/contact/",
+  "rateLimit": {
+    "memory": { "limit": 5, "windowMinutes": 10 }
+  }
+}

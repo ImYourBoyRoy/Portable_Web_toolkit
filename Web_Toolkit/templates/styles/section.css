@@ -1,0 +1,181 @@
+/* ./Web_Toolkit/templates/styles/section.css
+ * Section rhythm: consistent vertical padding, tonal bands, a section header block and a call-to-action band.
+ * Reads --space-*, --color-* (bg, surface, accent, border, text), --font-display, --radius-lg, --shadow-soft.
+ *
+ * Markup:
+ *   <section class="section section--surface">
+ *     <div class="container">
+ *       <header class="section__header">
+ *         <p class="section__eyebrow">Services</p>
+ *         <h2 class="section__title">What we do</h2>
+ *         <p class="section__lead">One short sentence.</p>
+ *       </header>
+ *       ...content...
+ *     </div>
+ *   </section>
+ */
+
+.section {
+  position: relative;
+  padding-block: clamp(var(--space-6), 6vw + 1rem, var(--space-7));
+  color: var(--color-text);
+}
+
+/* Adjacent plain sections share one gutter instead of doubling it. */
+.section:not([class*="section--"]) + .section:not([class*="section--"]) {
+  padding-block-start: 0;
+}
+
+/* ---- Density ---- */
+.section--tight {
+  padding-block: clamp(var(--space-5), 4vw + 0.5rem, var(--space-6));
+}
+
+.section--loose {
+  padding-block: clamp(var(--space-7), 10vw, calc(var(--space-7) * 1.6));
+}
+
+.section--flush {
+  padding-block: 0;
+}
+
+/* ---- Tone: re-skins automatically with the theme ---- */
+.section--surface {
+  background-color: var(--color-surface);
+  border-block: 1px solid var(--color-border);
+}
+
+.section--raised {
+  background-color: var(--color-surface-raised);
+  border-block: 1px solid var(--color-border);
+}
+
+.section--bordered {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.section--accent {
+  color: var(--color-accent-contrast);
+  background-color: var(--color-accent);
+}
+
+.section--accent :is(h1, h2, h3, h4, h5, h6, .section__eyebrow, .section__lead) {
+  color: inherit;
+}
+
+.section--accent a:not(.btn) {
+  color: inherit;
+}
+
+/* The accent fill would swallow a primary button, so it inverts inside an accent band (same contract pair, flipped). */
+.section--accent .btn--primary,
+.section--accent .btn--primary:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+  color: var(--color-accent);
+  background-color: var(--color-accent-contrast);
+  border-color: var(--color-accent-contrast);
+}
+
+/* A .cta-band is its own raised panel, so buttons inside it keep the normal (non-inverted) primary look. */
+.section--accent .cta-band .btn--primary,
+.section--accent .cta-band .btn--primary:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+  color: var(--color-accent-contrast);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* ---- Header block ---- */
+.section__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 44rem;
+  margin-block-end: var(--space-5);
+}
+
+.section__header--center {
+  margin-inline: auto;
+  text-align: center;
+  align-items: center;
+}
+
+.section__eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.3rem + 2vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.section__lead {
+  margin: 0;
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+}
+
+.section__actions--center {
+  justify-content: center;
+}
+
+/* ---- Call-to-action band: a rounded panel that sits inside a section ---- */
+.cta-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: clamp(var(--space-4), 4vw, var(--space-6));
+  color: var(--color-text);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.cta-band__body {
+  flex: 1 1 20rem;
+  max-width: 40rem;
+}
+
+.cta-band__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.cta-band__text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.cta-band__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+@media (forced-colors: active) {
+  .section--accent {
+    border-block: 1px solid currentColor;
+  }
+}

@@ -9,6 +9,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { importCore } from './resolve-core.mjs';
+import { detectEngineFeatures } from './overlays.mjs';
+import { findFreePort, withPort } from '../../../shared/lib/dev-server.mjs';
 
 function routesFromProfile(profile = {}) {
   const wcag = profile.diagnostics?.wcagAuditor || {};
@@ -43,10 +45,55 @@ function previewCommandFromProfile(profile = {}) {
   const preview = String(profile.commands?.preview || '').trim();
   if (!preview) return null;
   // Prefer npm script form without shell wrapping when it matches common Astro scripts.
-  if (preview === 'npm run preview' || preview === 'npm run preview --') {
-    return ['npm', 'run', 'preview'];
-  }
+  const script = /^(npm|pnpm|yarn|bun) run preview(?: --)?$/.exec(preview);
+  if (script) return [script[1], 'run', 'preview'];
   return null;
+}
+
+/** `diagnostics.wcagAuditor.matrix`: { colorSchemes: ['light','dark'], viewports: ['mobile','desktop'] }; null when unset or empty. */
+
+function managesServer(profile, flags) {
+  return flags['manage-server'] === true || flags['manage-server'] === 'true' || Boolean(profile.diagnostics?.wcagAuditor?.manageServer);
+}
+
+/**
+ * The toolkit owns the preview it starts, so it never reuses (or collides with) whatever already listens on the profile's
+ * port: 4321 is often the user's own dev server. Returns { port, preferred, busy } or null when no server is managed.
+ */
+export async function resolveManagedServerPort({ profile = {}, flags = {} } = {}) {
+  // An explicit --base-url names a server the caller runs: nothing is chosen or managed for it.
+  if (flags['base-url'] || !previewCommandFromProfile(profile) || !managesServer(profile, flags)) return null;
+  const url = new URL(baseUrlFromProfile(profile, flags));
+  if (!['127.0.0.1', 'localhost', '::1', '[::1]'].includes(url.hostname)) return null;
+  return findFreePort({ preferred: url.port ? Number(url.port) : undefined, host: '127.0.0.1' });
+}
+
+/** Flags for the preview script: npm needs `--` before them, the other managers pass them straight through. */
+function previewServerArgs(command, args, port) {
+  if (args[0] === 'run' && ['npm', 'pnpm', 'yarn', 'bun'].includes(command)) {
+    const flagsFor = ['--host', '127.0.0.1', '--port', String(port)];
+    return [...args, ...(command === 'npm' ? ['--'] : []), ...flagsFor];
+  }
+  return withPort(args, port, { append: true });
+}
+
+export function matrixFromProfile(profile = {}) {
+  const matrix = profile.diagnostics?.wcagAuditor?.matrix;
+  if (!matrix || typeof matrix !== 'object') return null;
+  const colorSchemes = Array.isArray(matrix.colorSchemes) ? matrix.colorSchemes.map(String) : [];
+  const viewports = Array.isArray(matrix.viewports) ? matrix.viewports : [];
+  if (colorSchemes.length === 0 && viewports.length === 0) return null;
+  return { ...(colorSchemes.length > 0 ? { colorSchemes } : {}), ...(viewports.length > 0 ? { viewports } : {}) };
+}
+
+/**
+ * Profile-built runs historically ignore unresolved (cantTell/untested) evidence unless manual evidence is wired in.
+ * `diagnostics.wcagAuditor.unresolvedEvidence: "error"` makes them fail closed (exit 3) once the project is ready for it.
+ */
+export function unresolvedEvidenceFromProfile(profile = {}, includeManualEvidence = false) {
+  const configured = profile.diagnostics?.wcagAuditor?.unresolvedEvidence;
+  if (configured === 'error' || configured === 'ignore') return configured;
+  return includeManualEvidence ? 'error' : 'ignore';
 }
 
 function scenariosFromRoutes(routes = ['/']) {
@@ -92,11 +139,20 @@ export function buildAstroConfigObject({
   projectRoot,
   outputDirectory,
   flags = {},
-  includeManualEvidence = false
+  includeManualEvidence = false,
+  // Detected from the loaded engine (overlays.detectEngineFeatures). Omitted = emit only keys every engine accepts.
+  engineFeatures = {},
+  // { port } from resolveManagedServerPort: the managed preview runs on this port and is never reused.
+  managedServerPort = null
 } = {}) {
   const siteId = profile.siteId || profile.branding?.seo?.siteName || path.basename(projectRoot);
   const routes = routesFromProfile(profile);
-  const baseURL = baseUrlFromProfile(profile, flags);
+  let baseURL = baseUrlFromProfile(profile, flags);
+  if (managedServerPort) {
+    const url = new URL(baseURL);
+    url.port = String(managedServerPort.port);
+    baseURL = url.origin;
+  }
   const previewCommand = previewCommandFromProfile(profile);
   const profileLevel = String(profile.diagnostics?.wcagAuditor?.profile || 'wcag22-aa');
   const adapters = [];
@@ -122,16 +178,26 @@ export function buildAstroConfigObject({
     }
   };
 
-  if (previewCommand && (flags['manage-server'] === true || flags['manage-server'] === 'true' || profile.diagnostics?.wcagAuditor?.manageServer)) {
+  if (previewCommand && managesServer(profile, flags)) {
     const [command, ...args] = previewCommand;
     playwrightAdapter.webServer = {
       command,
-      args,
+      args: managedServerPort ? previewServerArgs(command, args, managedServerPort.port) : args,
       url: baseURL,
       timeoutMs: Number(profile.diagnostics?.wcagAuditor?.serverTimeoutMs || 120000),
-      reuseExistingServer: true
+      // An owned server on a port chosen free is never "reused"; an explicit base URL keeps the old reuse behavior.
+      reuseExistingServer: !managedServerPort
     };
   }
+
+  if (engineFeatures.probes) {
+    // WCAGate 2.4+: 1.4.10 reflow and 1.4.12 text spacing run on AA/AAA targets; contrast resolution is automatic.
+    const aboveA = profileLevel !== 'wcag22-a';
+    playwrightAdapter.probes.reflow = { enabled: aboveA };
+    playwrightAdapter.probes.textSpacing = { enabled: aboveA };
+  }
+  const matrix = matrixFromProfile(profile);
+  if (engineFeatures.matrix && matrix) playwrightAdapter.matrix = matrix;
 
   adapters.push(playwrightAdapter);
 
@@ -157,12 +223,13 @@ export function buildAstroConfigObject({
       failOnSeverities: ['critical', 'serious', 'moderate', 'minor'],
       failOnOutcomes: ['failed'],
       unresolvedOutcomes: ['cantTell', 'untested'],
-      unresolvedEvidence: includeManualEvidence ? 'error' : 'ignore',
+      unresolvedEvidence: unresolvedEvidenceFromProfile(profile, includeManualEvidence),
       executionErrors: 'error',
       requireApplicableSurface: true
     },
     reporters: [
       { type: 'console' },
+      ...(engineFeatures.agent ? [{ type: 'agent', file: 'agent.md' }] : []),
       { type: 'json', file: 'wcag-audit.json' },
       { type: 'sarif', file: 'wcag-audit.sarif' },
       { type: 'junit', file: 'wcag-audit.junit.xml' },
@@ -245,11 +312,13 @@ export async function writeAstroStarterFiles(projectRoot, {
     throw new Error('Starter files already exist. Pass --force to overwrite them.');
   }
 
+  const { api } = await importCore({ ensure: true });
   const configObject = buildAstroConfigObject({
     profile,
     projectRoot,
     outputDirectory: '.wcag-audit-results',
-    includeManualEvidence
+    includeManualEvidence,
+    engineFeatures: detectEngineFeatures(api)
   });
 
   // Checked-in starter should not hard-code ephemeral output stamps.

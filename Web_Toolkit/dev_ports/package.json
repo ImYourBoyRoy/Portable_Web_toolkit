@@ -1,0 +1,11 @@
+{
+  "name": "dev-ports",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Roy Dawson IV",
+  "license": "MIT",
+  "bin": {
+    "dev-ports": "./bin/dev-ports.mjs"
+  }
+}

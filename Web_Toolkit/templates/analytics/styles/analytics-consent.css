@@ -1,0 +1,210 @@
+/* ./Web_Toolkit/templates/analytics/styles/analytics-consent.css
+ * Consent banner and footer "Privacy choices" control. Reads only semantic contract tokens
+ * (templates/theme/tokens.contract.json), so any installed theme re-skins it.
+ * Import once from the global stylesheet. Non-modal: it never blocks the page behind it.
+ */
+
+.pwt-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pwt-consent {
+  position: fixed;
+  inset-inline: var(--space-3);
+  inset-block-end: var(--space-3);
+  z-index: 60;
+  box-sizing: border-box;
+  max-inline-size: 46rem;
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: var(--line-height-body);
+}
+
+.pwt-consent[hidden] {
+  display: none;
+}
+
+/* Visible, never-obscured focus: while the banner is up, scrolled-to focus targets keep clear of it (WCAG 2.4.11). */
+html:has(.pwt-consent:not([hidden])) {
+  scroll-padding-block-end: 14rem;
+}
+
+body:has(.pwt-consent:not([hidden])) {
+  padding-block-end: 14rem;
+}
+
+.pwt-consent:focus {
+  outline: none;
+}
+
+.pwt-consent:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.pwt-consent__copy {
+  min-inline-size: 0;
+}
+
+.pwt-consent__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1.25;
+}
+
+.pwt-consent__text,
+.pwt-consent__state {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.pwt-consent__state[hidden] {
+  display: none;
+}
+
+.pwt-consent__state {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.pwt-consent__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--color-link);
+  font-size: 0.9375rem;
+  text-underline-offset: 0.2em;
+}
+
+.pwt-consent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Equal weight on purpose: declining must be as easy and as visible as allowing. */
+.pwt-consent__button {
+  flex: 1 1 9rem;
+  box-sizing: border-box;
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.pwt-consent__button[data-pwt-consent-choice='denied'] {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.pwt-consent__button:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.pwt-consent__close {
+  flex-basis: 100%;
+  min-block-size: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.pwt-consent__close[hidden] {
+  display: none;
+}
+
+.pwt-consent__button:focus-visible,
+.pwt-consent__close:focus-visible,
+.pwt-consent__link:focus-visible,
+.pwt-privacy-choices:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (min-width: 40rem) {
+  .pwt-consent {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .pwt-consent__actions {
+    flex-direction: column;
+    align-items: stretch;
+    min-inline-size: 12rem;
+  }
+
+  .pwt-consent__button {
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pwt-consent:not([hidden]) {
+    animation: pwt-consent-in var(--dur-mid) var(--ease-out) both;
+  }
+}
+
+@keyframes pwt-consent-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+}
+
+/* Footer control. Looks like a text link, behaves as a 44px button. */
+.pwt-privacy-choices {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--color-link);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.pwt-privacy-choices[hidden] {
+  display: none;
+}
+
+.pwt-privacy-choices[aria-expanded='true'] {
+  color: var(--color-text);
+}

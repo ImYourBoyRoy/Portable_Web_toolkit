@@ -9,6 +9,7 @@ import { runLighthouse } from '../src/commands/lighthouse.mjs';
 import { runLayoutCheck } from '../src/commands/layout.mjs';
 import { runMotionCheck } from '../src/commands/motion.mjs';
 import { runContrast } from '../src/commands/contrast.mjs';
+import { runSeo } from '../src/commands/seo.mjs';
 import { printHelp as printStandardHelp } from '../../shared/lib/help.mjs';
 
 function printHelp() {
@@ -19,12 +20,14 @@ function printHelp() {
       'preview-check lighthouse --url <base> [--routes /,/about/] [--strategy mobile|desktop|both] [--min 90]',
       'preview-check layout --url <base> [--routes /,/about/] [--widths 375,768,1440]',
       'preview-check motion --url <base> [--routes /,/about/]',
+      'preview-check seo --url <base> [--routes /,/about/ | --sitemap [url|file]] [--max-routes 60] [--canonical-host example.com] [--skip-links]',
       'preview-check contrast --url <base> [--routes /,/about/] [--schemes dark,light] [--width 1440] [--click <selector>]'
     ],
     commands: [
       { name: 'lighthouse', description: 'Run Lighthouse on a local or deployed URL. Compact JSON on stdout; raw reports in output/preview-check/.' },
       { name: 'layout', description: 'Detect horizontal overflow at phone, tablet and desktop widths and name the offending elements.' },
       { name: 'contrast', description: 'Resolve each text node against its real background in dark and light schemes and list WCAG AA failures. Catches what axe reports only as cantTell on translucent backgrounds.' },
+      { name: 'seo', description: 'Deterministic on-page SEO audit of rendered pages: title/description (length, duplicates), canonical, noindex, lang, h1, Open Graph/Twitter, JSON-LD parse, image sizing, broken and redirecting internal links. One line per cause.' },
       { name: 'motion', description: 'Verify reduced-motion, above-the-fold opacity, mobile canvas and no-JS content rules for cinematic pages.' }
     ],
     flags: [
@@ -37,6 +40,10 @@ function printHelp() {
       { name: '--schemes <csv>', description: 'Color schemes for contrast. Defaults to dark,light.' },
       { name: '--width <px>', description: 'Viewport width for contrast. Defaults to 1440.' },
       { name: '--click <selector>', description: 'Click this element before measuring contrast (for example a mobile menu button).' },
+      { name: '--sitemap [url|file]', description: 'seo: take routes from sitemap.xml (production hosts are mapped onto --url).' },
+      { name: '--canonical-host <host>', description: 'seo: canonical URLs must use this host (the production domain).' },
+      { name: '--skip-links', description: 'seo: skip the internal link check.' },
+      { name: '--allow-noindex', description: 'seo: do not report noindex pages (staging/dev previews).' },
       { name: '--settle-ms <ms>', description: 'Wait after load before measuring.' }
     ],
     examples: [
@@ -67,6 +74,7 @@ async function main() {
   if (primary === 'lighthouse') return runLighthouse(flags);
   if (primary === 'layout') return runLayoutCheck(flags);
   if (primary === 'motion') return runMotionCheck(flags);
+  if (primary === 'seo') return runSeo(flags);
   if (primary === 'contrast') return runContrast(flags);
   console.error(`Unknown command: ${primary}`);
   printHelp();

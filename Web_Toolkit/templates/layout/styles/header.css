@@ -1,0 +1,76 @@
+/* ./src/styles/layout/header.css — header bar, brand, tools. Navigation lives in nav.css. */
+
+.site-header {
+  position: relative;
+  z-index: 100;
+  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  color: var(--color-text);
+  border-block-end: 1px solid var(--color-border);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+
+/* Sticky on desktop always; on small screens only once JS has collapsed the menu (a wrapped no-JS nav would eat the viewport). */
+@media (width >= 48rem) {
+  .site-header--sticky {
+    position: sticky;
+    inset-block-start: 0;
+  }
+}
+
+.site-header--sticky[data-nav-ready] {
+  position: sticky;
+  inset-block-start: 0;
+}
+
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-height: var(--header-height);
+}
+
+.site-header[data-nav-ready] .site-header__bar {
+  flex-wrap: nowrap;
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.site-header__brand:hover {
+  color: var(--color-link);
+}
+
+.site-header__logo {
+  display: block;
+  width: auto;
+  max-height: 2.5rem;
+}
+
+.site-header__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.site-header__tools:not(:has(*)) {
+  display: none;
+}
+
+.site-header a:focus-visible,
+.site-header button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

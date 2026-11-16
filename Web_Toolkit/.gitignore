@@ -1,5 +1,7 @@
 # Package installs / build output
 node_modules/
+# The WCAGate engine is never locked (semver range of release tags): npm's package-lock is off in .npmrc and pnpm's lock is ignored here.
+/pnpm-lock.yaml
 dist/
 .astro/
 coverage/

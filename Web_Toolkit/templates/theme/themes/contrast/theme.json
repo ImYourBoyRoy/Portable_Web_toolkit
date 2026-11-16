@@ -1,0 +1,7 @@
+{
+  "name": "contrast",
+  "label": "High Contrast",
+  "scheme": "light",
+  "description": "Maximum-contrast light theme (black on white, strong borders); a safe baseline and an accessibility reference.",
+  "source": "portable-web-toolkit starter"
+}

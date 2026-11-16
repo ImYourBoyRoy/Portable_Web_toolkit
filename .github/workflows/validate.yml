@@ -16,9 +16,21 @@ concurrency:
 
 jobs:
   validate:
-    name: Release and toolkit validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: Release and toolkit validation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    # Windows reports without blocking until its first green run proves the suite there; Linux and macOS block.
+    continue-on-error: ${{ matrix.experimental == true }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            experimental: true
 
     steps:
       - name: Check out repository
@@ -30,16 +42,20 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
 
+      - name: Install pnpm
+        # npm ships with Node; pnpm is the toolkit's package manager (no version is pinned).
+        run: npm install --global pnpm
+
       - name: Install WCAGate engine
         # The wcag-auditor wrapper tests need @imyourboyroy/wcagate under Web_Toolkit/node_modules.
         # This used to be installed only as a side effect of the toolkit auto-update preflight.
-        run: npm install --prefix Web_Toolkit --ignore-scripts --allow-git=all
+        run: pnpm install --dir Web_Toolkit --ignore-scripts
 
       - name: Validate repository
-        run: npm run validate
+        run: pnpm run validate
 
       - name: Verify Vectorize Pipeline dependency lock
         run: |
-          npm ci --ignore-scripts --prefix Web_Toolkit/vectorize_pipeline
-          npm --prefix Web_Toolkit/vectorize_pipeline audit --audit-level=high
+          pnpm install --frozen-lockfile --ignore-scripts --dir Web_Toolkit/vectorize_pipeline
+          pnpm --dir Web_Toolkit/vectorize_pipeline audit --audit-level high
           node Web_Toolkit/vectorize_pipeline/bin/vectorize-pipeline.mjs --help >/dev/null

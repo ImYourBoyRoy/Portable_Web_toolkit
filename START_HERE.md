@@ -3,6 +3,11 @@
 **Purpose:** Operate toolkit-managed Astro and Cloudflare client sites through
 their established project contracts and deterministic tools.
 
+**Which tool?** Read [`docs/TOOLS.md`](./docs/TOOLS.md) (one line per tool, grouped by what you are
+trying to do, ~2k tokens) or run `node ./Web_Toolkit/toolkit_index/bin/toolkit-index.mjs find "<task>"`.
+The toolkit handles the repeatable parts (versions, a11y gate, discovery, deploy, templates, themes) so you can
+spend your effort on the parts that are specific to the user's project.
+
 ## 1. Confirm the active project
 
 Distinguish:
@@ -57,6 +62,7 @@ Core skills:
 Optional skills:
 
 - `brand-doctor`
+- `site-theme`
 - `image-pipeline`
 - `instagram-clone`
 - `vectorize-pipeline`
@@ -86,8 +92,9 @@ Deploy or Cloudflare?   → portable-web-toolkit
 Accessibility evidence? → wcag-auditor skill → Web_Toolkit/wcag_auditor wrapper (engine: node_modules/@imyourboyroy/wcagate; never AI/)
 PageSpeed Insights?     → pagespeed-diagnostics
 Discovery layer?        → discovery-doctor
-Maintenance day?        → site-maintenance (HOW_TO.md loop)
+Maintenance day?        → site-maintenance (HOW_TO.md § Healthy order of operations only)
 Brand / OG / favicons?  → brand-doctor
+Re-theme / compare themes / reuse a design?  → site-theme
 Raster → WebP?          → image-pipeline
 Instagram fallback?     → instagram-clone
 SVG recovery candidate? → vectorize-pipeline
@@ -109,8 +116,8 @@ authorization.
 Toolkit commands run a throttled freshness preflight by default (once every
 24 hours). It checks the public toolkit and WCAGate repositories, fast-forwards
 the toolkit only when the checkout is a clean `main` tracking `origin/main`,
-and refreshes the unpinned WCAGate Git dependency when its public `main` head
-changes. The result is printed to the agent and stored under
+and refreshes WCAGate to the latest published release tag (semver range, never a
+pinned version) when a newer release exists. The result is printed to the agent and stored under
 `Web_Toolkit/.runtime/toolkit-auto-update.json`.
 
 Dirty worktrees, feature branches, exported folders, unmanaged repositories,

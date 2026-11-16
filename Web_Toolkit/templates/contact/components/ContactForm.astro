@@ -1,0 +1,554 @@
+---
+// ./Web_Toolkit/templates/contact/components/ContactForm.astro
+/**
+ * Accessible, Worker-backed contact form with honeypot and Cloudflare Turnstile (explicit render).
+ * Usage: <ContactForm /> on the contact page, with the endpoint from pages/api/contact.ts and
+ *        contact-form.css imported once. Optional src/data/contact.json supplies inquiry types and limits.
+ * Inputs: PUBLIC_TURNSTILE_SITE_KEY (public site key). Props below override copy and the endpoint.
+ * Outputs: a real <form method="post">. Without JavaScript it posts natively (the route answers with a result
+ *   page, or redirects to `returnTo` when given); with JavaScript it posts via fetch and reports through one
+ *   aria-live status region plus per-field errors. Turnstile needs JavaScript, so the no-JS notice offers
+ *   `fallbackEmail` when configured.
+ * Failure and retry: a failed or unreachable send keeps every answer in place, shows the status with the submission
+ *   reference, and offers "Retry sending" plus an email link prefilled with what was typed (needs `fallbackEmail`).
+ *   A draft is autosaved to localStorage (versioned key, 7 days, `draftExclude` fields never stored, "Clear saved
+ *   draft" control) and deleted only after the server confirmed success. Set `draft={false}` to turn it off.
+ * Side effects: loads challenges.cloudflare.com/turnstile on first focus of the form only, and only when
+ *   turnstile.mode is not "off" and a site key exists. No inline styles, no third-party code beyond Turnstile.
+ */
+import { ELAPSED_FIELD, HONEYPOT_FIELD, SUBMISSION_ID_FIELD, TURNSTILE_ACTION, isTurnstileTestSiteKey } from '../../lib/contact/contact-lib';
+import { getContactConfig } from '../../lib/contact/load-config';
+
+interface Messages {
+  sending: string;
+  success: string;
+  error: string;
+  fields: string;
+  verifyWait: string;
+  verifyError: string;
+  network: string;
+  rateLimited: string;
+  testKey: string;
+  failed: string;
+  retry: string;
+  mailInstead: string;
+  clearDraft: string;
+  draftSaved: string;
+}
+
+interface Props {
+  id?: string;
+  action?: string;
+  /** Same-site path for the no-JS redirect (the page then renders the result when it is not prerendered). */
+  returnTo?: string;
+  intro?: string;
+  messageHint?: string;
+  submitLabel?: string;
+  sendingLabel?: string;
+  messages?: Partial<Messages>;
+  /** Autosave a local draft while typing (default true). */
+  draft?: boolean;
+  /** Field names never written to the draft, for example links or private free text. */
+  draftExclude?: string[];
+}
+
+const config = getContactConfig();
+const {
+  id = 'contact',
+  action = '/api/contact',
+  returnTo,
+  intro,
+  messageHint = 'Include dates and context where you can.',
+  submitLabel = 'Send message',
+  sendingLabel = 'Sending...',
+  messages: overrides = {},
+  draft = true,
+  draftExclude = []
+} = Astro.props;
+
+const messages: Messages = {
+  sending: 'Sending your message...',
+  success: 'Thank you. Your message is on its way.',
+  error: 'Something went wrong. Please try again.',
+  fields: 'Please check the highlighted fields and try again.',
+  verifyWait: 'Please wait for the spam check to finish, then send again.',
+  verifyError: 'The spam check could not load. Reload the page or email us instead.',
+  network: 'The form is temporarily unavailable. Please try again soon.',
+  rateLimited: 'Too many messages. Please wait a few minutes and try again.',
+  testKey: 'This form uses a Turnstile test key and is disabled outside local development.',
+  failed: 'Your message was not sent. Your answers are still here.',
+  retry: 'Retry sending',
+  mailInstead: 'Send this by email instead',
+  clearDraft: 'Clear saved draft',
+  draftSaved: 'Draft saved on this device.',
+  ...overrides
+};
+
+const siteKey = String(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
+const turnstileOn = config.turnstileMode !== 'off' && siteKey !== '';
+const isTestKey = siteKey !== '' && isTurnstileTestSiteKey(siteKey);
+if (import.meta.env.PROD && isTestKey) {
+  console.warn('[contact] PUBLIC_TURNSTILE_SITE_KEY is a Cloudflare TEST key. The widget refuses to run on non-local hosts.');
+}
+const types = config.inquiryTypes;
+const afterRedirect = Astro.url.searchParams.get('contact');
+const redirectedStatus =
+  afterRedirect === 'sent' ? { state: 'success', text: messages.success } : afterRedirect === 'error' ? { state: 'error', text: messages.error } : null;
+---
+
+<form
+  id={id}
+  class="contact-form"
+  method="post"
+  action={action}
+  data-contact-form
+  data-msg-sending={messages.sending}
+  data-msg-success={messages.success}
+  data-msg-error={messages.error}
+  data-msg-fields={messages.fields}
+  data-msg-verify-wait={messages.verifyWait}
+  data-msg-verify-error={messages.verifyError}
+  data-msg-network={messages.network}
+  data-msg-rate-limited={messages.rateLimited}
+  data-msg-test-key={messages.testKey}
+  data-sending-label={sendingLabel}
+  data-msg-failed={messages.failed}
+  data-msg-draft-saved={messages.draftSaved}
+  data-fallback-email={config.fallbackEmail || undefined}
+  data-min-fill-ms={config.minFillMs}
+  data-draft={draft ? 'on' : undefined}
+  data-draft-exclude={draftExclude.join(',')}
+>
+  <p class="contact-form__intro" id={`${id}-intro`}>
+    {intro ?? 'Required fields are marked with an asterisk (*).'}
+  </p>
+
+  <div class="contact-form__field">
+    <label for={`${id}-name`}>Name <span aria-hidden="true">*</span></label>
+    <input id={`${id}-name`} name="name" type="text" autocomplete="name" maxlength="120" required aria-describedby={`${id}-name-error`} />
+    <p class="contact-form__error" id={`${id}-name-error`} data-field-error="name"></p>
+  </div>
+
+  <div class="contact-form__field">
+    <label for={`${id}-email`}>Email <span aria-hidden="true">*</span></label>
+    <input
+      id={`${id}-email`}
+      name="email"
+      type="email"
+      inputmode="email"
+      autocomplete="email"
+      maxlength="254"
+      required
+      aria-describedby={`${id}-email-error`}
+    />
+    <p class="contact-form__error" id={`${id}-email-error`} data-field-error="email"></p>
+  </div>
+
+  {types.length > 0 && (
+    <div class="contact-form__field">
+      <label for={`${id}-inquiryType`}>Topic</label>
+      <select id={`${id}-inquiryType`} name="inquiryType" aria-describedby={`${id}-inquiryType-error`}>
+        <option value="">Choose a topic (optional)</option>
+        {types.map((type) => <option value={type}>{type}</option>)}
+      </select>
+      <p class="contact-form__error" id={`${id}-inquiryType-error`} data-field-error="inquiryType"></p>
+    </div>
+  )}
+
+  <div class="contact-form__field">
+    <label for={`${id}-message`}>Message <span aria-hidden="true">*</span></label>
+    <textarea
+      id={`${id}-message`}
+      name="message"
+      rows="7"
+      minlength={config.minMessageLength}
+      maxlength="5000"
+      required
+      aria-describedby={`${id}-message-hint ${id}-message-error`}
+    ></textarea>
+    <p class="contact-form__hint" id={`${id}-message-hint`}>{messageHint}</p>
+    <p class="contact-form__error" id={`${id}-message-error`} data-field-error="message"></p>
+  </div>
+
+  {/* Honeypot: real visitors never see or reach it (inert + aria-hidden); bots fill every field. */}
+  <div class="contact-form__trap" aria-hidden="true" inert>
+    <label for={`${id}-${HONEYPOT_FIELD}`}>Leave this field empty</label>
+    <input id={`${id}-${HONEYPOT_FIELD}`} name={HONEYPOT_FIELD} type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
+  <input type="hidden" name={SUBMISSION_ID_FIELD} value="" />
+  <input type="hidden" name={ELAPSED_FIELD} value="" />
+
+  {turnstileOn && (
+    <div class="contact-form__verify">
+      <div data-contact-turnstile data-sitekey={siteKey} data-action={TURNSTILE_ACTION} data-test-key={isTestKey ? 'true' : undefined}></div>
+    </div>
+  )}
+
+  <noscript>
+    <p class="contact-form__notice">
+      The spam check needs JavaScript.
+      {config.fallbackEmail
+        ? <>Turn it on to use this form, or email <a href={`mailto:${config.fallbackEmail}`}>{config.fallbackEmail}</a>.</>
+        : <>Turn it on to use this form.</>}
+    </p>
+  </noscript>
+
+  <button type="submit" class="contact-form__submit" data-contact-submit>
+    <span data-contact-submit-label>{submitLabel}</span>
+  </button>
+
+  <div
+    class="contact-form__status"
+    id={`${id}-status`}
+    data-contact-status
+    data-state={redirectedStatus?.state}
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    tabindex="-1"
+  >{redirectedStatus?.text}</div>
+
+  <div class="contact-form__recovery" data-contact-recovery hidden>
+    <button type="button" class="contact-form__retry" data-contact-retry>{messages.retry}</button>
+    {config.fallbackEmail && <a class="contact-form__mailto" data-contact-mailto href={`mailto:${config.fallbackEmail}`}>{messages.mailInstead}</a>}
+  </div>
+
+  {draft && (
+    <p class="contact-form__draft" data-contact-draft hidden>
+      <span data-contact-draft-note>{messages.draftSaved}</span>
+      <button type="button" class="contact-form__draft-clear" data-contact-draft-clear>{messages.clearDraft}</button>
+    </p>
+  )}
+</form>
+
+<script>
+  import { DAY_MS, buildMailtoHref, createDraftStore, createSubmissionId, type DraftValues, type StorageLike } from '../../scripts/form-draft';
+
+  interface TurnstileApi {
+    render(element: HTMLElement, options: Record<string, unknown>): string;
+    reset(widgetId?: string): void;
+  }
+  interface ApiResult {
+    ok?: boolean;
+    id?: string;
+    error?: string;
+    fieldErrors?: Record<string, string>;
+  }
+
+  const TURNSTILE_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+  const REQUEST_TIMEOUT_MS = 20000;
+  const host = location.hostname.toLowerCase();
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost');
+
+  let turnstileLoader: Promise<TurnstileApi> | null = null;
+  const turnstileApi = (): TurnstileApi | undefined => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
+
+  function loadTurnstile(): Promise<TurnstileApi> {
+    if (turnstileLoader) return turnstileLoader;
+    turnstileLoader = new Promise<TurnstileApi>((resolve, reject) => {
+      const ready = turnstileApi();
+      if (ready) return resolve(ready);
+      const script = document.createElement('script');
+      script.src = TURNSTILE_SRC;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        const api = turnstileApi();
+        if (api) resolve(api);
+        else reject(new Error('turnstile unavailable'));
+      };
+      script.onerror = () => {
+        turnstileLoader = null;
+        reject(new Error('turnstile failed to load'));
+      };
+      document.head.appendChild(script);
+    });
+    return turnstileLoader;
+  }
+
+  function setup(form: HTMLFormElement): void {
+    const status = form.querySelector<HTMLElement>('[data-contact-status]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-contact-submit]');
+    const submitLabel = form.querySelector<HTMLElement>('[data-contact-submit-label]');
+    const holder = form.querySelector<HTMLElement>('[data-contact-turnstile]');
+    const text = (name: string): string => form.dataset[name] ?? '';
+
+    let token = '';
+    let widgetId: string | undefined;
+    let widgetStarted = false;
+    let busy = false;
+
+    const setStatus = (message: string, state: 'pending' | 'success' | 'error'): void => {
+      if (!status) return;
+      status.dataset.state = state;
+      // Emptying first makes a repeated message announce again. A timer (not rAF) so a background tab still updates.
+      status.textContent = '';
+      window.setTimeout(() => {
+        status.textContent = message;
+      }, 40);
+    };
+
+    const clearFieldError = (name: string): void => {
+      const field = form.elements.namedItem(name);
+      if (field instanceof HTMLElement) field.removeAttribute('aria-invalid');
+      const slot = form.querySelector<HTMLElement>(`[data-field-error="${name}"]`);
+      if (slot) slot.textContent = '';
+    };
+
+    const clearFieldErrors = (): void => {
+      form.querySelectorAll<HTMLElement>('[data-field-error]').forEach((slot) => clearFieldError(slot.dataset.fieldError ?? ''));
+    };
+
+    const showFieldErrors = (errors: Record<string, string>): void => {
+      let first: HTMLElement | null = null;
+      for (const [name, message] of Object.entries(errors)) {
+        const field = form.elements.namedItem(name);
+        const slot = form.querySelector<HTMLElement>(`[data-field-error="${name}"]`);
+        if (!(field instanceof HTMLElement) || !slot) continue;
+        field.setAttribute('aria-invalid', 'true');
+        slot.textContent = message;
+        first ??= field;
+      }
+      first?.focus();
+    };
+
+    const resetWidget = (): void => {
+      token = '';
+      if (widgetId !== undefined) turnstileApi()?.reset(widgetId);
+    };
+
+    const startWidget = (): void => {
+      if (!holder || widgetStarted) return;
+      widgetStarted = true;
+      if (holder.dataset.testKey === 'true' && !isLocal) {
+        console.error('[contact] Turnstile test site key on a non-local host; widget not rendered.');
+        setStatus(text('msgTestKey'), 'error');
+        return;
+      }
+      loadTurnstile()
+        .then((api) => {
+          widgetId = api.render(holder, {
+            sitekey: holder.dataset.sitekey,
+            action: holder.dataset.action,
+            theme: 'auto',
+            callback: (value: string) => {
+              token = value;
+              if (status?.dataset.reason === 'verify') {
+                status.textContent = '';
+                delete status.dataset.state;
+                delete status.dataset.reason;
+              }
+            },
+            'expired-callback': () => {
+              token = '';
+            },
+            'error-callback': () => {
+              token = '';
+              if (status) status.dataset.reason = 'verify';
+              setStatus(text('msgVerifyError'), 'error');
+            },
+            'timeout-callback': () => {
+              token = '';
+            }
+          });
+        })
+        .catch(() => {
+          widgetStarted = false;
+          if (status) status.dataset.reason = 'verify';
+          setStatus(text('msgVerifyError'), 'error');
+        });
+    };
+
+    // Turnstile loads on first focus of the form only (or when a send is attempted), never at page load.
+    if (holder) form.addEventListener('focusin', startWidget, { once: true });
+
+    /* ------------------------------------------------ draft, retry, mailto */
+    const recovery = form.querySelector<HTMLElement>('[data-contact-recovery]');
+    const retryButton = form.querySelector<HTMLButtonElement>('[data-contact-retry]');
+    const mailtoLink = form.querySelector<HTMLAnchorElement>('[data-contact-mailto]');
+    const draftRow = form.querySelector<HTMLElement>('[data-contact-draft]');
+    const draftNote = form.querySelector<HTMLElement>('[data-contact-draft-note]');
+    const clearDraftButton = form.querySelector<HTMLButtonElement>('[data-contact-draft-clear]');
+    const idField = form.querySelector<HTMLInputElement>('input[name="submission_id"]');
+    const elapsedField = form.querySelector<HTMLInputElement>('input[name="form_elapsed"]');
+    const INTERNAL = ['submission_id', 'form_elapsed', 'cf-turnstile-response', 'returnTo', 'company_url'];
+    const excluded = [...INTERNAL, ...(form.dataset.draftExclude ?? '').split(',').filter(Boolean)];
+    let submissionId = createSubmissionId('msg');
+    let restored = false;
+    let saveTimer: number | undefined;
+    let saveEnabled = true;
+
+    let storage: StorageLike | null = null;
+    try {
+      storage = window.localStorage;
+      storage.setItem('__probe__', '1');
+      storage.removeItem('__probe__');
+    } catch {
+      storage = null;
+    }
+    const store = createDraftStore({ key: `contact-draft:${location.pathname}`, version: 1, ttlMs: 7 * DAY_MS, excluded, storage: form.dataset.draft ? storage : null });
+
+    const fieldValues = (): Array<[string, string]> => {
+      const rows: Array<[string, string]> = [];
+      for (const [name, value] of new FormData(form).entries()) if (typeof value === 'string' && !INTERNAL.includes(name)) rows.push([name, value]);
+      return rows;
+    };
+    const labelFor = (name: string): string => {
+      const el = form.elements.namedItem(name);
+      const id = el instanceof HTMLElement ? el.id : '';
+      const label = id ? form.querySelector<HTMLElement>(`label[for="${id}"]`) : null;
+      return label?.textContent?.replace(/\*/g, '').replace(/\s+/g, ' ').trim() || name;
+    };
+    const showDraft = (note: string): void => {
+      if (!draftRow || !store.available) return;
+      draftRow.hidden = false;
+      if (draftNote) draftNote.textContent = note;
+    };
+    const saveNow = (): void => {
+      if (!saveEnabled || !store.available) return;
+      window.clearTimeout(saveTimer);
+      const values: DraftValues = {};
+      for (const [name, value] of fieldValues()) values[name] = value;
+      if (store.save(values)) {
+        if (store.load()) showDraft(form.dataset.msgDraftSaved ?? '');
+        else if (draftRow) draftRow.hidden = true;
+      }
+    };
+    const scheduleSave = (): void => {
+      if (!saveEnabled || !store.available) return;
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(saveNow, 700);
+    };
+    const hideRecovery = (): void => {
+      if (recovery) recovery.hidden = true;
+    };
+    const showRecovery = (): void => {
+      if (!recovery) return;
+      if (mailtoLink && form.dataset.fallbackEmail) {
+        mailtoLink.href = buildMailtoHref({
+          address: form.dataset.fallbackEmail,
+          subject: `Message ${submissionId}`,
+          intro: `Reference: ${submissionId}\nSending the contact form failed, so I am writing instead.`,
+          rows: fieldValues().map(([name, value]) => [labelFor(name), value] as const)
+        });
+      }
+      recovery.hidden = false;
+    };
+
+    const draft = store.load();
+    if (draft) {
+      let any = false;
+      for (const [name, value] of Object.entries(draft.values)) {
+        const el = form.elements.namedItem(name);
+        if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) && !excluded.includes(name)) {
+          el.value = Array.isArray(value) ? (value[0] ?? '') : value;
+          any = true;
+        }
+      }
+      if (any) {
+        restored = true;
+        showDraft(`${form.dataset.msgDraftSaved ?? ''}`);
+      }
+    }
+    if (idField) idField.value = submissionId;
+    form.addEventListener('input', scheduleSave);
+    form.addEventListener('change', scheduleSave);
+    window.addEventListener('pagehide', saveNow);
+    clearDraftButton?.addEventListener('click', () => {
+      window.clearTimeout(saveTimer);
+      store.clear();
+      if (draftRow) draftRow.hidden = true;
+    });
+    retryButton?.addEventListener('click', () => form.requestSubmit());
+
+    const setBusy = (value: boolean): void => {
+      busy = value;
+      form.setAttribute('aria-busy', String(value));
+      if (submit) {
+        submit.setAttribute('aria-disabled', String(value));
+        submit.dataset.busy = String(value);
+      }
+      if (submitLabel) {
+        if (value) {
+          submitLabel.dataset.original = submitLabel.textContent ?? '';
+          submitLabel.textContent = form.dataset.sendingLabel ?? '';
+        } else if (submitLabel.dataset.original !== undefined) {
+          submitLabel.textContent = submitLabel.dataset.original;
+        }
+      }
+    };
+
+    form.addEventListener('input', (event) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && target.getAttribute('name')) clearFieldError(target.getAttribute('name') ?? '');
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (busy) return;
+      clearFieldErrors();
+
+      if (holder && !token) {
+        startWidget();
+        if (status) status.dataset.reason = 'verify';
+        setStatus(text('msgVerifyWait'), 'error');
+        return;
+      }
+
+      setBusy(true);
+      hideRecovery();
+      if (status) delete status.dataset.reason;
+      setStatus(text('msgSending'), 'pending');
+
+      if (idField) idField.value = submissionId;
+      // A restored draft proves the visitor spent time earlier, so a quick resend is not a bot.
+      if (elapsedField) elapsedField.value = String(Math.round(performance.now() + (restored ? 60000 : 0)));
+      const data = new FormData(form);
+      if (token && !data.get('cf-turnstile-response')) data.set('cf-turnstile-response', token);
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { Accept: 'application/json' },
+          signal: controller.signal
+        });
+        const result = (await response.json().catch(() => null)) as ApiResult | null;
+        if (response.ok && result?.ok) {
+          // The draft is deleted only now, after the server confirmed the provider accepted the message.
+          window.clearTimeout(saveTimer);
+          saveEnabled = false;
+          store.clear();
+          if (draftRow) draftRow.hidden = true;
+          form.reset();
+          resetWidget();
+          setStatus(`${text('msgSuccess')}${result.id ? ` (${result.id})` : ''}`, 'success');
+          submissionId = createSubmissionId('msg');
+          saveEnabled = true;
+          restored = false;
+        } else if (result?.fieldErrors) {
+          showFieldErrors(result.fieldErrors);
+          resetWidget();
+          setStatus(text('msgFields'), 'error');
+        } else {
+          resetWidget();
+          setStatus(`${response.status === 429 ? text('msgRateLimited') : (result?.error ?? text('msgError'))} ${text('msgFailed')}`.trim(), 'error');
+          showRecovery();
+        }
+      } catch {
+        resetWidget();
+        setStatus(`${text('msgNetwork')} ${text('msgFailed')}`.trim(), 'error');
+        showRecovery();
+      } finally {
+        window.clearTimeout(timer);
+        setBusy(false);
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLFormElement>('form[data-contact-form]').forEach(setup);
+</script>

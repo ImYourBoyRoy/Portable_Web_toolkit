@@ -1,0 +1,86 @@
+---
+// ./src/components/layout/SiteFooter.astro
+/**
+ * Footer from src/data/footer.json: brand + tagline, link columns, social links, legal links, copyright with a year
+ * computed at build time. Slots: `privacy-choices` (put the analytics consent "Privacy choices" button here, next to
+ * the legal links) and `extra` (anything between the columns and the legal row). No JavaScript.
+ */
+import footerData from '../../data/footer.json';
+import site from '../../data/site.json';
+import { copyrightYears, opensNewTab, parseFooterConfig } from '../../lib/nav';
+
+interface Props {
+  /** Defaults to site.json siteName. */
+  brandName?: string;
+  /** Link to the home page from the brand line. */
+  homeHref?: string;
+  legalLabel?: string;
+  navLabel?: string;
+}
+
+const { brandName = site.siteName, homeHref = '/', legalLabel = 'Legal', navLabel = 'Footer' } = Astro.props;
+const footer = parseFooterConfig(footerData);
+const holder = footer.copyright.holder || brandName;
+const years = copyrightYears(footer.copyright.startYear);
+const hasPrivacyChoices = Astro.slots.has('privacy-choices');
+const hasExtra = Astro.slots.has('extra');
+const attrs = (href: string) => (opensNewTab(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {});
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner container">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <a class="site-footer__name" href={homeHref}>{brandName}</a>
+        {footer.tagline && <p class="site-footer__tagline">{footer.tagline}</p>}
+        {footer.social.length > 0 && (
+          <ul class="site-footer__social" aria-label="Social">
+            {footer.social.map((link) => (
+              <li>
+                <a href={link.href} {...attrs(link.href)}>
+                  {link.label}
+                  {opensNewTab(link.href) && <span class="visually-hidden"> (opens in a new tab)</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {footer.columns.length > 0 && (
+        <nav class="site-footer__columns" aria-label={navLabel}>
+          {footer.columns.map((column) => (
+            <div class="site-footer__column">
+              <h2 class="site-footer__heading">{column.title}</h2>
+              <ul class="site-footer__list">
+                {column.links.map((link) => (
+                  <li>
+                    <a href={link.href} {...attrs(link.href)}>
+                      {link.label}
+                      {opensNewTab(link.href) && <span class="visually-hidden"> (opens in a new tab)</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      )}
+    </div>
+
+    {hasExtra && <div class="site-footer__extra"><slot name="extra" /></div>}
+
+    <div class="site-footer__bottom">
+      <p class="site-footer__copy">&copy; {years} {holder}. {footer.copyright.text}</p>
+      {(footer.legal.length > 0 || hasPrivacyChoices) && (
+        <nav class="site-footer__legal" aria-label={legalLabel}>
+          <ul>
+            {footer.legal.map((link) => (
+              <li><a href={link.href} {...attrs(link.href)}>{link.label}</a></li>
+            ))}
+            {hasPrivacyChoices && <li class="site-footer__privacy"><slot name="privacy-choices" /></li>}
+          </ul>
+        </nav>
+      )}
+    </div>
+  </div>
+</footer>

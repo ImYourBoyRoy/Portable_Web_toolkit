@@ -1,0 +1,170 @@
+---
+// ./Web_Toolkit/templates/analytics/components/AnalyticsConsent.astro
+/**
+ * Privacy-first analytics consent banner (opt-in, default OFF).
+ * Usage: render once, near the end of <body> in the base layout, next to <Ga4 />, <PostHog /> and
+ *        <CloudflareWebAnalytics />. Put <PrivacyChoices /> in the footer so visitors can change their mind.
+ * Inputs: public analytics config (env + optional src/data/analytics.json); optional copy props below.
+ * Outputs: a non-modal, keyboard-operable region. Choice persisted under `pwt-analytics-consent`;
+ *          `pwt:analytics-consent` is dispatched on window for any other script (see lib/consent.ts).
+ * Side effects: none until the visitor chooses. Renders nothing when no provider needs consent.
+ * Accessibility: non-modal landmark (no focus trap, no focus steal on first view), equal-weight choices,
+ *          one polite status message after a choice, Escape closes the re-opened panel.
+ */
+import { getAnalyticsConfig } from '../../lib/analytics/load-config';
+
+interface Props {
+  heading?: string;
+  description?: string;
+  privacyHref?: string;
+  privacyLabel?: string;
+  acceptLabel?: string;
+  declineLabel?: string;
+  closeLabel?: string;
+}
+
+const config = getAnalyticsConfig();
+const {
+  heading = config.consent.heading,
+  description = config.consent.description,
+  privacyHref = config.consent.privacyHref,
+  privacyLabel = 'What is collected',
+  acceptLabel = 'Allow analytics',
+  declineLabel = 'Keep analytics off',
+  closeLabel = 'Close'
+} = Astro.props;
+const render = config.enabled && config.needsConsent;
+---
+
+{render && (
+  <>
+    <section
+      id="pwt-analytics-consent"
+      class="pwt-consent"
+      role="region"
+      aria-labelledby="pwt-consent-title"
+      aria-describedby="pwt-consent-description"
+      tabindex="-1"
+      data-pwt-consent
+      hidden
+    >
+      <div class="pwt-consent__copy">
+        <h2 id="pwt-consent-title" class="pwt-consent__title">{heading}</h2>
+        <p id="pwt-consent-description" class="pwt-consent__text">{description}</p>
+        <p
+          class="pwt-consent__state"
+          data-pwt-consent-state
+          data-text-granted="Analytics are currently on."
+          data-text-denied="Analytics are currently off."
+          hidden
+        ></p>
+        <a class="pwt-consent__link" href={privacyHref}>{privacyLabel}</a>
+      </div>
+      <div class="pwt-consent__actions">
+        <button type="button" class="pwt-consent__button" data-pwt-consent-choice="denied">{declineLabel}</button>
+        <button type="button" class="pwt-consent__button" data-pwt-consent-choice="granted">{acceptLabel}</button>
+        <button type="button" class="pwt-consent__close" data-pwt-consent-close hidden>{closeLabel}</button>
+      </div>
+    </section>
+    <p
+      class="pwt-visually-hidden"
+      role="status"
+      aria-live="polite"
+      data-pwt-consent-status
+      data-text-granted="Analytics turned on."
+      data-text-denied="Analytics turned off."
+    ></p>
+  </>
+)}
+
+<script>
+  import { CONSENT_OPEN_EVENT, getConsentManager } from '../../lib/analytics/consent';
+
+  const banner = document.querySelector<HTMLElement>('[data-pwt-consent]');
+
+  if (banner) {
+    const manager = getConsentManager();
+    const status = document.querySelector<HTMLElement>('[data-pwt-consent-status]');
+    const state = banner.querySelector<HTMLElement>('[data-pwt-consent-state]');
+    const closeButton = banner.querySelector<HTMLButtonElement>('[data-pwt-consent-close]');
+    const triggers = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>('[data-pwt-privacy-choices]'));
+    let opener: HTMLElement | null = null;
+
+    const syncTriggers = (): void => {
+      triggers().forEach((trigger) => {
+        trigger.hidden = false;
+        trigger.setAttribute('aria-expanded', String(!banner.hidden));
+      });
+    };
+
+    const show = (reopened: boolean, from: HTMLElement | null): void => {
+      const current = manager.get();
+      if (state) {
+        const text = current ? state.dataset[current === 'granted' ? 'textGranted' : 'textDenied'] : '';
+        state.textContent = text ?? '';
+        state.hidden = !text;
+      }
+      if (closeButton) closeButton.hidden = current === null;
+      opener = from;
+      banner.hidden = false;
+      syncTriggers();
+      // First view never steals focus. A re-open comes from a deliberate action, so move focus into the region.
+      if (reopened) banner.focus({ preventScroll: false });
+    };
+
+    const hide = (): void => {
+      const hadFocus = banner.contains(document.activeElement);
+      banner.hidden = true;
+      syncTriggers();
+      if (hadFocus) {
+        const target = opener && opener.isConnected ? opener : triggers()[0];
+        target?.focus();
+      }
+      opener = null;
+    };
+
+    banner.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const choice = target?.closest<HTMLElement>('[data-pwt-consent-choice]');
+      if (choice) {
+        const value = choice.dataset.pwtConsentChoice ?? '';
+        if (manager.set(value) && status) {
+          const message = status.dataset[value === 'granted' ? 'textGranted' : 'textDenied'] ?? '';
+          // Clear first so repeating the same choice is announced again.
+          status.textContent = '';
+          window.setTimeout(() => {
+            status.textContent = message;
+          }, 50);
+        }
+        hide();
+      } else if (target?.closest('[data-pwt-consent-close]')) {
+        hide();
+      }
+    });
+
+    banner.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && manager.get() !== null) {
+        event.stopPropagation();
+        hide();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-pwt-privacy-choices]') : null;
+      if (trigger) show(true, trigger);
+    });
+
+    window.addEventListener(CONSENT_OPEN_EVENT, () => {
+      const active = document.activeElement;
+      show(true, active instanceof HTMLElement ? active : null);
+    });
+
+    // Another tab changed the choice: keep this tab honest and drop a now-pointless prompt.
+    manager.subscribe((detail) => {
+      if (detail.source === 'sync' && !banner.hidden) hide();
+    });
+
+    syncTriggers();
+    if (manager.get() === null) show(false, null);
+  }
+</script>

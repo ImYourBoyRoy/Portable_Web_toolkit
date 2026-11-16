@@ -1,0 +1,12 @@
+/* ./Web_Toolkit/templates/styles/index.css
+ * One import for the whole component set. Order matters: reset and tokens-driven defaults first, utilities next,
+ * then components, then long-form content. Import tokens (a theme) BEFORE this file.
+ */
+@import "./base.css";
+@import "./utilities.css";
+@import "./button.css";
+@import "./form-controls.css";
+@import "./card.css";
+@import "./section.css";
+@import "./hero.css";
+@import "./prose.css";

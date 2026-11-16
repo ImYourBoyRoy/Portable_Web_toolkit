@@ -1,0 +1,14 @@
+{
+  "name": "theme",
+  "description": "Token contract components read, ThemeInit/Toggle/Picker. Themes themselves are installed with site-theme apply.",
+  "requires": [],
+  "files": [
+    { "from": "ThemeInit.astro", "to": "src/components/theme/" },
+    { "from": "ThemeToggle.astro", "to": "src/components/theme/" },
+    { "from": "ThemePicker.astro", "to": "src/components/theme/" }
+  ],
+  "next": [
+    "Install themes: node ./Web_Toolkit/site_theme/bin/site-theme.mjs apply paper ink --pair paper,ink --project-root . (writes src/styles/themes, src/data/themes.json)",
+    "global.css: @import './themes/index.css';"
+  ]
+}

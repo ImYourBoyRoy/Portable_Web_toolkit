@@ -13,8 +13,8 @@ This toolkit is **highly portable**, **spec-driven**, and **AI-Ready**. It is de
 Toolkit commands perform a throttled freshness check once per 24 hours by
 default. A clean `main` checkout of the public toolkit may fast-forward to
 `origin/main`; dirty worktrees, feature branches, exported folders, and
-unmanaged repositories are left untouched. WCAGate follows its unpinned GitHub
-`main` dependency and refreshes when the remote head changes.
+unmanaged repositories are left untouched. WCAGate follows the latest published release
+tag through a semver range (`shared/lib/engine-spec.mjs`) and refreshes when a newer release exists.
 
 Reports are printed for the agent and saved to
 `.runtime/toolkit-auto-update.json`. Set `PORTABLE_TOOLKIT_AUTO_UPDATE=0` to

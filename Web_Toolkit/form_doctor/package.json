@@ -1,0 +1,11 @@
+{
+  "name": "form-doctor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Roy Dawson IV",
+  "license": "MIT",
+  "bin": {
+    "form-doctor": "./bin/form-doctor.mjs"
+  }
+}

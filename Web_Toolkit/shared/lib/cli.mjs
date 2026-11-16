@@ -17,10 +17,10 @@
  */
 
 export const DEFAULT_BOOLEAN_FLAGS = Object.freeze(new Set([
-  'aggressive', 'allow-loopback', 'stale-only', 'apply', 'apply-safe-fixes', 'browser-lighthouse', 'browser-screenshots',
-  'build', 'cloudflare', 'cleanup-dns', 'create-missing', 'current-color', 'debug', 'dry-run', 'force', 'from-profile',
+  'aggressive', 'all', 'allow-contrast-failures', 'allow-loopback', 'allow-noindex', 'stale-only', 'apply', 'apply-safe-fixes', 'browser-lighthouse', 'browser-screenshots',
+  'build', 'cloudflare', 'cleanup-dns', 'create-missing', 'current-color', 'debug', 'dry-run', 'force', 'from-profile', 'full-page',
   'headed', 'help', 'include-assets', 'install-deps', 'json', 'keep-prep', 'lighthouse',
-  'manage-server', 'offline', 'pagespeed', 'quiet', 'replace-references', 'require-llms',
+  'manage-server', 'offline', 'spawn', 'expect-mail-failure', 'pagespeed', 'quiet', 'replace-references', 'require-llms',
   'require-llms-full', 'screenshots', 'strict', 'update-engine', 'verbose', 'version', 'wcag', 'wcag-from-profile', 'wcag-manage-server',
   'yes'
 ]));

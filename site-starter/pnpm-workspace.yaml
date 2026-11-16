@@ -1,0 +1,13 @@
+# pnpm 12 reads project settings from this file (the package.json "pnpm" field is ignored).
+# Copy to the project root next to package.json. npm users keep using package.json "overrides" / "allowScripts".
+
+# Dependencies allowed to run install scripts (native binaries). pnpm fails the install on any other build script.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true
+
+# Keep one copy of yaml across the language-server tooling (mirrors package.json "overrides").
+overrides:
+  yaml: ^2.9.1
+  yaml-language-server: ^2.0.0

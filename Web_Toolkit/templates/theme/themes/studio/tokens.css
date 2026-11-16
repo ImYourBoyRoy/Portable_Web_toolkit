@@ -1,0 +1,39 @@
+/* Studio: Warm light theme: cream paper, terracotta accent, serif display type. */
+:root[data-theme="studio"] {
+  color-scheme: light;
+  --color-bg: #fbf8f3;
+  --color-surface: #f2eae0;
+  --color-surface-raised: #fffdf9;
+  --color-text: #121417;
+  --color-text-muted: #556064;
+  --color-link: #8d3f2e;
+  --color-accent: #a4502f;
+  --color-accent-contrast: #fffdf9;
+  --color-border: #d9cdbf;
+  --color-border-strong: #7b8385;
+  --color-focus: #8d3f2e;
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-sans: "DM Sans", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-sm: 0.35rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.5rem;
+  --shadow-soft: 0 1rem 3rem rgba(18, 20, 23, 0.12);
+  --shadow-raised: 0 1.5rem 4rem rgba(18, 20, 23, 0.2);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+  --space-7: 5rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 160ms;
+  --dur-mid: 320ms;
+  --dur-slow: 640ms;
+  --max-width-content: 72rem;
+  --line-height-body: 1.6;
+  --header-height: 4rem;
+  --color-danger: #a3261b;
+  --color-success: #1f6b3a;
+}

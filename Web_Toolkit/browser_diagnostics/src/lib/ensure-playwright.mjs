@@ -7,10 +7,10 @@
  * a full env bootstrap without operator visibility.
  */
 
-import { spawnSync } from 'node:child_process';
+import { spawnSyncCross } from '../../../shared/lib/spawn-cross.mjs';
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  const result = spawnSyncCross(command, args, {
     cwd: options.cwd || process.cwd(),
     encoding: 'utf8',
     env: process.env,

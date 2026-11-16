@@ -1,0 +1,69 @@
+---
+// ./Web_Toolkit/templates/analytics/components/CloudflareWebAnalytics.astro
+/**
+ * Cloudflare Web Analytics beacon (cookieless, no fingerprinting).
+ * Usage: render once in the base layout. No-op when PUBLIC_CF_BEACON_TOKEN / analytics.json is unset.
+ * Inputs: PUBLIC_CF_BEACON_TOKEN (32-character site token from Cloudflare dashboard > Web Analytics), and in
+ *   src/data/analytics.json: cloudflareWebAnalytics.requireConsent (default true) and .spa (default false).
+ * Behavior: by default the beacon loads only after the visitor allows analytics, like the other providers.
+ *   Set requireConsent to false only if your privacy policy and legal review treat cookieless, aggregate
+ *   measurement as exempt; the beacon is then rendered as a plain server-side <script> for everyone.
+ *   Revoking consent removes the script, but a beacon already running stops on the next page load.
+ * Note: do not also enable "automatic setup" for the same site in the Cloudflare dashboard, or the beacon is
+ *   injected at the edge without consent.
+ */
+import { getAnalyticsConfig } from '../../lib/analytics/load-config';
+import { serializeForScript } from '../../lib/analytics/config';
+import { CF_BEACON_SRC, cfBeaconAttributes } from '../../lib/analytics/providers';
+
+const { enabled, cloudflare } = getAnalyticsConfig();
+const active = enabled && cloudflare ? cloudflare : null;
+const open = active !== null && !active.requireConsent;
+const gated = active !== null && active.requireConsent;
+const beacon = active ? cfBeaconAttributes({ token: active.token, spa: active.spa }) : null;
+---
+
+{open && beacon && <script is:inline defer src={CF_BEACON_SRC} data-cf-beacon={beacon['data-cf-beacon']}></script>}
+
+{gated && beacon && (
+  <script
+    is:inline
+    type="application/json"
+    data-pwt-analytics="cloudflare"
+    set:html={serializeForScript({ beacon: beacon['data-cf-beacon'] })}
+  />
+)}
+
+<script>
+  import { getConsentManager, whenGranted } from '../../lib/analytics/consent';
+  import { deferUntilIdle } from '../../lib/analytics/idle';
+  import { CF_BEACON_SRC } from '../../lib/analytics/providers';
+
+  let beacon = '';
+  try {
+    const raw = document.querySelector('script[data-pwt-analytics="cloudflare"]')?.textContent;
+    beacon = raw ? String((JSON.parse(raw) as { beacon?: unknown }).beacon ?? '') : '';
+  } catch {
+    beacon = '';
+  }
+
+  if (beacon) {
+    const marker = 'data-pwt-cf-beacon';
+
+    const grant = (): void => {
+      if (document.querySelector(`script[${marker}]`)) return;
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = CF_BEACON_SRC;
+      script.setAttribute('data-cf-beacon', beacon);
+      script.setAttribute(marker, '');
+      document.head.append(script);
+    };
+
+    const revoke = (): void => {
+      document.querySelector(`script[${marker}]`)?.remove();
+    };
+
+    whenGranted(getConsentManager(), { grant, revoke }, { defer: (run) => deferUntilIdle(run) });
+  }
+</script>

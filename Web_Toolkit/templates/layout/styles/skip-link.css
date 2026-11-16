@@ -1,0 +1,31 @@
+/* ./src/styles/layout/skip-link.css — first focusable element; visible only on keyboard focus */
+
+.skip-link {
+  position: absolute;
+  z-index: 1000;
+  inset-block-start: 0;
+  inset-inline-start: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(var(--space-2));
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skip-link {
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+}

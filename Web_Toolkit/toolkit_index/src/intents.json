@@ -1,0 +1,185 @@
+{
+  "categories": {
+    "Start a site": [
+      "project-init",
+      "init-site-profile",
+      "site-readiness",
+      "agent-env-setup",
+      "astro-env-setup"
+    ],
+    "Build and style": [
+      "site-templates",
+      "site-theme",
+      "stylesheet-check",
+      "image-pipeline",
+      "brand-doctor",
+      "vectorize-pipeline"
+    ],
+    "Check quality": [
+      "wcag-auditor",
+      "preview-check",
+      "site-snapshots",
+      "browser-diagnostics",
+      "pagespeed-diagnostics",
+      "site-doctor",
+      "site-quality-smoke",
+      "performance-fixes",
+      "form-doctor"
+    ],
+    "Discovery and SEO": [
+      "discovery-doctor",
+      "sourcing-doctor"
+    ],
+    "Cloudflare and deploy": [
+      "cf-agent",
+      "headers-deploy",
+      "cache-purge",
+      "integration-doctor"
+    ],
+    "Keep current": [
+      "package-updater",
+      "toolkit-report",
+      "toolkit-verify",
+      "toolkit-purge",
+      "privacy-check",
+      "junk-purge",
+      "toolkit-index"
+    ],
+    "Content sources": [
+      "instagram-clone"
+    ]
+  },
+  "intents": [
+    {
+      "task": "build a new site, install layout header footer analytics consent contact form styles fonts templates",
+      "use": "site-templates",
+      "then": "show <name> for one template; add layout analytics contact styles fonts --apply (contact-intake only for long forms); then site-theme apply"
+    },
+    {
+      "task": "port already in use, EADDRINUSE, pick a free port, stop the preview server I started, who is using this port, dev server running",
+      "use": "dev-ports",
+      "then": "free --preferred <n> before starting a server; release --port <n> stops only toolkit-owned servers; never stop a foreign process without asking the user"
+    },
+    {
+      "task": "make the site accessible, WCAG, contrast, keyboard focus, screen reader gate",
+      "use": "wcag-auditor",
+      "then": "preview-check contrast for a quick standalone check"
+    },
+    {
+      "task": "compare themes, try other looks, reuse a site's design, re-theme",
+      "use": "site-theme",
+      "then": "compare --all, extract, apply"
+    },
+    {
+      "task": "contact form, inquiry form, form silently loses leads, form says sent but no email arrives, spam honeypot, no-JS form, retry and mailto fallback",
+      "use": "form-doctor",
+      "then": "scan (read-only), then run --spawn after a build to probe a local Worker with a broken mail binding"
+    },
+    {
+      "task": "on-page SEO, titles, meta descriptions, canonical, broken links",
+      "use": "preview-check",
+      "then": "seo --sitemap"
+    },
+    {
+      "task": "sitemap, robots.txt, llms.txt, JSON-LD, markdown twins, agent readiness",
+      "use": "discovery-doctor"
+    },
+    {
+      "task": "performance, Lighthouse, Core Web Vitals, PageSpeed",
+      "use": "pagespeed-diagnostics",
+      "then": "preview-check lighthouse for local previews"
+    },
+    {
+      "task": "horizontal overflow, responsive layout, reduced motion",
+      "use": "preview-check",
+      "then": "layout, motion"
+    },
+    {
+      "task": "upgrade dependencies, Astro major, typescript held back, versions",
+      "use": "package-updater",
+      "then": "run --apply verifies and rolls back; doctor lints starters"
+    },
+    {
+      "task": "convert npm to pnpm, package manager migration",
+      "use": "package-updater",
+      "then": "migrate"
+    },
+    {
+      "task": "deploy, DNS, cache purge, zone hardening, Cloudflare account",
+      "use": "cf-agent",
+      "then": "dry-run first; context shows which account"
+    },
+    {
+      "task": "_headers, security headers, cache baseline",
+      "use": "headers-deploy"
+    },
+    {
+      "task": "favicon, Open Graph images, brand assets",
+      "use": "brand-doctor"
+    },
+    {
+      "task": "convert images to WebP/AVIF, optimize rasters",
+      "use": "image-pipeline"
+    },
+    {
+      "task": "screenshots of pages for galleries or visual regression",
+      "use": "site-snapshots"
+    },
+    {
+      "task": "new site, scaffold, first setup, readiness",
+      "use": "site-readiness",
+      "then": "project-init apply-safe on an empty folder; site-starter skill"
+    },
+    {
+      "task": "is this machine ready, tools missing, Node, Playwright",
+      "use": "site-doctor"
+    },
+    {
+      "task": "check CSS for tokens, hardcoded colors, reduced-motion guard",
+      "use": "stylesheet-check"
+    },
+    {
+      "task": "before sharing the toolkit, privacy scan, secrets",
+      "use": "privacy-check",
+      "then": "toolkit-purge, toolkit-verify"
+    }
+  ],
+  "templates": [
+    [
+      "templates/base",
+      "tsconfig, env types, pnpm settings (site-templates add base)"
+    ],
+    [
+      "templates/theme",
+      "token contract, 5 themes, ThemeInit/Toggle/Picker"
+    ],
+    [
+      "templates/styles",
+      "component CSS on theme tokens (button, card, hero, form, prose, utilities)"
+    ],
+    [
+      "templates/fonts",
+      "self-hosted fonts: sync-fonts, @font-face with fallback metrics, preload"
+    ],
+    [
+      "templates/layout",
+      "BaseHead, BaseLayout, header/nav/footer, breadcrumbs, skip link"
+    ],
+    [
+      "templates/analytics",
+      "consent banner, GA4/PostHog/CF Web Analytics loaders gated by consent"
+    ],
+    [
+      "templates/contact",
+      "contact form with Turnstile and a Workers send_email handler"
+    ],
+    [
+      "templates/discovery",
+      "sitemap, llms.txt, robots, JSON-LD, markdown twins, API catalog"
+    ],
+    [
+      "templates/cinematic",
+      "motion and page-system CSS, WebGL hero field"
+    ]
+  ]
+}

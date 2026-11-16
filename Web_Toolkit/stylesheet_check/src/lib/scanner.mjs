@@ -218,7 +218,8 @@ function checkAstroStyleArchitecture(root, findings) {
     'src/layouts/Layout.astro',
     'src/layouts/BaseLayout.astro',
     'src/layouts/RootLayout.astro',
-    'src/components/Layout.astro'
+    'src/components/Layout.astro',
+    'src/components/layout/BaseLayout.astro'
   ];
   let layoutImportsGlobal = false;
   let layoutFound = '';
@@ -403,7 +404,10 @@ export function scanStylesheets(rootPath, options = {}) {
     }
   }
 
-  for (const [name, defs] of tokenDefinitions.entries()) {
+  for (const [name, allDefs] of tokenDefinitions.entries()) {
+    // Theme variants (src/styles/themes/<name>/tokens.css) redefine the same names on purpose, each scoped by
+    // :root[data-theme="<name>"]. They are alternatives to the default, not duplicates of it.
+    const defs = allDefs.filter((entry) => !/(^|\/)themes\//.test(entry.file));
     const files = [...new Set(defs.map((entry) => entry.file))];
     if (files.length <= 1) continue;
     const values = [...new Set(defs.map((entry) => entry.value))];

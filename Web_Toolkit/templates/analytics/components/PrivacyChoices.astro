@@ -1,0 +1,30 @@
+---
+// ./Web_Toolkit/templates/analytics/components/PrivacyChoices.astro
+/**
+ * Footer control that re-opens the analytics consent banner so visitors can change their choice at any time.
+ * Usage: <PrivacyChoices /> inside the footer (any element is fine; it is a real <button>).
+ * Behavior: stays hidden until <AnalyticsConsent /> initializes, and renders nothing when no provider needs
+ * consent. Any element with the data-pwt-privacy-choices attribute works as a trigger too.
+ */
+import { getAnalyticsConfig } from '../../lib/analytics/load-config';
+
+interface Props {
+  label?: string;
+  class?: string;
+}
+
+const config = getAnalyticsConfig();
+const { label = 'Privacy choices', class: className } = Astro.props;
+const render = config.enabled && config.needsConsent;
+---
+
+{render && (
+  <button
+    type="button"
+    class:list={['pwt-privacy-choices', className]}
+    aria-controls="pwt-analytics-consent"
+    aria-expanded="false"
+    data-pwt-privacy-choices
+    hidden
+  >{label}</button>
+)}

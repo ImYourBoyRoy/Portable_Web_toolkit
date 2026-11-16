@@ -1,0 +1,52 @@
+/* ./src/styles/layout/layout-shell.css — page frame: sticky-footer body, container, scroll offsets, visually-hidden */
+
+.site-body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: var(--line-height-body);
+}
+
+.site-main {
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+/* <main tabindex="-1"> receives programmatic focus from the skip link; it is not a control, so no ring around the page. */
+.site-main:focus {
+  outline: none;
+}
+
+/* Zero specificity so a site's own .container wins without a fight. */
+:where(.container) {
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+/*
+ * Sticky header must never cover the element that receives focus or an anchor jump (WCAG 2.4.11).
+ * scroll-padding-top on the root applies to keyboard focus, #hash jumps and scrollIntoView. For a custom scroll
+ * container, put the same calc() on that container, or use scroll-margin-top on the targets.
+ */
+:root[data-sticky-header] {
+  scroll-padding-top: calc(var(--header-height) + var(--space-3));
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

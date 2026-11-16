@@ -5,8 +5,9 @@
  * The preflight may update two independent resources:
  *   1. this toolkit, but only from a clean public-repository main branch that
  *      can fast-forward to origin/main;
- *   2. WCAGate, from the public GitHub main branch, installed into the
- *      toolkit's ignored node_modules directory.
+ *   2. WCAGate, the highest published release tag that satisfies the semver range in
+ *      engine-spec.mjs (never a pinned version), installed into the toolkit's ignored
+ *      node_modules directory.
  *
  * It never overwrites dirty work, feature branches, unmanaged repositories, or
  * exported toolkit folders. Runtime state is intentionally kept under
@@ -15,12 +16,19 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSyncCross } from './spawn-cross.mjs';
+import {
+  WCAGATE_RANGE,
+  WCAGATE_REPOSITORY,
+  WCAGATE_SPEC,
+  compareVersions,
+  engineInstallCommand,
+  latestReleaseTag,
+  parseVersion
+} from './engine-spec.mjs';
 
 const TOOLKIT_REPOSITORY = 'github.com/imyourboyroy/portable_web_toolkit';
 const TOOLKIT_BRANCH = 'main';
-const WCAGATE_REPOSITORY = 'https://github.com/imyourboyroy/WCAGate.git';
-const WCAGATE_SPEC = 'github:imyourboyroy/WCAGate';
 const STATE_FILE = path.join('.runtime', 'toolkit-auto-update.json');
 const DEFAULT_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const FAILURE_RETRY_MS = 60 * 60 * 1000;
@@ -57,12 +65,8 @@ function writeState(filePath, state) {
   fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
 }
 
-function commandName(name) {
-  return process.platform === 'win32' && name === 'npm' ? 'npm.cmd' : name;
-}
-
 function run(command, args, options = {}) {
-  const result = spawnSync(commandName(command), args, {
+  const result = spawnSyncCross(command, args, {
     cwd: options.cwd,
     encoding: 'utf8',
     stdio: 'pipe',
@@ -255,53 +259,51 @@ function inspectToolkit(portableRoot) {
   };
 }
 
-function remoteWcagHead() {
-  const result = run('git', ['ls-remote', '--heads', WCAGATE_REPOSITORY, 'main']);
+function remoteWcagRelease() {
+  const result = run('git', ['ls-remote', '--tags', WCAGATE_REPOSITORY]);
   if (!result.ok) {
-    return { ok: false, reason: `Could not check WCAGate main${lastLine(result.stderr || result.error) ? `: ${lastLine(result.stderr || result.error)}` : ''}` };
+    return { ok: false, reason: `Could not check WCAGate releases${lastLine(result.stderr || result.error) ? `: ${lastLine(result.stderr || result.error)}` : ''}` };
   }
-  const head = result.stdout.split(/\s+/)[0] || '';
-  return head ? { ok: true, head } : { ok: false, reason: 'WCAGate main returned no commit.' };
+  const release = latestReleaseTag(result.stdout, WCAGATE_RANGE);
+  return release
+    ? { ok: true, ...release }
+    : { ok: false, reason: `WCAGate has no release tag satisfying "${WCAGATE_RANGE}".` };
 }
 
 function updateWcagEngine(portableRoot, previous = {}) {
   const installed = validEngineRoot(portableRoot);
-  const remote = remoteWcagHead();
+  const remote = remoteWcagRelease();
   if (!remote.ok) {
     return {
       status: 'error',
       installedVersion: installed.version,
       installed: installed.valid,
-      remoteHead: previous.remoteHead || null,
+      remoteVersion: previous.remoteVersion || null,
       reason: remote.reason
     };
   }
 
-  if (installed.valid && previous.remoteHead === remote.head) {
+  const installedParsed = parseVersion(installed.version);
+  const upToDate = installed.valid && installedParsed && compareVersions(installedParsed, remote.version.split('.').map(Number)) >= 0;
+  if (upToDate) {
     return {
       status: 'current',
       installedVersion: installed.version,
       installed: true,
-      remoteHead: remote.head
+      remoteVersion: remote.version
     };
   }
 
-  const install = run('npm', [
-    'install',
-    WCAGATE_SPEC,
-    '--allow-git=all',
-    '--no-audit',
-    '--no-fund',
-    '--package-lock=false'
-  ], { cwd: portableRoot, timeout: 120_000 });
+  const plan = engineInstallCommand({ refresh: true });
+  const install = run(plan.command, plan.args, { cwd: portableRoot, timeout: 120_000 });
   const refreshed = validEngineRoot(portableRoot);
   if (!install.ok || !refreshed.valid) {
     return {
       status: 'error',
       installedVersion: refreshed.version || installed.version,
       installed: refreshed.valid,
-      remoteHead: previous.remoteHead || null,
-      targetHead: remote.head,
+      remoteVersion: previous.remoteVersion || null,
+      targetVersion: remote.version,
       reason: `WCAGate update failed${lastLine(install.stderr || install.error) ? `: ${lastLine(install.stderr || install.error)}` : ` (exit ${install.status})`}`
     };
   }
@@ -309,8 +311,8 @@ function updateWcagEngine(portableRoot, previous = {}) {
     status: 'updated',
     installedVersion: refreshed.version,
     installed: true,
-    remoteHead: remote.head,
-    reason: previous.remoteHead ? 'WCAGate main changed; installed the current GitHub head.' : 'Installed the current WCAGate GitHub head.'
+    remoteVersion: remote.version,
+    reason: `Installed WCAGate ${refreshed.version} (latest release satisfying "${WCAGATE_RANGE}", ${remote.tag}).`
   };
 }
 

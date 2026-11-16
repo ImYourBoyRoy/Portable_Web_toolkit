@@ -1,0 +1,242 @@
+/* ./Web_Toolkit/templates/contact/styles/contact-form.css
+ * Contact form. Reads only semantic contract tokens (templates/theme/tokens.contract.json), so any installed
+ * theme re-skins it. Import once from the global stylesheet.
+ * The contract has no error/success colors yet: state is carried by text, weight and border style, never by
+ * color alone, and uses --color-accent / --color-text so it stays AA in every theme.
+ */
+
+.contact-form {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-4);
+  inline-size: 100%;
+  max-inline-size: var(--max-width-content);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: var(--line-height-body);
+}
+
+.contact-form__intro,
+.contact-form__hint,
+.contact-form__notice {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.contact-form__field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.contact-form__field label {
+  font-weight: 600;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.contact-form textarea {
+  min-block-size: 9rem;
+  resize: vertical;
+}
+
+.contact-form input:hover,
+.contact-form select:hover,
+.contact-form textarea:hover {
+  border-color: var(--color-text-muted);
+}
+
+.contact-form input:focus-visible,
+.contact-form select:focus-visible,
+.contact-form textarea:focus-visible,
+.contact-form__submit:focus-visible,
+.contact-form__status:focus-visible,
+.contact-form__notice a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.contact-form [aria-invalid='true'] {
+  border-color: var(--color-text);
+  border-width: 2px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Field errors: always text, introduced by a label so color is never the only signal (WCAG 1.4.1). */
+.contact-form__error {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.contact-form__error:empty {
+  display: none;
+}
+
+.contact-form__error::before {
+  content: 'Error: ';
+}
+
+/* Honeypot: off-screen and inert, not display:none, so naive bots still fill it. */
+.contact-form__trap {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.contact-form__verify {
+  min-block-size: 0;
+}
+
+.contact-form__submit {
+  justify-self: start;
+  box-sizing: border-box;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: var(--space-2) var(--space-5);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.contact-form__submit:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.contact-form__submit[aria-disabled='true'] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.contact-form__status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.contact-form__status:empty {
+  display: none;
+}
+
+.contact-form__status:not(:empty) {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-inline-start: var(--space-2) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.contact-form__status[data-state='error']:not(:empty) {
+  border-inline-start-color: var(--color-text);
+  border-inline-start-style: double;
+}
+
+.contact-form__status[data-state='error']:not(:empty)::before {
+  content: 'Problem: ';
+}
+
+.contact-form__status[data-state='success']:not(:empty)::before {
+  content: 'Sent: ';
+}
+
+.contact-form__notice a {
+  color: var(--color-link);
+  text-underline-offset: 0.2em;
+}
+
+.contact-form__recovery,
+.contact-form__draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.contact-form__recovery[hidden],
+.contact-form__draft[hidden] {
+  display: none;
+}
+
+.contact-form__draft {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.contact-form__retry {
+  box-sizing: border-box;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contact-form__mailto,
+.contact-form__draft-clear {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-link);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.contact-form__retry:focus-visible,
+.contact-form__mailto:focus-visible,
+.contact-form__draft-clear:focus-visible,
+.contact-form__status:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-form input,
+  .contact-form select,
+  .contact-form textarea,
+  .contact-form__submit {
+    transition: none;
+  }
+}
+
+@media (max-width: 30rem) {
+  .contact-form__submit {
+    justify-self: stretch;
+  }
+}

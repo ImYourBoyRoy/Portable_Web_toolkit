@@ -1,0 +1,11 @@
+{
+  "name": "site-theme",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "Roy Dawson IV",
+  "license": "MIT",
+  "bin": {
+    "site-theme": "./bin/site-theme.mjs"
+  }
+}

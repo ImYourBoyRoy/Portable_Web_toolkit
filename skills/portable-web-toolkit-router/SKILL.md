@@ -13,17 +13,24 @@ Only this router is `install_by_default` / globally installed.
 
 ## Route first
 
+First stop for any task: `docs/TOOLS.md` or `node <toolkit>/Web_Toolkit/toolkit_index/bin/toolkit-index.mjs find "<task>"`. The table below routes to skills.
+
 | Need | Skill |
 |---|---|
 | New machine, Cloudflare beginner, guided setup | `site-onboarding` → `docs/agent-skills/ONBOARDING_STAGES.md` |
 | New site scaffold only (already onboarded) | `site-starter` (ask Workers vs Pages first) |
 | Readiness / gates | `site-readiness` |
 | Deploy / Cloudflare ops | `portable-web-toolkit` |
-| Full upgrade → smoke → deploy → purge → warm → PSI | `site-maintenance` → `HOW_TO.md` |
+| Full upgrade → smoke → deploy → purge → warm → PSI | `site-maintenance` (HOW_TO.md § Healthy order of operations only) |
 | Accessibility evidence | `wcag-auditor` → `Web_Toolkit/wcag_auditor` wrapper (engine in `node_modules/@imyourboyroy/wcagate`; never `AI/`) |
 | PageSpeed Insights | `pagespeed-diagnostics` |
 | Discovery layer (robots/sitemap/llms) | `discovery-doctor` |
 | Brand / favicon / OG | `brand-doctor` |
+| Layout, header/footer, consent, contact/intake form, styles, fonts, form checks | `site-templates` |
+| Re-theme, compare themes, reuse a design | `site-theme` |
+| On-page SEO, broken links | `preview-check seo` (see `docs/agent-skills/MCP_INTEGRATIONS.md`) |
+| Which MCP/plugin for what (Cloudflare API vs connector, Axe, Svelte, Playwright) | `docs/agent-skills/MCP_INTEGRATIONS.md` |
+| Dependency upgrades, Astro majors | `package-updater` (peer-aware, verifies, rolls back) |
 | Raster → WebP | `image-pipeline` |
 | Toolkit freshness | `toolkit-update` |
 | Instagram gallery | `instagram-clone` |

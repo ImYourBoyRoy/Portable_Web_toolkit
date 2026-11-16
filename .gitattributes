@@ -1,0 +1,22 @@
+# Normalize text to LF in the repository and in every checkout (Git for Windows defaults to autocrlf=true, which turns
+# SKILL.md into CRLF and breaks the content_sha256 integrity checks, and turns .sh/.command into scripts macOS and Linux cannot run).
+* text=auto eol=lf
+
+# Windows batch wrappers keep their bytes exactly as committed.
+*.bat -text
+*.cmd -text
+
+# Binary assets are never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.pdf binary

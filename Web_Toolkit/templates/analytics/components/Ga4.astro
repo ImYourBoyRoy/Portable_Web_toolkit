@@ -1,0 +1,99 @@
+---
+// ./Web_Toolkit/templates/analytics/components/Ga4.astro
+/**
+ * Google Analytics 4 (gtag.js), loaded ONLY after the visitor allows analytics.
+ * Usage: render once in the base layout (head or body). No-op when PUBLIC_GA4_ID / analytics.json is unset.
+ * Inputs: PUBLIC_GA4_ID (or ga4.measurementId in src/data/analytics.json), PUBLIC_ANALYTICS_ENABLED=false to disable.
+ * Outputs: window.dataLayer / window.gtag after consent; page views and GA4 events.
+ * Side effects: requests to googletagmanager.com and google-analytics.com after consent only. Uses Consent Mode v2
+ *   with advertising storage always denied. Revoking consent sets the documented `ga-disable-<id>` flag, updates
+ *   Consent Mode to denied and clears the _ga* cookies.
+ */
+import { getAnalyticsConfig } from '../../lib/analytics/load-config';
+import { serializeForScript } from '../../lib/analytics/config';
+
+const { enabled, ga4 } = getAnalyticsConfig();
+const payload = enabled && ga4 ? serializeForScript({ id: ga4.id }) : '';
+---
+
+{payload && <script is:inline type="application/json" data-pwt-analytics="ga4" set:html={payload} />}
+
+<script>
+  import { getConsentManager, whenGranted } from '../../lib/analytics/consent';
+  import { deferUntilIdle } from '../../lib/analytics/idle';
+  import {
+    cookieClearDomains,
+    ga4ConsentPayload,
+    ga4DisableKey,
+    ga4ScriptUrl,
+    isGoogleAnalyticsCookie,
+    isPreviewHost
+  } from '../../lib/analytics/providers';
+
+  type Gtag = (...args: unknown[]) => void;
+  const w = window as unknown as Record<string, unknown> & { dataLayer?: unknown[]; gtag?: Gtag };
+
+  let id = '';
+  try {
+    const raw = document.querySelector('script[data-pwt-analytics="ga4"]')?.textContent;
+    id = raw ? String((JSON.parse(raw) as { id?: unknown }).id ?? '') : '';
+  } catch {
+    id = '';
+  }
+
+  if (id) {
+    let loaded = false;
+
+    const clearCookies = (): void => {
+      const names = document.cookie
+        .split(';')
+        .map((cookie) => cookie.split('=')[0].trim())
+        .filter(isGoogleAnalyticsCookie);
+      const expired = 'Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+      for (const name of names) {
+        document.cookie = `${name}=; ${expired}`;
+        for (const domain of cookieClearDomains(location.hostname)) document.cookie = `${name}=; ${expired}; domain=${domain}`;
+      }
+    };
+
+    const grant = (): void => {
+      w[ga4DisableKey(id)] = false;
+      if (loaded) {
+        w.gtag?.('consent', 'update', ga4ConsentPayload(true));
+        w.gtag?.('event', 'page_view');
+        return;
+      }
+      loaded = true;
+      w.dataLayer = w.dataLayer || [];
+      if (!w.gtag) {
+        // gtag.js reads `arguments` objects from the data layer, so a rest-args arrow function would break it.
+        w.gtag = function gtag() {
+          // eslint-disable-next-line prefer-rest-params
+          w.dataLayer?.push(arguments);
+        };
+      }
+      const gtag = w.gtag as Gtag;
+      gtag('consent', 'default', ga4ConsentPayload(false));
+      gtag('consent', 'update', ga4ConsentPayload(true));
+      gtag('js', new Date());
+      gtag('config', id, {
+        send_page_view: true,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+        debug_mode: isPreviewHost(location.hostname)
+      });
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = ga4ScriptUrl(id);
+      document.head.append(script);
+    };
+
+    const revoke = (): void => {
+      w[ga4DisableKey(id)] = true;
+      w.gtag?.('consent', 'update', ga4ConsentPayload(false));
+      clearCookies();
+    };
+
+    whenGranted(getConsentManager(), { grant, revoke }, { defer: (run) => deferUntilIdle(run) });
+  }
+</script>

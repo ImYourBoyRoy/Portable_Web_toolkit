@@ -1,0 +1,45 @@
+{
+  "name": "layout",
+  "description": "BaseHead, BaseLayout, SiteHeader (mobile menu), SiteFooter, Breadcrumbs, skip link; head/SEO model and nav as unit-tested TS.",
+  "requires": [
+    "theme",
+    "discovery"
+  ],
+  "files": [
+    {
+      "from": "*.astro",
+      "to": "src/components/layout/"
+    },
+    {
+      "from": "lib/*.ts",
+      "to": "src/lib/"
+    },
+    {
+      "from": "styles/*.css",
+      "to": "src/styles/layout/"
+    },
+    {
+      "from": "site.example.json",
+      "to": "src/data/site.json",
+      "keepExisting": true
+    },
+    {
+      "from": "nav.example.json",
+      "to": "src/data/nav.json",
+      "keepExisting": true
+    },
+    {
+      "from": "footer.example.json",
+      "to": "src/data/footer.json",
+      "keepExisting": true
+    }
+  ],
+  "cssImports": [],
+  "next": [
+    "Edit src/data/site.json, nav.json, footer.json (placeholder origin and @yourhandle force noindex until replaced).",
+    "BaseLayout imports global.css and layout/layout.css itself; global.css must @import './themes/index.css'.",
+    "Wrap pages: <BaseLayout title=\"About\" description=\"...\">; put <ThemeToggle slot=\"theme-toggle\" /> in the header.",
+    "Add real public/favicon.svg, apple-touch-icon.png, manifest.webmanifest, og-default.png (brand-doctor).",
+    "Static pages need `export const prerender = true;` in their frontmatter (the starter is SSR), or dist/client has no HTML and discovery-doctor reports a missing homepage. Before discovery-doctor: set PUBLIC_SECURITY_CONTACT (mailto:...) and run `<pm> run build:headers:prod` (writes the security headers)."
+  ]
+}

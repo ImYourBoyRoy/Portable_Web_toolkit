@@ -1,0 +1,349 @@
+/* ./Web_Toolkit/templates/styles/form-controls.css
+ * Form controls: field wrapper, label, hint, error, input/select/textarea, checkbox/radio, fieldset, notices.
+ * Reads --color-*, --font-sans, --space-*, --radius-*, --line-height-body, --dur-fast, --ease-out.
+ *
+ * Markup:
+ *   <div class="field">
+ *     <label class="field__label field__label--required" for="email">Email</label>
+ *     <input class="input" id="email" type="email" required aria-describedby="email-hint email-error">
+ *     <p class="field__hint" id="email-hint">We reply within a day.</p>
+ *     <p class="field__error" id="email-error" hidden>Enter a valid email address.</p>
+ *   </div>
+ * Invalid state: set aria-invalid="true" on the control (or .is-invalid). Errors never rely on color alone:
+ * a thicker edge plus the "!" marker on .field__error, drawn in --color-danger (AA on page and surface). Control edges use --color-border-strong (3:1).
+ */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form__row {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 40rem) {
+  .form__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Spam trap: off-screen, not display:none, so naive bots still fill it. Mark the input aria-hidden and tabindex -1. */
+.form__honeypot {
+  position: absolute;
+  inset-inline-start: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.field__label,
+.fieldset__legend {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.field__label--required::after {
+  content: "*";
+  margin-inline-start: 0.25em;
+}
+
+.field__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.45;
+  color: var(--color-danger);
+}
+
+.field__error::before {
+  content: "!";
+  content: "!" / "";
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* ---- Text-like controls (zero specificity so one class can override anything here) ---- */
+:where(
+  .input,
+  .select,
+  .textarea,
+  .field :is(input, select, textarea):not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="submit"], [type="button"], [type="reset"], [type="image"], [type="hidden"])
+) {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover,
+.field :is(input, select, textarea):not(:disabled):hover {
+  border-color: var(--color-text);
+}
+
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible,
+.field :is(input, select, textarea):focus-visible {
+  border-color: var(--color-text);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.textarea,
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.input:disabled,
+.select:disabled,
+.textarea:disabled,
+.field :is(input, select, textarea):disabled {
+  border-style: dashed;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg);
+  cursor: not-allowed;
+}
+
+.input[readonly],
+.textarea[readonly] {
+  background-color: var(--color-bg);
+}
+
+/* Invalid: a doubled edge (border plus inset ring) in the danger color, paired with .field__error text and its marker. */
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"],
+.input.is-invalid,
+.select.is-invalid,
+.textarea.is-invalid,
+.field :is(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  box-shadow: inset 0 0 0 1px var(--color-danger);
+}
+
+.input:user-invalid,
+.textarea:user-invalid {
+  border-color: var(--color-danger);
+  box-shadow: inset 0 0 0 1px var(--color-text);
+}
+
+/* ---- Select: native picker, custom chevron drawn with gradients in the text color ---- */
+.select,
+.field select {
+  padding-inline-end: calc(var(--space-3) + 1.75rem);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.375rem) 50%,
+    calc(100% - 1rem) 50%;
+  background-size: 0.375rem 0.375rem;
+  background-repeat: no-repeat;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* ---- Checkbox and radio: .check wraps the input and its label text; the whole row is the 44px target ---- */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding-block: var(--space-2);
+  line-height: 1.4;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.check input {
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin: 0.0625rem 0 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  background-color: var(--color-surface);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.check input[type="radio"] {
+  border-radius: 50%;
+}
+
+.check input::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: var(--color-accent-contrast);
+  transform: scale(0);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.check input[type="checkbox"]::before {
+  clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 21%, 85% 8%, 40% 66%);
+}
+
+.check input[type="radio"]::before {
+  border-radius: 50%;
+}
+
+.check input:checked,
+.check input:indeterminate {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+}
+
+.check input:checked::before {
+  transform: scale(1);
+}
+
+.check input[type="checkbox"]:indeterminate::before {
+  clip-path: polygon(0 40%, 100% 40%, 100% 60%, 0 60%);
+  transform: scale(1);
+}
+
+.check input:hover {
+  border-color: var(--color-text);
+}
+
+.check input:hover:checked {
+  border-color: var(--color-accent);
+}
+
+.check input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.check input[aria-invalid="true"] {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-text);
+}
+
+.check input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.check:has(input:disabled) {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---- Fieldset: groups radios/checkboxes; --boxed adds a card-like frame ---- */
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fieldset--boxed {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+}
+
+.fieldset__legend {
+  padding: 0;
+  margin-block-end: var(--space-1);
+}
+
+/* ---- Notice: form-level feedback (success, failure). Role/aria-live is the author's job; no color-only meaning. ---- */
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-inline-start: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.notice--error {
+  border-color: var(--color-danger);
+  border-inline-start-width: 6px;
+}
+
+/* ---- Forced colors: restore native widgets where our drawn ones would vanish ---- */
+@media (forced-colors: active) {
+  .select,
+  .check input {
+    -webkit-appearance: auto;
+    appearance: auto;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    border-color: currentColor;
+  }
+}

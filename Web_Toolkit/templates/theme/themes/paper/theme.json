@@ -1,0 +1,7 @@
+{
+  "name": "paper",
+  "label": "Paper",
+  "scheme": "light",
+  "description": "Quiet editorial light theme: warm white, near-black text, blue accent, serif headings.",
+  "source": "portable-web-toolkit starter"
+}

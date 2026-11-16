@@ -432,6 +432,42 @@
             "serverTimeoutMs": {
               "type": "integer",
               "minimum": 1
+            },
+            "sitemap": {
+              "type": "boolean",
+              "description": "Audit the routes listed in sitemap.xml instead of routes[] (WCAGate 2.4+)."
+            },
+            "sitemapUrl": {
+              "type": "string",
+              "description": "Sitemap URL or file when it is not <baseURL>/sitemap.xml."
+            },
+            "maxRoutes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap on routes taken from the sitemap (default 50)."
+            },
+            "matrix": {
+              "type": "object",
+              "description": "Run every route in each color scheme and viewport (WCAGate 2.4+).",
+              "properties": {
+                "colorSchemes": {
+                  "type": "array",
+                  "items": { "enum": ["light", "dark"] }
+                },
+                "viewports": {
+                  "type": "array",
+                  "items": { "enum": ["mobile", "tablet", "desktop"] }
+                }
+              },
+              "additionalProperties": false
+            },
+            "baseline": {
+              "type": "string",
+              "description": "Baseline file (relative to project root): known findings stop blocking, only new ones do."
+            },
+            "unresolvedEvidence": {
+              "enum": ["error", "ignore"],
+              "description": "Profile-built runs ignore cantTell/untested by default; set \"error\" to fail closed (exit 3)."
             }
           },
           "additionalProperties": true

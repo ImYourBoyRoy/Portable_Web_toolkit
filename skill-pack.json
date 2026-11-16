@@ -2,7 +2,7 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.4.0",
-  "toolkit_version": "0.5.1",
+  "toolkit_version": "0.6.1",
   "source_base_commit": "fffa17c8f95e3613b0b1530107e06e010fe16675",
   "skills": [
     {
@@ -57,7 +57,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/portable-web-toolkit",
-      "content_sha256": "4a0237e61972fd597cbab0f2a8870b862dcc666c03a31961798fb37581dbf7d3"
+      "content_sha256": "a3ce15cb39cfcebada5817f1062017a96beea0358c3a4c47687463b6b71eee8e"
     },
     {
       "name": "portable-web-toolkit-router",
@@ -66,7 +66,7 @@
       "status": "stable",
       "install_by_default": true,
       "path": "skills/portable-web-toolkit-router",
-      "content_sha256": "38cfd31e7d427b43e83b33188b507382a623913189bc39eee4ef5d4a87067da4"
+      "content_sha256": "570b088989e19a8874c602c54e3509492064a43d2c865a8821780632f1df1908"
     },
     {
       "name": "site-maintenance",
@@ -75,7 +75,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-maintenance",
-      "content_sha256": "5dc04c0d5e45932f1e02239b814d35e28833333fd09fbab79de89fb51e82e5b9"
+      "content_sha256": "704ede9cbef9ec0c925ce4f66190e4fadadab6cb372bb216cecce4148215228d"
     },
     {
       "name": "site-onboarding",
@@ -102,7 +102,25 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-starter",
-      "content_sha256": "bef2f1cc390b1be61def973ed36b4bb1238704414905bc39d3e508b25c003cfe"
+      "content_sha256": "affdf45c552b55a2f6c48ad26a4f34e4e7bb0718e63d1e3b2c43b72c4f39e463"
+    },
+    {
+      "name": "site-templates",
+      "version": "1.0.0",
+      "tier": "core",
+      "status": "stable",
+      "install_by_default": false,
+      "path": "skills/site-templates",
+      "content_sha256": "7b8cf33b7f191fa9452291610e4404239d81005f5ec3d639720943fbbd7ef218"
+    },
+    {
+      "name": "site-theme",
+      "version": "1.0.0",
+      "tier": "optional",
+      "status": "stable",
+      "install_by_default": false,
+      "path": "skills/site-theme",
+      "content_sha256": "7defaca83a12d08d1b3c0fbe21fdc2cce660edaed8bc5395078004f6385c325b"
     },
     {
       "name": "toolkit-update",
@@ -111,7 +129,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/toolkit-update",
-      "content_sha256": "f5dc09814b355f432eb7d50d567b74ebd03e87e40d7becd19572643ba4be022b"
+      "content_sha256": "3742c11e8e22db3c016e6e607621c56a885a97c807a47edb7ba62cc548e44c78"
     },
     {
       "name": "vectorize-pipeline",
@@ -129,7 +147,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/wcag-auditor",
-      "content_sha256": "36d861045c01846216204ba93ef17a251bb2e5ee4c8e8f624372183d742b5ab3"
+      "content_sha256": "2f9646b81d4989c530d2dbce864abc5639d0a534e1bf502d6fe9100accaa10cc"
     }
   ]
 }

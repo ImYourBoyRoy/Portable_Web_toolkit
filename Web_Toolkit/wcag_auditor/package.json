@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node ./bin/wcag-auditor.mjs",
     "test": "node --unhandled-rejections=strict --throw-deprecation --test --test-reporter=spec ./tests/*.test.mjs",
-    "check": "npm test"
+    "check": "pnpm test"
   },
   "author": "Roy Dawson IV",
   "license": "MIT",

@@ -7,7 +7,7 @@ before a deploy and encodes the rules that keep cinematic pages fast and accessi
 |---------|----------------|
 | `lighthouse` | Scores, core metrics and failing audits for each route and strategy (mobile and desktop). Raw reports go to `output/preview-check/`. |
 | `layout` | No horizontal overflow at 375, 768 and 1440 px; names the offending elements (for example a `1fr` grid stretched by a `nowrap` code block). |
-| `contrast` | Every visible text node against its resolved background in dark and light schemes (optionally after a click, such as opening the mobile menu). Lists WCAG AA failures, separating certain ones from backgrounds with images or gradients. axe/WCAGate report translucent backgrounds only as `cantTell`, so this is the check that catches white text on a pale button. |
+| `contrast` | Every visible text node against its resolved background in dark and light schemes (optionally after a click, such as opening the mobile menu). Lists WCAG AA failures, separating certain ones from backgrounds with images or gradients. WCAGate 2.4+ now measures those axe incompletes from rendered pixels itself, so a normal `wcag-auditor run` catches white text on a pale button; this command remains the quick standalone check (no axe needed) and the one that can click into a state first (for example the mobile menu). |
 | `motion` | Reduced motion leaves no scroll-driven or infinite animation and no canvas; no above-the-fold text is gated by opacity (LCP risk); no canvas on a phone viewport; the page has real content with JavaScript off. |
 
 ## Usage

@@ -4,6 +4,7 @@
 
 ## Do first
 
+0. [`../docs/TOOLS.md`](../docs/TOOLS.md) (which tool for which task)
 1. [`../START_HERE.md`](../START_HERE.md)
 2. `README.md`
 3. `OPERATIONS.md` (reference — primary path is `site-readiness` JSON)
@@ -24,12 +25,12 @@ does not override client safety or release policy.
 - Live MCP discovery is read-only: probe modern `2026-07-28` `server/discover`/list methods with legacy fallback; never call tools or attach credentials. Local SSR/MCP routes are runtime-only evidence and require a live check.
 - `security.txt` is required for production by default; development, preview, and staging policies may omit it because the generator intentionally returns 404 on non-indexable hosts.
 - `site-readiness run` before material work when current evidence is absent or stale
-- Automatic freshness runs at most once per 24 hours. It may fast-forward only a clean public `main` checkout; it never overwrites dirty, feature, exported, or unmanaged state. WCAGate refresh follows the public GitHub `main` head.
+- Automatic freshness runs at most once per 24 hours. It may fast-forward only a clean public `main` checkout; it never overwrites dirty, feature, exported, or unmanaged state. WCAGate refresh follows the latest published release tag (semver range, never a pinned version).
 
 ## Site deploy gate
 
 1. `site-readiness run` → read JSON report
-2. `npm run check` → `npm run build`
+2. `<pm> run check` → `<pm> run build` (`<pm>` = the site's package manager, pnpm by default)
 3. `discovery-doctor` on `./dist`
 4. Staging → smoke → production → live discovery
 5. Sync **client** `MEMORY.md` + Brand Guide if identity changed

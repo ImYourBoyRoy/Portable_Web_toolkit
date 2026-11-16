@@ -12,6 +12,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseRoutes, resolveBase, slugForRoute } from '../lib/browser.mjs';
+import { binaryCommand, detectPackageManager } from '../../../shared/lib/package-manager.mjs';
 
 const SKIP_DISPLAY_MODES = new Set(['informative', 'manual', 'notApplicable']);
 
@@ -47,14 +48,16 @@ export async function runLighthouse(flags = {}) {
     for (const strategy of strategies) {
       const reportPath = path.join(outDir, `lighthouse-${slugForRoute(route)}-${strategy}.json`);
       const args = [
-        '--yes', 'lighthouse', `${base}${route}`,
+        `${base}${route}`,
         '--quiet',
         '--only-categories=performance,accessibility,best-practices,seo',
         ...(strategy === 'desktop' ? ['--preset=desktop'] : []),
         '--output=json', `--output-path=${reportPath}`,
         '--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage',
       ];
-      const run = spawnSync('npx', args, { cwd: projectRoot, encoding: 'utf8', env: process.env, shell: process.platform === 'win32' });
+      // Lighthouse is run without installing it: npx --yes / pnpm dlx / yarn dlx / bun x, per the project's package manager.
+      const [pmBin, pmArgs] = binaryCommand(detectPackageManager(projectRoot).name, 'lighthouse', args, { dlx: true });
+      const run = spawnSync(pmBin, pmArgs, { cwd: projectRoot, encoding: 'utf8', env: process.env, shell: process.platform === 'win32' });
       if (!fs.existsSync(reportPath)) {
         results.push({ route, strategy, ok: false, error: (run.stderr || run.stdout || 'Lighthouse produced no report').slice(0, 400) });
         continue;

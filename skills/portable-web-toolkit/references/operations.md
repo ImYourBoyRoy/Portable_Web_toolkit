@@ -12,7 +12,7 @@ contract. Verify exact flags rather than relying on this routing index.
 | Accessibility evidence gate | `wcag-auditor` skill → `Web_Toolkit/wcag_auditor` wrapper (WCAGate in `Web_Toolkit/node_modules`; never `AI/`) |
 | PageSpeed Insights | `pagespeed-diagnostics` skill → `pagespeed-diagnostics` CLI |
 | Discovery layer | `discovery-doctor` skill |
-| Maintenance loop | `site-maintenance` skill → `HOW_TO.md` |
+| Maintenance loop | `site-maintenance` skill → `HOW_TO.md` § Healthy order of operations |
 | Discovery validation | `discovery-doctor` |
 | Legacy CMS harvest | `sourcing-doctor` |
 | Cloudflare audit or authorized mutation | `cf-agent` |

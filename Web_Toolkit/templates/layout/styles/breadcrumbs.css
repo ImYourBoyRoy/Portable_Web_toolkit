@@ -1,0 +1,53 @@
+/* ./src/styles/layout/breadcrumbs.css — trail above the page heading */
+
+.breadcrumbs {
+  padding-block: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.breadcrumbs__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+/* Decorative separator; the alt-text form (after the slash) keeps screen readers from announcing it. */
+.breadcrumbs__item + .breadcrumbs__item::before {
+  content: '/';
+  content: '/' / '';
+  padding-inline: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-link);
+  text-underline-offset: 0.2em;
+}
+
+.breadcrumbs a:hover {
+  color: var(--color-text);
+}
+
+.breadcrumbs a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.breadcrumbs [aria-current='page'] {
+  color: var(--color-text);
+  font-weight: 600;
+}

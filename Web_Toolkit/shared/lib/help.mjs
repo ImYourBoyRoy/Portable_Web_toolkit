@@ -67,6 +67,11 @@ export function renderHelp({
 }
 
 export function printHelp(config = {}) {
+  // PORTABLE_TOOLKIT_HELP_JSON=1 prints the structured help (used by toolkit-index to build docs/TOOLS.md).
+  if (process.env.PORTABLE_TOOLKIT_HELP_JSON === '1') {
+    console.log(JSON.stringify(config));
+    return;
+  }
   console.log(renderHelp(config).trimEnd());
 }
 

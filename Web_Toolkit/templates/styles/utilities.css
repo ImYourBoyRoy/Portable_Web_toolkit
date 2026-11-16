@@ -1,0 +1,214 @@
+/* ./Web_Toolkit/templates/styles/utilities.css
+ * Layout primitives (container, stack, cluster, grid), accessibility helpers (sr-only, skip link) and small
+ * media helpers. Reads --max-width-content, --space-*, --radius-*, --color-accent*, --color-focus, --dur-*, --ease-out.
+ */
+
+/* ---- Container: centered column with fluid gutters ---- */
+.container {
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin-inline: auto;
+  padding-inline: clamp(var(--space-3), 4vw, var(--space-5));
+}
+
+.container--narrow {
+  max-width: 48rem;
+}
+
+.container--prose {
+  max-width: 70ch;
+}
+
+.container--full {
+  max-width: none;
+}
+
+/* ---- Stack: vertical rhythm between direct children (replaces ad-hoc margins) ---- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stack > * {
+  margin-block: 0;
+}
+
+.stack--sm {
+  gap: var(--space-2);
+}
+
+.stack--lg {
+  gap: var(--space-4);
+}
+
+.stack--xl {
+  gap: var(--space-5);
+}
+
+/* ---- Cluster: wrapping row with consistent gaps (button groups, tags, meta rows) ---- */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.cluster--center {
+  justify-content: center;
+}
+
+.cluster--end {
+  justify-content: flex-end;
+}
+
+.cluster--between {
+  justify-content: space-between;
+}
+
+.cluster--start {
+  align-items: flex-start;
+}
+
+/* ---- Grid: auto-fit columns that never overflow narrow screens ---- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+}
+
+.grid--tight {
+  gap: var(--space-3);
+}
+
+.grid--loose {
+  gap: var(--space-5);
+}
+
+/* Fixed column counts: one column on phones, two from 40rem, the full count from 64rem. */
+.grid--2,
+.grid--3,
+.grid--4 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 40rem) {
+  .grid--2,
+  .grid--3,
+  .grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---- Small layout helpers ---- */
+.measure {
+  max-width: 65ch;
+}
+
+.mx-auto {
+  margin-inline: auto;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.divider {
+  height: 0;
+  border: 0;
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* ---- Media helpers ---- */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rounded {
+  border-radius: var(--radius-md);
+}
+
+/* ---- Accessibility: visually hidden but available to assistive tech ---- */
+.sr-only,
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible again while focused (skip links, "jump to" helpers). */
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-visible,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* Skip link: first focusable element in the layout. Parked above the viewport until it receives focus. */
+.skip-link {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 650;
+  text-decoration: none;
+  color: var(--color-accent-contrast);
+  background-color: var(--color-accent);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-250%);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skip-link {
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+}

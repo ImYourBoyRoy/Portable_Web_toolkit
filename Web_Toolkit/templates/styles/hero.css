@@ -1,0 +1,194 @@
+/* ./Web_Toolkit/templates/styles/hero.css
+ * Hero block: eyebrow, display title, lead, actions, optional media. Variants: centered, split, tall, background image.
+ * Static by design (no reveal animation) so the hero text and image can be the LCP element; motion belongs to
+ * templates/cinematic. Reads --space-*, --color-*, --font-display, --font-sans, --max-width-content, --header-height,
+ * --radius-lg, --shadow-raised.
+ *
+ * Markup:
+ *   <section class="hero hero--split">
+ *     <div class="hero__inner">
+ *       <div class="hero__content">
+ *         <p class="hero__eyebrow">Studio</p>
+ *         <h1 class="hero__title">One clear promise</h1>
+ *         <p class="hero__lead">Supporting sentence.</p>
+ *         <div class="hero__actions"><a class="btn btn--primary" href="/contact">Start</a></div>
+ *       </div>
+ *       <figure class="hero__media"><img src="" alt="" width="1200" height="900" fetchpriority="high"></figure>
+ *     </div>
+ *   </section>
+ */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: clamp(var(--space-6), 8vw + 1rem, calc(var(--space-7) * 1.5));
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+.hero__inner {
+  display: grid;
+  gap: var(--space-5);
+  align-items: center;
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin-inline: auto;
+  padding-inline: clamp(var(--space-3), 4vw, var(--space-5));
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.hero__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.hero__title {
+  max-width: 18ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 1.4rem + 5.2vw, 5rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.hero__lead {
+  max-width: 52ch;
+  margin: 0;
+  font-size: clamp(1.125rem, 1.05rem + 0.5vw, 1.375rem);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-3);
+}
+
+.hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.hero__media {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.hero__media :is(img, picture, video) {
+  width: 100%;
+}
+
+/* ---- Variants ---- */
+.hero--surface {
+  background-color: var(--color-surface);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.hero--center .hero__inner {
+  justify-items: center;
+}
+
+.hero--center .hero__content {
+  align-items: center;
+  text-align: center;
+}
+
+.hero--center .hero__title {
+  max-width: 20ch;
+}
+
+.hero--center .hero__lead {
+  margin-inline: auto;
+}
+
+.hero--center :is(.hero__actions, .hero__meta) {
+  justify-content: center;
+}
+
+/* Fills most of the first screen, below a sticky header. svh keeps mobile browser chrome from causing jumps. */
+.hero--tall {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100svh - var(--header-height));
+}
+
+.hero--tall > .hero__inner {
+  margin-block: auto;
+}
+
+@media (min-width: 56rem) {
+  .hero--split .hero__inner {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--space-6);
+  }
+
+  .hero--split-reverse .hero__media {
+    order: -1;
+  }
+}
+
+/* ---- Background media: a real <img>/<picture> (so it can be preloaded and sized), never a CSS background ---- */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.hero__bg :is(img, picture, video) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Scrim keeps text legible over photos; confirm the final contrast with preview-check. */
+.hero--media {
+  color: var(--color-text);
+}
+
+.hero--media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    var(--color-bg),
+    color-mix(in srgb, var(--color-bg) 72%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg) 40%, transparent)
+  );
+}
+
+@media (forced-colors: active) {
+  .hero--media::after {
+    display: none;
+  }
+}

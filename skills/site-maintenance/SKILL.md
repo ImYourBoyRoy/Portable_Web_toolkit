@@ -5,7 +5,7 @@ description: Run the Portable Web Toolkit healthy maintenance loop: package refr
 
 # Site Maintenance
 
-Follow repository `HOW_TO.md` (full maintenance loop) and `Web_Toolkit/OPERATIONS.md`.
+Follow the `HOW_TO.md` § Healthy order of operations and § Full maintenance loop only (it is a 4.7k-token human guide; do not load the rest) and `Web_Toolkit/OPERATIONS.md`.
 
 ## Default order (checkpoints)
 

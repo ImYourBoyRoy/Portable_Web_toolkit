@@ -1,16 +1,16 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.5.1`
+**Toolkit Release:** `v0.6.1`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.5.1` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.6.1` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
 | **Node.js Runtime Pin** | `26.13.0` | [`.node-version`](./.node-version) |
-| **Astro Framework** | `^7.4.7` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **@astrojs/cloudflare** | `^14.4.6` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
-| **Cloudflare Wrangler** | `^4.158.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Astro Framework** | `^7.4.12` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **@astrojs/cloudflare** | `^14.4.8` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
+| **Cloudflare Wrangler** | `^4.162.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 <!-- VERSIONS:END -->
 
 [GitHub](https://github.com/imyourboyroy/Portable_Web_toolkit) ·
@@ -197,7 +197,7 @@ node ./scripts/sync-readme-versions.mjs
 For repository changes, run the complete portable validation gate:
 
 ```bash
-npm run validate
+pnpm run validate
 ```
 
 ## Related project

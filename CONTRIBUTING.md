@@ -21,9 +21,9 @@ out of this repository.
 6. Run the complete local gate:
 
    ```bash
-   npm run validate
-   npm ci --ignore-scripts --prefix Web_Toolkit/vectorize_pipeline
-   npm --prefix Web_Toolkit/vectorize_pipeline audit --audit-level=high
+   pnpm run validate
+   pnpm install --frozen-lockfile --ignore-scripts --dir Web_Toolkit/vectorize_pipeline
+   pnpm --dir Web_Toolkit/vectorize_pipeline audit --audit-level high
    ```
 
 The repository's pinned GitHub Actions workflow repeats the portable validation

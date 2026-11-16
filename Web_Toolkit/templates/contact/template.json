@@ -1,0 +1,61 @@
+{
+  "name": "contact",
+  "description": "Accessible contact form with honest status codes, honeypot, time trap, rate limit, body cap, optional Cloudflare Turnstile, local draft, retry with email fallback and a Workers send_email endpoint. Long multi-section forms: add the contact-intake template (handler only; shared parsing helpers ship here).",
+  "requires": [
+    "base",
+    "theme"
+  ],
+  "files": [
+    {
+      "from": "components/ContactForm.astro",
+      "to": "src/components/contact/"
+    },
+    {
+      "from": "lib/contact-lib.ts",
+      "to": "src/lib/contact/"
+    },
+    {
+      "from": "lib/intake-lib.ts",
+      "to": "src/lib/contact/"
+    },
+    {
+      "from": "lib/load-config.ts",
+      "to": "src/lib/contact/"
+    },
+    {
+      "from": "scripts/*.ts",
+      "to": "src/scripts/"
+    },
+    {
+      "from": "pages/api/contact.ts",
+      "to": "src/pages/api/contact.ts"
+    },
+    {
+      "from": "styles/contact-form.css",
+      "to": "src/styles/components/contact-form.css"
+    },
+    {
+      "from": "contact.config.example.json",
+      "to": "src/data/contact.json",
+      "keepExisting": true
+    },
+    {
+      "from": "contact.dev.vars.example",
+      "to": ".dev.vars.example",
+      "keepExisting": true
+    }
+  ],
+  "cssImports": [
+    "./components/contact-form.css"
+  ],
+  "env": [
+    "PUBLIC_TURNSTILE_SITE_KEY",
+    "TURNSTILE_SECRET_KEY (Worker secret)"
+  ],
+  "next": [
+    "Merge wrangler.contact.snippet.toml (the send_email binding and a verified sender) into wrangler.toml: node -e \"console.log(require('fs').readFileSync('Web_Toolkit/templates/contact/wrangler.contact.snippet.toml','utf8'))\"",
+    "Add /api/contact to crawlerDisallow in the discovery site-config.ts.",
+    "Local runs: copy .dev.vars.example to .dev.vars (Turnstile test keys work on localhost only).",
+    "Check the result: node Web_Toolkit/form_doctor/bin/form-doctor.mjs run --project-root . --spawn (after a build)."
+  ]
+}

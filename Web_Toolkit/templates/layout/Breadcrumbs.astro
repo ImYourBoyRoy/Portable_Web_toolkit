@@ -1,0 +1,54 @@
+---
+// ./src/components/layout/Breadcrumbs.astro
+/**
+ * Visible breadcrumb trail. Items default to a trail derived from the URL ("Home > Services > Design"); pass `items`
+ * (or `labels`) when slugs are poor labels. Renders nothing for fewer than two crumbs. The last crumb is the current
+ * page (aria-current="page", not a link).
+ *
+ * Structured data: Schema.astro already emits a BreadcrumbList for the page from the URL path. Set `jsonLd` only when
+ * your labels differ from the slugs: this emits a BreadcrumbList with the SAME @id (`<pageUrl>#breadcrumb`), so the two
+ * script blocks describe one node and the better labels win in graph-aware consumers.
+ */
+import { buildCanonicalUrl } from '../../lib/head';
+import { breadcrumbListNode, breadcrumbsFromPath, type Crumb } from '../../lib/nav';
+
+interface Props {
+  items?: Crumb[];
+  /** Canonical path -> label, used only when `items` is not given: { '/services/': 'What we do' }. */
+  labels?: Record<string, string>;
+  homeLabel?: string;
+  label?: string;
+  jsonLd?: boolean;
+}
+
+const { items, labels, homeLabel = 'Home', label = 'Breadcrumb', jsonLd = false } = Astro.props;
+const trail = (items ?? breadcrumbsFromPath(Astro.url.pathname, { homeLabel, labels })).filter((crumb) => crumb.label.trim() && crumb.href.trim());
+
+const origin = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const pageUrl = origin ? buildCanonicalUrl(origin, Astro.url.pathname) : Astro.url.href;
+const json = jsonLd
+  ? JSON.stringify({ '@context': 'https://schema.org', '@graph': [breadcrumbListNode(trail, origin, pageUrl)] })
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026')
+  : '';
+---
+
+{
+  trail.length > 1 && (
+    <nav class="breadcrumbs" aria-label={label}>
+      <div class="container">
+        <ol class="breadcrumbs__list">
+          {trail.map((crumb, index) =>
+            index === trail.length - 1 ? (
+              <li class="breadcrumbs__item"><span aria-current="page">{crumb.label}</span></li>
+            ) : (
+              <li class="breadcrumbs__item"><a href={crumb.href}>{crumb.label}</a></li>
+            ),
+          )}
+        </ol>
+      </div>
+    </nav>
+  )
+}
+{json && <script type="application/ld+json" is:inline set:html={json} />}

@@ -8,8 +8,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { TOOL_ROOT } from './paths.mjs';
+import { binaryCommand, detectPackageManager } from '../../../shared/lib/package-manager.mjs';
 
-const WINDOWS_CMD_NAMES = new Set(['npx', 'npm']);
+const WINDOWS_CMD_NAMES = new Set(['npx', 'npm', 'pnpm', 'yarn']);
 
 function resolveCommand(command) {
   if (process.platform === 'win32' && WINDOWS_CMD_NAMES.has(String(command || '').toLowerCase()) && !String(command).toLowerCase().endsWith('.cmd')) {
@@ -49,9 +50,8 @@ export function runPythonDiagnostics(configPath, cwd) {
 
 export function runLighthouse(url, outputPath, tempDir, cwd, extraEnv = {}, preset = 'mobile') {
   fs.mkdirSync(tempDir, { recursive: true });
-  return run('npx', [
-    '--yes',
-    'lighthouse',
+  // Lighthouse runs without being installed: npx --yes / pnpm dlx / yarn dlx / bun x, per the project's package manager.
+  const [pmBin, pmArgs] = binaryCommand(detectPackageManager(cwd || process.cwd()).name, 'lighthouse', [
     url,
     '--quiet',
     '--preset',
@@ -62,7 +62,8 @@ export function runLighthouse(url, outputPath, tempDir, cwd, extraEnv = {}, pres
     outputPath,
     '--chrome-flags',
     `--headless=new --no-sandbox --disable-dev-shm-usage --user-data-dir=${path.join(tempDir, 'chrome-profile')}`
-  ], {
+  ], { dlx: true });
+  return run(pmBin, pmArgs, {
     cwd,
     env: {
       ...process.env,
@@ -73,4 +74,3 @@ export function runLighthouse(url, outputPath, tempDir, cwd, extraEnv = {}, pres
     }
   });
 }
-

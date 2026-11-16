@@ -1,0 +1,36 @@
+---
+/**
+ * Dropdown of every installed theme: for development, previews, and "try five themes on this site".
+ * Remove it (or render it only when import.meta.env.DEV) before production if you want a single look.
+ */
+import themes from '../../data/themes.json';
+---
+<label class="theme-picker">
+  <span>Theme</span>
+  <select data-theme-picker>
+    {themes.available.map((theme) => <option value={theme.name}>{theme.label} ({theme.scheme})</option>)}
+  </select>
+</label>
+
+<script>
+  const select = document.querySelector<HTMLSelectElement>('[data-theme-picker]');
+  if (select) {
+    select.value = document.documentElement.getAttribute('data-theme') ?? select.value;
+    select.addEventListener('change', () => {
+      document.documentElement.setAttribute('data-theme', select.value);
+      try { localStorage.setItem('theme', select.value); } catch { /* ignore */ }
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim();
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
+    });
+  }
+</script>
+
+<style>
+  .theme-picker { display: inline-flex; gap: var(--space-2); align-items: center; color: var(--color-text); }
+  .theme-picker select {
+    min-height: 2.75rem; padding: var(--space-1) var(--space-3);
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border); border-radius: var(--radius-md); font: inherit;
+  }
+  .theme-picker select:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+</style>

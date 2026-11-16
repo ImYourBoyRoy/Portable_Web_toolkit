@@ -23,8 +23,8 @@ node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs run --site-profile ./site.s
 Peers in the **client** project (Playwright + axe). The wrapper auto-installs missing peers/Chromium unless `--skip-playwright-install`:
 
 ```bash
-npm install --save-dev playwright @axe-core/playwright
-npx playwright install chromium
+pnpm add -D playwright @axe-core/playwright
+pnpm exec playwright install chromium
 ```
 
 With a site profile and no checked-in config, `run --site-profile …` implies ephemeral `--from-profile`. Checked-in configs may be `wcag-auditor.config.mjs` (toolkit) or `wcagate.config.mjs` (engine).
@@ -48,9 +48,9 @@ Web_Toolkit/wcag_auditor/          ← wrapper (this repo)
   bin/wcag-auditor.mjs             ← agent-facing CLI
   src/toolkit/                     ← --site-profile, ephemeral Astro configs
 Web_Toolkit/node_modules/@imyourboyroy/wcagate
-                                   ← engine (npm git dep, not committed)
+                                   ← engine (git dependency installed by pnpm, or npm without it; not committed)
 ```
 
 ## Apps outside the toolkit
 
-Use WCAGate directly: `npm install --save-dev github:imyourboyroy/WCAGate`. That path is out of scope for toolkit-managed sites.
+Use WCAGate directly: `pnpm add -D github:imyourboyroy/WCAGate`. That path is out of scope for toolkit-managed sites.

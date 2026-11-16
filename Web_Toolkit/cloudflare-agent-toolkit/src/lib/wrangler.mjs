@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { runCommand } from './exec.mjs';
+import { binaryCommand, commandsFor, detectPackageManager } from '../../../shared/lib/package-manager.mjs';
 import { clearSessionMeta, readSessionMeta } from './env.mjs';
 
 function commandExists(command) {
@@ -25,13 +26,20 @@ export function hasNpx() {
   return commandExists('npx');
 }
 
+/** Wrangler runs through the current project's package manager (npx for npm sites, pnpm exec for pnpm sites). */
+function wranglerCommand(args) {
+  return binaryCommand(detectPackageManager(process.cwd()).name, 'wrangler', args);
+}
+
 export function wranglerVersion() {
-  const result = runCommand('npx', ['wrangler', '--version'], { throwOnError: false });
+  const [command, commandArgs] = wranglerCommand(['--version']);
+  const result = runCommand(command, commandArgs, { throwOnError: false });
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
 export function runWrangler(args, options = {}) {
-  return runCommand('npx', ['wrangler', ...args], {
+  const [command, commandArgs] = wranglerCommand(args);
+  return runCommand(command, commandArgs, {
     throwOnError: options.throwOnError !== false,
     env: options.env
   });
@@ -41,7 +49,9 @@ export function installOrUpdateWrangler({ global = false } = {}) {
   if (global) {
     return runCommand('npm', ['install', '-g', 'wrangler@latest']);
   }
-  return runCommand('npm', ['install', '--save-dev', 'wrangler@latest']);
+  const pm = detectPackageManager(process.cwd()).name;
+  const add = commandsFor(pm).add(['wrangler@latest'], { dev: true });
+  return runCommand(commandsFor(pm).bin, add);
 }
 
 export function wranglerWhoami() {

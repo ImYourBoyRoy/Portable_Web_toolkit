@@ -1,0 +1,122 @@
+---
+// ./src/components/layout/BaseLayout.astro
+/**
+ * The page shell: <html lang data-theme>, BaseHead, skip link FIRST in <body>, header, <main id="main" tabindex="-1">,
+ * footer. Core content needs no JavaScript. Wrap every page in it:
+ *   <BaseLayout title="About" description="..."><h1>About</h1></BaseLayout>
+ * Slots: head, preload, schema, header, theme-toggle, before-main, (default), after-main, footer, privacy-choices.
+ */
+import '../../styles/global.css';
+import '../../styles/layout/layout.css';
+import BaseHead from './BaseHead.astro';
+import SiteHeader from './SiteHeader.astro';
+import SiteFooter from './SiteFooter.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Schema from '../Schema.astro';
+import site from '../../data/site.json';
+import themes from '../../data/themes.json';
+import { langFromLocale } from '../../lib/head';
+import type { Crumb } from '../../lib/nav';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogType?: 'website' | 'article' | 'profile';
+  publishedTime?: string;
+  modifiedTime?: string;
+  noindex?: boolean;
+  robots?: string;
+  assetVersion?: string;
+  /** schema.org page type handed to Schema.astro. */
+  schemaType?: 'WebPage' | 'AboutPage' | 'ContactPage' | 'CollectionPage' | 'ProfilePage';
+  /** Overrides the lang derived from site.json locale. */
+  lang?: string;
+  /** Extra classes on <body>. */
+  bodyClass?: string;
+  /** Short page id exposed as data-page for page-scoped CSS or tests. */
+  pageId?: string;
+  /** Sticky header (default). Also sets data-sticky-header on <html> so scroll-padding-top clears it. */
+  stickyHeader?: boolean;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  /** true derives a trail from the URL; an array supplies explicit crumbs. Rendered at the top of <main>. */
+  breadcrumbs?: boolean | Crumb[];
+  skipLabel?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  ogImageAlt,
+  ogType,
+  publishedTime,
+  modifiedTime,
+  noindex,
+  robots,
+  assetVersion,
+  schemaType = 'WebPage',
+  lang = langFromLocale(site.locale),
+  bodyClass,
+  pageId,
+  stickyHeader = true,
+  showHeader = true,
+  showFooter = true,
+  breadcrumbs = false,
+  skipLabel = 'Skip to main content',
+} = Astro.props;
+
+const crumbItems = Array.isArray(breadcrumbs) ? breadcrumbs : undefined;
+---
+
+<!doctype html>
+<html lang={lang} data-theme={themes.default} data-sticky-header={stickyHeader ? '' : undefined}>
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      canonical={canonical}
+      ogImage={ogImage}
+      ogImageAlt={ogImageAlt}
+      ogType={ogType}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      noindex={noindex}
+      robots={robots}
+      assetVersion={assetVersion}
+    >
+      <slot name="preload" slot="preload" />
+      <Fragment slot="head">
+        <slot name="head" />
+        <slot name="schema"><Schema title={title} description={description} schemaType={schemaType} /></slot>
+      </Fragment>
+    </BaseHead>
+  </head>
+  <body class:list={['site-body', bodyClass]} data-page={pageId}>
+    <a class="skip-link" href="#main">{skipLabel}</a>
+    {showHeader && (
+      <slot name="header">
+        <SiteHeader sticky={stickyHeader}>
+          <slot name="theme-toggle" slot="theme-toggle" />
+        </SiteHeader>
+      </slot>
+    )}
+    <slot name="before-main" />
+    <main id="main" class="site-main" tabindex="-1">
+      {breadcrumbs && <Breadcrumbs items={crumbItems} />}
+      <slot />
+    </main>
+    <slot name="after-main" />
+    {showFooter && (
+      <slot name="footer">
+        <SiteFooter>
+          <slot name="privacy-choices" slot="privacy-choices" />
+        </SiteFooter>
+      </slot>
+    )}
+  </body>
+</html>

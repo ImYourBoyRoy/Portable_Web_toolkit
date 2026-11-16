@@ -12,9 +12,9 @@ The toolkit re-bundled a full WCAG engine under `Web_Toolkit/wcag_auditor` so ag
 
 ## Decision
 
-- Canonical engine: `github:imyourboyroy/WCAGate` (`@imyourboyroy/wcagate`), unpinned default branch.
+- Canonical engine: `github:imyourboyroy/WCAGate#semver:*` (`@imyourboyroy/wcagate`): the latest published release tag via a semver range, never a pinned version (single definition in `Web_Toolkit/shared/lib/engine-spec.mjs`).
 - Toolkit keeps a thin `--site-profile` wrapper at `Web_Toolkit/wcag_auditor`.
-- Install into `Web_Toolkit/node_modules` (`npm install --allow-git=all`). Auto-ensure on doctor/run/core-path.
+- Install into `Web_Toolkit/node_modules` (`pnpm install`, or `npm install --allow-git=all` when pnpm is absent). Auto-ensure on doctor/run/core-path.
 - `core-path` prints the engine package root. Never auto-discover `AI/wcag-auditor`.
 - A throttled freshness preflight checks WCAGate `main` once per 24 hours and reinstalls the Git dependency when its remote head changes. Manual refresh remains available through `npm run wcagate:update`; this does not bump toolkit `VERSION`.
 

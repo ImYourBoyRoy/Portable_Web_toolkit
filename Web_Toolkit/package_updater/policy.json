@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "description": "Toolchain update policy for Portable Web Toolkit sites and starters. Versions are never pinned here; the resolver picks the newest set whose peerDependencies and dependencies agree (so TypeScript stays on 6.x while @astrojs/check peers ^5 || ^6, and lifts itself the day a release allows 7).",
+  "anchors": [
+    "astro"
+  ],
+  "holds": {},
+  "ignore": [],
+  "notes": {
+    "anchors": "Packages the rest of the set is solved around. They stay at the newest version that every other direct dependency can support; an integration that lags a new major holds the anchor on the previous major and says so.",
+    "holds": "Last resort for a reason peers cannot express: { \"pkg\": { \"range\": \"^1\", \"reason\": \"why\" } }. Prefer fixing the cause; every hold is printed in every report.",
+    "ignore": "Package names the updater must never touch.",
+    "acceptPeerConflicts": "User-approved risk: [{ \"package\": \"typescript\", \"owner\": \"@astrojs/check\", \"reason\": \"why this is acceptable, who approved, and when to re-check\" }]. Ignores what `owner` declares about `package`, so the newer major is allowed even though the owner does not claim support. Printed in every report until removed.",
+    "minimumReleaseAgeHours": "Releases younger than this are never written into a range (pnpm 12 refuses them with ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION). A project's pnpm-workspace.yaml minimumReleaseAge (minutes) wins; 0 disables."
+  },
+  "acceptPeerConflicts": [],
+  "minimumReleaseAgeHours": 24
+}

@@ -1,0 +1,79 @@
+{
+  "name": "discovery",
+  "description": "Sitemap, robots + AI policy, llms.txt, humans/ai/security.txt, JSON-LD Schema.astro, markdown twins, API catalog, Workers middleware.",
+  "requires": [
+    "base"
+  ],
+  "files": [
+    {
+      "from": "lib/site-config.ts",
+      "to": "src/lib/site-config.ts",
+      "keepExisting": true
+    },
+    {
+      "from": "lib/metadata-extractor.ts",
+      "to": "src/lib/metadata-extractor.ts"
+    },
+    {
+      "from": "lib/site.ts",
+      "to": "src/lib/discovery/"
+    },
+    {
+      "from": "lib/routes.ts",
+      "to": "src/lib/discovery/"
+    },
+    {
+      "from": "lib/ai-policy.ts",
+      "to": "src/lib/discovery/"
+    },
+    {
+      "from": "lib/negotiate.ts",
+      "to": "src/lib/discovery/"
+    },
+    {
+      "from": "lib/ratelimit.ts",
+      "to": "src/lib/discovery/"
+    },
+    {
+      "from": "pages/*.ts",
+      "to": "src/pages/"
+    },
+    {
+      "from": "pages/.well-known/*.ts",
+      "to": "src/pages/.well-known/"
+    },
+    {
+      "from": "pages/api/*.ts",
+      "to": "src/pages/api/"
+    },
+    {
+      "from": "components/Schema.astro",
+      "to": "src/components/Schema.astro"
+    },
+    {
+      "from": "src/middleware.ts",
+      "to": "src/middleware.ts"
+    },
+    {
+      "from": "src/worker.ts",
+      "to": "src/worker.ts"
+    },
+    {
+      "from": "scripts/*.mjs",
+      "to": "scripts/"
+    },
+    {
+      "from": "scripts/lib/*.mjs",
+      "to": "scripts/lib/"
+    }
+  ],
+  "env": [
+    "PUBLIC_SECURITY_CONTACT"
+  ],
+  "next": [
+    "Set `site` in astro.config.mjs to the production URL; edit src/lib/site-config.ts (name, description, contactEmail, aiPolicy, crawlerDisallow, apis).",
+    "Workers sites: merge Web_Toolkit/templates/discovery/wrangler.discovery.snippet.toml into wrangler.toml (main above every [table], [assets] after top-level keys). Pages (static) sites: delete src/middleware.ts and src/worker.ts.",
+    "The optional read-only MCP server is in Web_Toolkit/templates/discovery/optional/mcp (copy by hand if wanted).",
+    "Run discovery-doctor on dist/ after the build."
+  ]
+}

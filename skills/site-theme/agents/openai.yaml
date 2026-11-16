@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Theme"
+  short_description: "Install, compare, extract, and validate token themes"
+  default_prompt: "Use $site-theme against this toolkit-managed site profile to compare themes on this site, or extract and reuse its design."

@@ -5,9 +5,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import process from 'node:process';
 import { collectChecks, previewCommand } from './setup.mjs';
+import { findFreePort, isPortFree, listenerBelongsTo, listenerInfo, startOwned } from '../../../shared/lib/dev-server.mjs';
 
 function toBool(value, fallback = false) {
   if (value === undefined || value === null || value === '') return fallback;
@@ -19,12 +19,9 @@ function toBool(value, fallback = false) {
 
 function appendPreviewFlags(command, host, port) {
   if (!command) return '';
-  if (/npm\s+run\s+preview/i.test(command)) {
-    return `${command} -- --host ${host} --port ${port}`;
-  }
-  if (/npm\s+run\s+dev/i.test(command)) {
-    return `${command} -- --host ${host} --port ${port}`;
-  }
+  // npm needs `--` before script flags; pnpm, yarn and bun pass them straight through.
+  const script = /^(npm|pnpm|yarn|bun)\s+run\s+(preview|dev)\b/i.exec(command.trim());
+  if (script) return `${command} ${script[1].toLowerCase() === 'npm' ? '-- ' : ''}--host ${host} --port ${port}`;
   return command;
 }
 
@@ -33,20 +30,29 @@ function reportPath(projectRoot) {
   return path.join(projectRoot, 'output', `preview-smoke-${stamp}.json`);
 }
 
+// A plain `sh -c` (not a login shell): `-l` would source the user's profile, which can change PATH and the Node version.
+// On Windows the whole line is one verbatim argument for cmd.exe so quoted paths survive libuv's argument quoting.
 function shellDetails(command) {
   if (process.platform === 'win32') {
-    return { file: 'cmd.exe', args: ['/d', '/s', '/c', command] };
+    return { file: process.env.ComSpec || 'cmd.exe', args: ['/d', '/s', '/c', `"${command}"`], spawnOptions: { windowsVerbatimArguments: true } };
   }
-  return { file: 'sh', args: ['-lc', command] };
+  return { file: 'sh', args: ['-c', command], spawnOptions: {} };
 }
 
-async function waitForUrl(url, timeoutMs) {
+/** Polls until the URL answers, the child exits, or time runs out; an answer from a process that is not our child is refused. */
+async function waitForUrl(url, timeoutMs, child = null, port = null) {
   const startedAt = Date.now();
   let lastError = '';
   while (Date.now() - startedAt < timeoutMs) {
+    if (child && (child.exitCode !== null || child.signalCode !== null)) {
+      return { ok: false, status: 0, error: `The preview command exited (code ${child.exitCode ?? child.signalCode}) before ${url} answered.` };
+    }
     try {
       const response = await fetch(url, { redirect: 'manual' });
       const body = await response.text();
+      if (child && port && listenerBelongsTo(port, child.pid) === false) {
+        return { ok: false, status: 0, error: `Another process answered on port ${port} before the preview the toolkit started; it was not used. Omit --port to pick a free one.` };
+      }
       return {
         ok: response.status >= 200 && response.status < 500,
         status: response.status,
@@ -61,23 +67,22 @@ async function waitForUrl(url, timeoutMs) {
   return { ok: false, status: 0, error: lastError || `Timeout waiting for ${url}` };
 }
 
-async function stopChild(child) {
-  if (!child || child.exitCode !== null) return;
-  if (process.platform === 'win32') {
-    await new Promise((resolve) => {
-      const killer = spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
-      killer.on('exit', () => resolve());
-      killer.on('error', () => resolve());
-    });
-    return;
-  }
-  child.kill('SIGTERM');
-}
-
 export async function runPreviewSmoke(flags = {}) {
   const report = collectChecks(flags);
   const host = String(flags.host || '127.0.0.1');
-  const port = Number(flags.port || 4322);
+  // Never assume a port is free (4321/4322 are common dev ports): an explicit --port must be free, otherwise one is chosen.
+  let port;
+  if (flags.port) {
+    port = Number(flags.port);
+    if (!(await isPortFree(port, host))) {
+      const holder = listenerInfo(port);
+      throw new Error(`Port ${port} is already in use${holder ? ` by pid ${holder.pid} (${holder.command || 'unknown'}${holder.cwd ? `, started in ${holder.cwd}` : ''})` : ''}. That process was not started by the toolkit and is left alone; omit --port to pick a free one.`);
+    }
+  } else {
+    const found = await findFreePort({ preferred: 4322, host });
+    port = found.port;
+    if (found.busy) console.log(`[preview-smoke] port ${found.preferred} is in use by another process (left untouched); using ${port}`);
+  }
   const timeoutMs = Number(flags['timeout-ms'] || 120000);
   const url = String(flags.url || `http://${host}:${port}`);
   const baseCommand = String(flags.command || previewCommand(report)).trim();
@@ -90,22 +95,18 @@ export async function runPreviewSmoke(flags = {}) {
   const outPath = path.join(logDir, 'preview-smoke.stdout.log');
   const errPath = path.join(logDir, 'preview-smoke.stderr.log');
   fs.mkdirSync(logDir, { recursive: true });
-  const { file, args } = shellDetails(command);
-  const child = spawn(file, args, {
-    cwd: report.projectRoot,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true
-  });
+  const { file, args, spawnOptions } = shellDetails(command);
+  const server = startOwned({ command: file, args, cwd: report.projectRoot, label: 'preview-smoke', port, startedBy: 'preview-smoke', stdio: ['ignore', 'pipe', 'pipe'], spawnOptions });
   const stdoutChunks = [];
   const stderrChunks = [];
-  child.stdout.on('data', (chunk) => stdoutChunks.push(Buffer.from(chunk)));
-  child.stderr.on('data', (chunk) => stderrChunks.push(Buffer.from(chunk)));
+  server.child.stdout.on('data', (chunk) => stdoutChunks.push(Buffer.from(chunk)));
+  server.child.stderr.on('data', (chunk) => stderrChunks.push(Buffer.from(chunk)));
 
   let probe;
   try {
-    probe = await waitForUrl(url, timeoutMs);
+    probe = await waitForUrl(url, timeoutMs, server.child, flags.url ? null : port);
   } finally {
-    await stopChild(child);
+    await server.stop();
   }
 
   fs.writeFileSync(outPath, Buffer.concat(stdoutChunks).toString('utf8'), 'utf8');

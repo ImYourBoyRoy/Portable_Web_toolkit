@@ -1,0 +1,192 @@
+/* ./Web_Toolkit/templates/styles/card.css
+ * Cards: surface container with optional media, body, footer, a stretched link, and layout variants.
+ * Reads --color-surface*, --color-border, --color-text*, --color-focus, --space-*, --radius-*, --shadow-*,
+ * --font-display, --dur-*, --ease-out.
+ *
+ * Markup:
+ *   <article class="card card--link">
+ *     <div class="card__media"><img src="" alt="" width="800" height="500" loading="lazy"></div>
+ *     <div class="card__body">
+ *       <p class="card__eyebrow">Category</p>
+ *       <h3 class="card__title"><a class="card__link" href="/post">Title</a></h3>
+ *       <p class="card__text">Summary.</p>
+ *     </div>
+ *   </article>
+ */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out),
+    transform var(--dur-mid) var(--ease-out);
+}
+
+.card__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background-color: var(--color-surface-raised);
+}
+
+.card__media > img,
+.card__media > picture,
+.card__media > picture > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.card__eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.card__text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.card__meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: auto;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Plain link inside a card. Use .card--link to make the whole card the click target. */
+.card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card__link:hover {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.card__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Variants ---- */
+.card--raised {
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.card--outline {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.card--flat {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.card--pad > .card__body {
+  padding: var(--space-5);
+}
+
+/* Whole-card link: the title link stretches over the card; other links in the card stay above it. */
+.card--link .card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.card--link :is(a:not(.card__link), button) {
+  position: relative;
+  z-index: 2;
+}
+
+.card--link .card__link:focus-visible {
+  outline-color: transparent;
+}
+
+.card--link:has(.card__link:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .card--link:hover {
+    border-color: var(--color-text-muted);
+    box-shadow: var(--shadow-raised);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card--link:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Side-by-side media and body on wide cards. */
+@media (min-width: 40rem) {
+  .card--horizontal {
+    flex-direction: row;
+  }
+
+  .card--horizontal > .card__media {
+    flex: 0 0 40%;
+    aspect-ratio: auto;
+  }
+}
+
+/* ---- Card grid: equal-height cards that wrap without media queries ---- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (forced-colors: active) {
+  .card {
+    border-color: currentColor;
+  }
+}

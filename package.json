@@ -2,7 +2,7 @@
   "name": "@imyourboyroy/portable-web-toolkit-repo",
   "private": true,
   "description": "Toolkit distribution repository — not a deployable website. Copy site-starter/ into a new client project folder.",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -18,12 +18,12 @@
     "test:updates": "node --test ./tests/version-comparison.test.mjs",
     "test:auto-update": "node --test ./tests/auto-update.test.mjs",
     "test:cache": "node --test ./tests/cache-purge.test.mjs ./tests/cache-warm.test.mjs",
-    "test": "node --test \"tests/*.test.mjs\" \"Web_Toolkit/*/tests/*.test.mjs\"",
+    "test": "node --test \"tests/*.test.mjs\" \"Web_Toolkit/*/tests/*.test.mjs\" \"Web_Toolkit/templates/*/tests/*.test.mjs\"",
     "sync:readme-versions": "node ./scripts/sync-readme-versions.mjs",
     "check:readme-versions": "node ./scripts/sync-readme-versions.mjs --check",
     "verify:toolkit": "node ./scripts/sync-readme-versions.mjs --check && node ./Web_Toolkit/toolkit_verify/bin/toolkit-verify.mjs",
     "privacy:scan": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root ./Web_Toolkit --json",
     "privacy:scan:release": "node ./Web_Toolkit/privacy_check/bin/privacy-check.mjs scan --root . --json",
-    "validate": "npm run validate:release && npm run validate:skills && npm test && npm --prefix Web_Toolkit run check:syntax && npm run verify:toolkit && npm run privacy:scan:release"
+    "validate": "pnpm run validate:release && pnpm run validate:skills && pnpm test && pnpm --dir Web_Toolkit run check:syntax && pnpm run verify:toolkit && pnpm run privacy:scan:release"
   }
 }

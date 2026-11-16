@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "description": "The semantic token contract every theme implements and every component stylesheet reads. Brand palette names live inside a theme's own values only, never in component CSS, so swapping one theme file re-skins a whole site.",
+  "color": [
+    {
+      "name": "--color-bg",
+      "role": "page background"
+    },
+    {
+      "name": "--color-surface",
+      "role": "cards, panels, header, footer"
+    },
+    {
+      "name": "--color-surface-raised",
+      "role": "modals, menus, hovered cards"
+    },
+    {
+      "name": "--color-text",
+      "role": "body and heading text"
+    },
+    {
+      "name": "--color-text-muted",
+      "role": "secondary text, captions"
+    },
+    {
+      "name": "--color-link",
+      "role": "inline links"
+    },
+    {
+      "name": "--color-accent",
+      "role": "primary button fill, key highlights"
+    },
+    {
+      "name": "--color-accent-contrast",
+      "role": "text on --color-accent"
+    },
+    {
+      "name": "--color-border",
+      "role": "dividers and outlines"
+    },
+    {
+      "name": "--color-border-strong",
+      "role": "form-control and component boundaries (needs 3:1 against the page, WCAG 1.4.11)"
+    },
+    {
+      "name": "--color-danger",
+      "role": "error text and borders (never color alone: pair with an icon or label)"
+    },
+    {
+      "name": "--color-success",
+      "role": "success text and borders (never color alone)"
+    },
+    {
+      "name": "--color-focus",
+      "role": "keyboard focus ring"
+    }
+  ],
+  "font": [
+    {
+      "name": "--font-display",
+      "role": "headings"
+    },
+    {
+      "name": "--font-sans",
+      "role": "body"
+    },
+    {
+      "name": "--font-mono",
+      "role": "code"
+    }
+  ],
+  "radius": [
+    {
+      "name": "--radius-sm"
+    },
+    {
+      "name": "--radius-md"
+    },
+    {
+      "name": "--radius-lg"
+    }
+  ],
+  "space": [
+    {
+      "name": "--space-1"
+    },
+    {
+      "name": "--space-2"
+    },
+    {
+      "name": "--space-3"
+    },
+    {
+      "name": "--space-4"
+    },
+    {
+      "name": "--space-5"
+    },
+    {
+      "name": "--space-6"
+    },
+    {
+      "name": "--space-7"
+    }
+  ],
+  "shadow": [
+    {
+      "name": "--shadow-soft"
+    },
+    {
+      "name": "--shadow-raised"
+    }
+  ],
+  "motion": [
+    {
+      "name": "--ease-out"
+    },
+    {
+      "name": "--dur-fast"
+    },
+    {
+      "name": "--dur-mid"
+    },
+    {
+      "name": "--dur-slow"
+    }
+  ],
+  "layout": [
+    {
+      "name": "--max-width-content"
+    },
+    {
+      "name": "--line-height-body"
+    },
+    {
+      "name": "--header-height"
+    }
+  ],
+  "contrast": [
+    {
+      "text": "--color-text",
+      "on": "--color-bg",
+      "min": 4.5
+    },
+    {
+      "text": "--color-text",
+      "on": "--color-surface",
+      "min": 4.5
+    },
+    {
+      "text": "--color-text-muted",
+      "on": "--color-bg",
+      "min": 4.5
+    },
+    {
+      "text": "--color-text-muted",
+      "on": "--color-surface",
+      "min": 4.5
+    },
+    {
+      "text": "--color-link",
+      "on": "--color-bg",
+      "min": 4.5
+    },
+    {
+      "text": "--color-accent-contrast",
+      "on": "--color-accent",
+      "min": 4.5
+    },
+    {
+      "text": "--color-focus",
+      "on": "--color-bg",
+      "min": 3
+    },
+    {
+      "text": "--color-danger",
+      "on": "--color-bg",
+      "min": 4.5
+    },
+    {
+      "text": "--color-danger",
+      "on": "--color-surface",
+      "min": 4.5
+    },
+    {
+      "text": "--color-success",
+      "on": "--color-bg",
+      "min": 4.5
+    },
+    {
+      "text": "--color-success",
+      "on": "--color-surface",
+      "min": 4.5
+    },
+    {
+      "text": "--color-border-strong",
+      "on": "--color-bg",
+      "min": 3
+    },
+    {
+      "text": "--color-border-strong",
+      "on": "--color-surface",
+      "min": 3
+    }
+  ]
+}

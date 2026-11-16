@@ -1,0 +1,34 @@
+---
+// ./Web_Toolkit/templates/fonts/FontPreload.astro
+/**
+ * Preloads the one or two font files that paint the LCP text. The list comes from fonts.manifest.json, which
+ * sync-fonts.mjs writes from the "preload": true families in fonts.config.json, so the URLs always match the hashed
+ * files in public/fonts/. Place inside <head>, before the stylesheet. Copy to src/components/FontPreload.astro.
+ *
+ * crossorigin is required even for same-origin fonts: font fetches are CORS-mode, and a preload without it is
+ * downloaded twice. Entries with a media condition (desktop-only faces) only preload when it matches.
+ *
+ * Usage: <FontPreload />  or  <FontPreload manifest={customManifest} limit={1} />
+ */
+import defaultManifest from '../styles/fonts.manifest.json';
+
+interface PreloadEntry {
+  url: string;
+  media?: string;
+}
+
+interface Props {
+  manifest?: { preload?: PreloadEntry[] };
+  /** Hard cap on preload tags (each one competes with the LCP image for early bandwidth). Default 2. */
+  limit?: number;
+}
+
+const { manifest = defaultManifest as { preload?: PreloadEntry[] }, limit = 2 } = Astro.props;
+const entries: PreloadEntry[] = (manifest.preload ?? []).slice(0, limit);
+---
+
+{
+  entries.map((entry) => (
+    <link rel="preload" as="font" type="font/woff2" href={entry.url} crossorigin="anonymous" media={entry.media} />
+  ))
+}

@@ -1,0 +1,24 @@
+# ./Web_Toolkit/templates/contact/wrangler.contact.snippet.toml
+# Add to the client wrangler.toml (Workers target). See README.md in this folder.
+
+# Cloudflare Email Service sending binding. The Worker calls env.EMAIL.send({...}).
+# The sender domain must be onboarded and verified in Cloudflare Email Service BEFORE mail is delivered, and
+# CONTACT_FROM_EMAIL must be an address on that verified domain. Until then the route answers 503 "not configured".
+# Leave `remote` off: with `remote = true` every `astro build` and `wrangler dev` needs a logged-in Cloudflare session or API
+# token (CI fails with "user auth missing api token"). Add `remote = true` only on a machine that should really send mail.
+[[send_email]]
+name = "EMAIL"
+
+# Per-IP burst limit (same pattern as templates/discovery/lib/ratelimit.ts). `period` must be 10 or 60 seconds.
+# Use a namespace_id that no other Worker in the account uses (counters are keyed per namespace).
+[[ratelimits]]
+name = "CONTACT_RATE_LIMIT"
+namespace_id = "2001"
+simple = { limit = 3, period = 60 }
+
+# Non-secret display value: add this line inside your EXISTING [vars] table (a second [vars] header is a TOML error):
+#   CONTACT_FROM_NAME = "Example Studio"
+# Addresses and the Turnstile secret are SECRETS, not vars:
+#   wrangler secret put TURNSTILE_SECRET_KEY
+#   wrangler secret put CONTACT_RECIPIENT_EMAIL
+#   wrangler secret put CONTACT_FROM_EMAIL

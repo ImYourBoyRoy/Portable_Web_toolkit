@@ -1,0 +1,137 @@
+---
+// ./src/components/layout/BaseHead.astro
+/**
+ * Everything that belongs in <head>, in a deliberate order: charset, viewport, theme-color, ThemeInit (before any
+ * stylesheet so the right theme paints on frame one), preload slot, title/description/canonical/robots, icons,
+ * Markdown + llms alternates, Open Graph, Twitter, then the page's own `head` slot. Logic lives in src/lib/head.ts.
+ */
+import ThemeInit from '../theme/ThemeInit.astro';
+import site from '../../data/site.json';
+import { buildSeo, resolveIcons, type IconConfig } from '../../lib/head';
+
+interface Props {
+  /** Page title. Omit on the home page: it becomes the site name. */
+  title?: string;
+  description?: string;
+  /** Absolute URL or path; default is the current path in trailing-slash form on the production origin. */
+  canonical?: string;
+  /** Absolute URL or root-relative path of a 1200x630 image; default site.json defaultOgImage. */
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogType?: 'website' | 'article' | 'profile';
+  /** ISO dates, emitted as article:* tags when ogType is "article". */
+  publishedTime?: string;
+  modifiedTime?: string;
+  /** Force noindex (thank-you pages, previews). Non-production builds are noindex automatically. */
+  noindex?: boolean;
+  /** Full robots override, e.g. "index, follow, max-snippet:160". */
+  robots?: string;
+  /** Overrides site.json titleTemplate. Tokens: %s page title, %site site name. */
+  titleTemplate?: string;
+  /** No-JS fallback colour for the browser UI; ThemeInit syncs the real --color-bg. */
+  themeColor?: string;
+  /** Build stamp appended as ?v= to icons, manifest and the OG image (unhashed public/ files). */
+  assetVersion?: string;
+  /** Override or disable (false) the svg, ico, apple and manifest links. */
+  icons?: IconConfig;
+  /** rel=alternate links to this page's Markdown twin and /llms.txt (indexable pages only). Default true. */
+  markdownAlternate?: boolean;
+  /** Set false only if the theme template is not installed yet. Default true. */
+  themeInit?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  ogImageAlt,
+  ogImageWidth,
+  ogImageHeight,
+  ogType = 'website',
+  publishedTime,
+  modifiedTime,
+  noindex = false,
+  robots,
+  titleTemplate = site.titleTemplate,
+  themeColor = site.themeColor,
+  assetVersion,
+  icons,
+  markdownAlternate = true,
+  themeInit = true,
+} = Astro.props;
+
+const origin = (Astro.site ?? (site.origin ? new URL(site.origin) : undefined))?.toString().replace(/\/$/, '') ?? '';
+const hostname = origin ? new URL(origin).hostname : '';
+const usingDefaultImage = !ogImage;
+
+const seo = buildSeo({
+  siteName: site.siteName,
+  titleTemplate,
+  title,
+  description: description ?? site.defaultDescription,
+  origin,
+  pathname: Astro.url.pathname,
+  canonical,
+  ogImage: ogImage ?? site.defaultOgImage,
+  ogImageAlt: ogImageAlt ?? (usingDefaultImage ? site.defaultOgImageAlt || site.siteName : ''),
+  ogImageWidth: ogImageWidth ?? (usingDefaultImage ? site.defaultOgImageWidth : undefined),
+  ogImageHeight: ogImageHeight ?? (usingDefaultImage ? site.defaultOgImageHeight : undefined),
+  ogType,
+  locale: site.locale,
+  twitterSite: site.twitter?.site,
+  assetVersion,
+  publishedTime,
+  modifiedTime,
+  markdownAlternate,
+  llmsPath: '/llms.txt',
+  noindex,
+  robots,
+  // Prerendered pages are emitted at build time, so indexing follows the build profile, not the request host.
+  siteEnv: import.meta.env.PUBLIC_SITE_ENV,
+  hostname,
+  isProd: import.meta.env.PROD,
+});
+const iconLinks = resolveIcons(icons, assetVersion);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+{themeColor && <meta name="theme-color" content={themeColor} />}
+{themeInit && <ThemeInit />}
+<slot name="preload" />
+
+<title>{seo.title}</title>
+{seo.description && <meta name="description" content={seo.description} />}
+<link rel="canonical" href={seo.canonical} />
+<meta name="robots" content={seo.robots} />
+
+{iconLinks.map((link) => <link rel={link.rel} href={link.href} type={link.type} sizes={link.sizes} />)}
+
+{seo.markdownHref && <link rel="alternate" type="text/markdown" href={seo.markdownHref} title="Markdown version of this page" />}
+{seo.llmsHref && <link rel="alternate" type="text/plain" href={seo.llmsHref} title="llms.txt" />}
+
+<meta property="og:type" content={seo.ogType} />
+<meta property="og:site_name" content={seo.ogSiteName} />
+<meta property="og:locale" content={seo.ogLocale} />
+<meta property="og:title" content={seo.title} />
+{seo.description && <meta property="og:description" content={seo.description} />}
+<meta property="og:url" content={seo.canonical} />
+{seo.ogImage && <meta property="og:image" content={seo.ogImage} />}
+{seo.ogImage && seo.ogImageType && <meta property="og:image:type" content={seo.ogImageType} />}
+{seo.ogImage && seo.ogImageWidth && <meta property="og:image:width" content={String(seo.ogImageWidth)} />}
+{seo.ogImage && seo.ogImageHeight && <meta property="og:image:height" content={String(seo.ogImageHeight)} />}
+{seo.ogImage && seo.ogImageAlt && <meta property="og:image:alt" content={seo.ogImageAlt} />}
+{seo.ogType === 'article' && seo.publishedTime && <meta property="article:published_time" content={seo.publishedTime} />}
+{seo.ogType === 'article' && seo.modifiedTime && <meta property="article:modified_time" content={seo.modifiedTime} />}
+
+<meta name="twitter:card" content={seo.twitterCard} />
+{seo.twitterSite && <meta name="twitter:site" content={seo.twitterSite} />}
+<meta name="twitter:title" content={seo.title} />
+{seo.description && <meta name="twitter:description" content={seo.description} />}
+{seo.ogImage && <meta name="twitter:image" content={seo.ogImage} />}
+{seo.ogImage && seo.ogImageAlt && <meta name="twitter:image:alt" content={seo.ogImageAlt} />}
+
+<slot name="head" />

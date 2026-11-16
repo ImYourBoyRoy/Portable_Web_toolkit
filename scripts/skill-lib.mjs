@@ -38,12 +38,22 @@ export function listFiles(root) {
   return files.sort((left, right) => left.localeCompare(right));
 }
 
+// Text skill files hash with LF endings, so a Windows checkout (autocrlf) or an editor that saved CRLF does not change the digest.
+const TEXT_EXTENSIONS = new Set(['.md', '.json', '.yaml', '.yml', '.txt', '.mjs', '.js', '.sh', '.py', '.toml', '.css', '.html']);
+
+function digestBytes(filePath) {
+  const data = fs.readFileSync(filePath);
+  return TEXT_EXTENSIONS.has(path.extname(filePath).toLowerCase()) && data.includes(13)
+    ? Buffer.from(data.toString('utf8').replace(/\r\n/g, '\n'), 'utf8')
+    : data;
+}
+
 export function treeDigest(root) {
   const digest = crypto.createHash('sha256');
   for (const filePath of listFiles(root)) {
     const relative = path.relative(root, filePath).split(path.sep).join('/');
     const name = Buffer.from(relative, 'utf8');
-    const data = fs.readFileSync(filePath);
+    const data = digestBytes(filePath);
     const nameLength = Buffer.alloc(8);
     nameLength.writeBigUInt64BE(BigInt(name.length));
     const dataLength = Buffer.alloc(8);

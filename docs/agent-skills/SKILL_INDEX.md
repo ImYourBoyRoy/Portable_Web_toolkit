@@ -22,6 +22,8 @@ This index is the fast-lookup manifest used by AI coding agents (**Antigravity, 
 | **`discovery-doctor`** | `core` | **Policy-driven discovery layer**: semantic robots/sitemap/llms/security/JSON-LD plus public REST/MCP checks on `dist` or live URL. | Pre-deploy and post-prod discovery pass. | None |
 | **`toolkit-update`** | `core` | **Reconciliation & Version Sync**. | Upgrading toolkit health. | None |
 | **`brand-doctor`** | `optional` | **Brand / favicon / OG** assets per Brand Guide. | Branding and social preview assets. | None |
+| **`site-templates`** | `core` | **Copy-ready site parts**: layout, analytics consent, contact/intake form, styles, fonts, plus `form-doctor`. | New sites; adding header/footer, consent, forms. | None |
+| **`site-theme`** | `optional` | **Token themes**: install, validate, extract from a built site, compare several themes on one site. | Re-theming, trying other looks, reusing a design. | None |
 | **`image-pipeline`** | `optional` | **WebP / media** rationalization. | Photographic/raster optimization. | None |
 | **`instagram-clone`** | `optional` | **Static Instagram gallery** fallback. | Public IG gallery without Meta API. | `portable-web-toolkit` |
 | **`vectorize-pipeline`** | `optional` | **SVG candidate prep** from fonts/rasters. | Logo & vector asset preparation. | None |

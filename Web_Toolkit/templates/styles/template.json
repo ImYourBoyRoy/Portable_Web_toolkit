@@ -1,0 +1,13 @@
+{
+  "name": "styles",
+  "description": "Component CSS on the theme tokens: base, utilities, button, card, hero, section, form controls, prose. No colors or fonts of its own.",
+  "requires": ["theme"],
+  "files": [
+    { "from": "*.css", "to": "src/styles/components/" }
+  ],
+  "cssImports": ["./components/index.css"],
+  "next": [
+    "global.css order: tokens.css, themes/index.css, (fonts.generated.css), components/index.css. Class API: Web_Toolkit/templates/styles/README.md.",
+    "Components read only contract tokens; run stylesheet-check scan --root . after editing."
+  ]
+}

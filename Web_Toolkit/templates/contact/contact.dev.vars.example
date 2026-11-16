@@ -1,0 +1,9 @@
+# ./Web_Toolkit/templates/contact/contact.dev.vars.example
+# Copy to .dev.vars (Wrangler) or the project .env for local runs. These are Cloudflare's PUBLISHED Turnstile
+# test keys: always-pass, never usable in production (the form and the route both refuse them off localhost).
+# Always-fail pair for testing the error path: site key 2x00000000000000000000AB, secret 2x0000000000000000000000000000000AA.
+PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+CONTACT_RECIPIENT_EMAIL=you@example.com
+CONTACT_FROM_EMAIL=website@your-verified-domain.example
+CONTACT_FROM_NAME=Example Studio

@@ -1,0 +1,28 @@
+{
+  "$comment": "Copy to src/data/nav.json. brand.name defaults to site.json siteName. Leave brand.logo empty for a wordmark-only header; logos are SVG masters with explicit width/height. items: label + href, optional external (auto-detected for absolute URLs) and one level of children [{label, href, description?}]. A parent without href renders as a submenu button only. cta is optional. Example children shape: { \"label\": \"Services\", \"href\": \"/services/\", \"children\": [{ \"label\": \"Design\", \"href\": \"/services/design/\", \"description\": \"One line.\" }] }. The shipped items only link routes a fresh site has (Home, About, Contact) so the first build has no dead links; add sections as you create the pages.",
+  "brand": {
+    "href": "/",
+    "logo": "",
+    "logoWidth": 40,
+    "logoHeight": 40,
+    "showName": true
+  },
+  "items": [
+    {
+      "label": "Home",
+      "href": "/"
+    },
+    {
+      "label": "About",
+      "href": "/about/"
+    },
+    {
+      "label": "Contact",
+      "href": "/contact/"
+    }
+  ],
+  "cta": {
+    "label": "Contact",
+    "href": "/contact/"
+  }
+}

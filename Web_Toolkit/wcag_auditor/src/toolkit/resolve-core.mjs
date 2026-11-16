@@ -5,18 +5,19 @@
  * The engine is `@imyourboyroy/wcagate` from GitHub, installed under
  * `Web_Toolkit/node_modules`. This module never walks `AI/` sibling trees.
  *
- * Missing engine: `npm install` in `Web_Toolkit/` (auto-ensure unless skipped).
+ * Missing engine: `pnpm install` (npm when pnpm is absent) in `Web_Toolkit/` (auto-ensure unless skipped).
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSyncCross } from '../../../shared/lib/spawn-cross.mjs';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { maybeAutoUpdate } from '../../../shared/lib/auto-update.mjs';
+import { WCAGATE_REPOSITORY_SPEC, WCAGATE_SPEC, engineInstallCommand } from '../../../shared/lib/engine-spec.mjs';
 
 const ENGINE_PACKAGE = '@imyourboyroy/wcagate';
-const ENGINE_GITHUB = 'github:imyourboyroy/WCAGate';
+const ENGINE_GITHUB = WCAGATE_SPEC;
 const FORBIDDEN_CORE_MARKERS = ['/AI/wcag-auditor', '\\AI\\wcag-auditor', '/wcag-auditor/src/cli.mjs'];
 
 export const BRIDGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -49,7 +50,7 @@ function assertNotForbidden(root) {
           'WCAGate engine resolution refused a workstation AI/ checkout.',
           `Rejected path: ${root}`,
           'Install github:imyourboyroy/WCAGate into Web_Toolkit/node_modules instead.',
-          'Run: cd Web_Toolkit && npm install'
+          'Run: cd Web_Toolkit && pnpm install (or npm install)'
         ].join('\n')
       );
     }
@@ -61,8 +62,8 @@ function missingEngineError(detail = '') {
     [
       'WCAGate engine is missing from the linked Web_Toolkit.',
       'This folder is a site-profile wrapper only. The engine is @imyourboyroy/wcagate.',
-      'Install: cd Web_Toolkit && npm install',
-      'That fetches github:imyourboyroy/WCAGate (unpinned default branch).',
+      'Install: cd Web_Toolkit && pnpm install (or npm install)',
+      'That fetches the latest WCAGate release tag (semver range, never a pinned version).',
       'Do not git clone into AI/wcag-auditor and point the toolkit at it.',
       'Do not git submodule this folder.',
       detail
@@ -90,10 +91,10 @@ function gitSpecFromEnv() {
   if (ref.startsWith('github:') || ref.startsWith('git+')) return ref;
   if (ref.startsWith('/') || ref.startsWith('.') || ref.includes('\\')) {
     throw new Error(
-      'WCAGATE_REF must be a GitHub ref (for example v2.3.1), not a filesystem path. Use WCAGATE_ROOT only for a local WCAGate package checkout that is not AI/wcag-auditor.'
+      'WCAGATE_REF must be a GitHub ref (a tag or branch name), not a filesystem path. Use WCAGATE_ROOT only for a local WCAGate package checkout that is not AI/wcag-auditor.'
     );
   }
-  return `${ENGINE_GITHUB}#${ref}`;
+  return `${WCAGATE_REPOSITORY_SPEC}#${ref}`;
 }
 
 function resolveExplicitRoot() {
@@ -107,17 +108,10 @@ function resolveExplicitRoot() {
   return root;
 }
 
-function npmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
-
-function runNpm(args) {
-  // npm 12+ defaults allow-git=none. WCAGate is a GitHub git dependency.
-  const withGit = args.includes('--allow-git=all') ? args : [...args, '--allow-git=all'];
-  return spawnSync(npmCommand(), withGit, {
+function runInstall(plan) {
+  return spawnSyncCross(plan.command, plan.args, {
     cwd: WEB_TOOLKIT_ROOT,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
     env: process.env
   });
 }
@@ -154,18 +148,15 @@ export function ensureEngine({ skip = false, update = false } = {}) {
 
   const spec = gitSpecFromEnv();
   console.error(`[wcag-auditor] ensuring WCAGate engine (${spec}) in ${WEB_TOOLKIT_ROOT}`);
-  // `npm update` does not refetch unpinned git dependencies. Reinstall the spec
-  // when updating or pinning a ref; otherwise `npm install` from package.json.
-  const args = wantUpdate || spec !== ENGINE_GITHUB
-    ? ['install', spec]
-    : ['install'];
-  const result = runNpm(args);
+  // An update does not refetch git dependencies, so refreshing or pinning a ref reinstalls the spec; otherwise install from package.json.
+  const plan = engineInstallCommand({ spec, refresh: wantUpdate });
+  const result = runInstall(plan);
   if (result.status !== 0) {
-    throw missingEngineError(`npm ${args.join(' ')} failed with exit ${result.status}.`);
+    throw missingEngineError(`${plan.manager} ${plan.args.join(' ')} failed with exit ${result.status}.`);
   }
 
   installed = resolveFromNodeModules();
-  if (!installed) throw missingEngineError('npm install finished but @imyourboyroy/wcagate is still missing.');
+  if (!installed) throw missingEngineError('The engine install finished but @imyourboyroy/wcagate is still missing.');
   assertNotForbidden(installed);
   return installed;
 }

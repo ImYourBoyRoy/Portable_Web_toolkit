@@ -30,7 +30,7 @@ The `package.json` scripts in `site-starter/*.package.json` already wire the scr
 `build:headers:prod` ends with `discovery-postbuild.mjs`, and `npm run discovery:check` runs the consistency gate.
 
 Optional structural CSS (no brand lock-in) lives in
-[`../../site-starter/src/styles/`](../site-starter/src/styles/).
+[`../../site-starter/src/styles/`](../../../site-starter/src/styles/).
 
 ## Setup
 

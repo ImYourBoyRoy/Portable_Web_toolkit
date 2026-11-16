@@ -1,0 +1,83 @@
+---
+// ./Web_Toolkit/templates/analytics/components/PostHog.astro
+/**
+ * PostHog product analytics, initialized ONLY after the visitor allows analytics.
+ * Usage: render once in the base layout. No-op when PUBLIC_POSTHOG_KEY / analytics.json is unset.
+ * Inputs: PUBLIC_POSTHOG_KEY, PUBLIC_POSTHOG_HOST (default https://us.i.posthog.com; use https://eu.i.posthog.com
+ *   for EU cloud or your reverse-proxy origin), optional posthog.autocapture / posthog.sessionRecording in
+ *   src/data/analytics.json (both default false).
+ * Outputs: window.posthog after consent. Options follow the toolkit defaults: defaults "2026-08-30",
+ *   capture_pageview "history_change", no autocapture, no session recording, no surveys, Do Not Track respected.
+ * Side effects: loads <region>-assets.i.posthog.com/static/array.js and posts to the API host after consent only.
+ *   Revoking consent calls opt_out_capturing() and reset().
+ */
+import { getAnalyticsConfig } from '../../lib/analytics/load-config';
+import { serializeForScript } from '../../lib/analytics/config';
+
+const { enabled, posthog } = getAnalyticsConfig();
+const payload =
+  enabled && posthog
+    ? serializeForScript({
+        key: posthog.key,
+        host: posthog.host,
+        autocapture: posthog.autocapture,
+        sessionRecording: posthog.sessionRecording
+      })
+    : '';
+---
+
+{payload && <script is:inline type="application/json" data-pwt-analytics="posthog" set:html={payload} />}
+
+<script>
+  import { getConsentManager, whenGranted } from '../../lib/analytics/consent';
+  import { deferUntilIdle } from '../../lib/analytics/idle';
+  import { posthogInitOptions } from '../../lib/analytics/providers';
+  import { installPosthogStub } from '../../lib/analytics/posthog-stub';
+
+  interface PostHogConfig {
+    key?: string;
+    host?: string;
+    autocapture?: boolean;
+    sessionRecording?: boolean;
+  }
+  interface PostHogClient {
+    init(key: string, options: Record<string, unknown>): void;
+    opt_in_capturing?: () => void;
+    opt_out_capturing?: () => void;
+    reset?: () => void;
+  }
+
+  let config: PostHogConfig = {};
+  try {
+    const raw = document.querySelector('script[data-pwt-analytics="posthog"]')?.textContent;
+    config = raw ? (JSON.parse(raw) as PostHogConfig) : {};
+  } catch {
+    config = {};
+  }
+
+  if (config.key && config.host) {
+    const { key, host } = config;
+    let initialized = false;
+    const client = (): PostHogClient | undefined => (window as unknown as { posthog?: PostHogClient }).posthog;
+
+    const grant = (): void => {
+      if (initialized) {
+        client()?.opt_in_capturing?.();
+        return;
+      }
+      initialized = true;
+      installPosthogStub(window, document);
+      client()?.init(
+        key,
+        posthogInitOptions({ apiHost: host, autocapture: config.autocapture, sessionRecording: config.sessionRecording })
+      );
+    };
+
+    const revoke = (): void => {
+      client()?.opt_out_capturing?.();
+      client()?.reset?.();
+    };
+
+    whenGranted(getConsentManager(), { grant, revoke }, { defer: (run) => deferUntilIdle(run) });
+  }
+</script>

@@ -1,0 +1,35 @@
+{
+  "$comment": "Copy to <project>/fonts.config.json. Example matches the 'studio' theme (Instrument Serif + DM Sans). Install packages first: pnpm add @fontsource/instrument-serif @fontsource-variable/dm-sans @fontsource-variable/jetbrains-mono",
+  "outDir": "public/fonts",
+  "cssOut": "src/styles/fonts.generated.css",
+  "manifestOut": "src/styles/fonts.manifest.json",
+  "display": "swap",
+  "subsets": ["latin"],
+  "families": [
+    {
+      "family": "Instrument Serif",
+      "role": "display",
+      "fallback": "serif",
+      "weights": [400],
+      "styles": ["normal", "italic"],
+      "preload": true
+    },
+    {
+      "family": "DM Sans",
+      "role": "sans",
+      "variable": true,
+      "weightRange": [100, 1000],
+      "styles": ["normal"],
+      "preload": true
+    },
+    {
+      "family": "JetBrains Mono",
+      "role": "mono",
+      "fallback": "monospace",
+      "variable": true,
+      "weightRange": [100, 800],
+      "display": "optional",
+      "media": "(min-width: 641px)"
+    }
+  ]
+}

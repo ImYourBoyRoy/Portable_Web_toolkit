@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Templates"
+  short_description: "Install layout, consent, contact form, styles and fonts"
+  default_prompt: "Use $site-templates against this toolkit-managed site profile to install the layout, consent banner, contact form, styles and fonts, then check the form with form-doctor."

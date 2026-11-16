@@ -2,7 +2,7 @@
 
 This folder is a **site-profile wrapper** for Portable Web Toolkit sites.
 
-The accessibility engine is **[WCAGate](https://github.com/imyourboyroy/WCAGate)** (`@imyourboyroy/wcagate`). It is installed into `Web_Toolkit/node_modules` from GitHub (unpinned default branch). It is **not** vendored here and **not** a git submodule.
+The accessibility engine is **[WCAGate](https://github.com/imyourboyroy/WCAGate)** (`@imyourboyroy/wcagate`). It is installed into `Web_Toolkit/node_modules` from GitHub as the latest release tag (semver range `github:imyourboyroy/WCAGate#semver:*`, never a pinned version). It is **not** vendored here and **not** a git submodule.
 
 ## If the engine is missing
 
@@ -12,10 +12,10 @@ Manual:
 
 ```bash
 cd Web_Toolkit
-npm install --allow-git=all
+pnpm install              # npm install --allow-git=all when pnpm is absent
 ```
 
-npm 12+ defaults `allow-git=none`. This toolkit ships [`Web_Toolkit/.npmrc`](../.npmrc) with `allow-git=all` so that known GitHub dependency can install.
+The engine installs with pnpm when it is installed and with npm otherwise (`PORTABLE_TOOLKIT_PM=npm|pnpm` overrides). npm 12+ defaults `allow-git=none`; this toolkit ships [`Web_Toolkit/.npmrc`](../.npmrc) with `allow-git=all` so that known GitHub dependency can install.
 
 Confirm:
 
@@ -34,10 +34,10 @@ Do **not**:
 
 ```bash
 cd Web_Toolkit
-npm run wcagate:update
-# reinstalls github:imyourboyroy/WCAGate (npm update does not refetch git deps)
+pnpm run wcagate:update
+# runs the freshness check now and installs the latest WCAGate release if newer
 # or:
 node ./wcag_auditor/bin/wcag-auditor.mjs doctor --update-engine
 ```
 
-Optional pin for one machine: `WCAGATE_REF=v2.3.1` (git tag/branch, not a filesystem path).
+Optional pin for one machine only: `WCAGATE_REF=<tag-or-branch>` (git ref, not a filesystem path). Leave it unset to always get the latest release.

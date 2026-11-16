@@ -1,0 +1,26 @@
+{
+  "$comment": "Copy to src/data/footer.json. columns: up to four, each {title, links[{label, href, external?}]}. legal: small-print links. social: optional external profile links. copyright.holder defaults to site.json siteName; startYear renders 2021-2026 style ranges; the end year is computed at build. The shipped links only point at routes a fresh site has; add Privacy, Terms, and Accessibility entries when those pages exist.",
+  "tagline": "A short line about what the site stands for.",
+  "columns": [
+    {
+      "title": "Explore",
+      "links": [
+        {
+          "label": "About",
+          "href": "/about/"
+        },
+        {
+          "label": "Contact",
+          "href": "/contact/"
+        }
+      ]
+    }
+  ],
+  "social": [],
+  "legal": [],
+  "copyright": {
+    "holder": "",
+    "text": "All rights reserved.",
+    "startYear": 2026
+  }
+}

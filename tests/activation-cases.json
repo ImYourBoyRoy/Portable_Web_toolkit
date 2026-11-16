@@ -12,7 +12,7 @@
     },
     "discovery-doctor": {
       "positive": [
-        "Run discovery-doctor on this site’s dist output and fix robots/sitemap/llms failures before deploy."
+        "Run discovery-doctor on this site\u2019s dist output and fix robots/sitemap/llms failures before deploy."
       ],
       "near_miss": [
         "Add a marketing blog post draft.",
@@ -21,7 +21,7 @@
     },
     "image-pipeline": {
       "positive": [
-        "Convert this site’s photographic assets to WebP with the toolkit image-pipeline."
+        "Convert this site\u2019s photographic assets to WebP with the toolkit image-pipeline."
       ],
       "near_miss": [
         "Trace a logo font to SVG outlines.",
@@ -101,6 +101,16 @@
         "Copy a starter package file over this non-empty existing project."
       ]
     },
+    "site-theme": {
+      "positive": [
+        "Compare five themes on this site and show me which one I like.",
+        "Extract this site's design into a theme I can reuse on another site."
+      ],
+      "near_miss": [
+        "Change the homepage headline copy only.",
+        "Run PageSpeed Insights on production."
+      ]
+    },
     "toolkit-update": {
       "positive": [
         "Compare my Portable Web Toolkit checkout with the latest public source and plan a safe reconciliation."
@@ -127,6 +137,16 @@
       "near_miss": [
         "Check contrast by eye only without toolkit tooling.",
         "Open AI/wcag-auditor instead of the toolkit module."
+      ]
+    },
+    "site-templates": {
+      "positive": [
+        "Add a header, footer and mobile nav to this new Astro site.",
+        "Add a contact form with Turnstile and check that it reports failures honestly."
+      ],
+      "near_miss": [
+        "Change the homepage headline copy only.",
+        "Compare five themes on this site."
       ]
     }
   }

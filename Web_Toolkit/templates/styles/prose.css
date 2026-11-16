@@ -1,0 +1,215 @@
+/* ./Web_Toolkit/templates/styles/prose.css
+ * Long-form content (articles, legal pages, CMS/markdown output). Wrap rendered content in .prose; it styles bare
+ * elements with zero-specificity :where() rules so any class you add still wins.
+ * Reads --font-*, --color-*, --space-*, --radius-*, --line-height-body.
+ *
+ * Variants: .prose--wide (no measure cap), .prose--lg (larger type).
+ */
+
+.prose {
+  max-width: 68ch;
+  font-size: 1.0625rem;
+  line-height: calc(var(--line-height-body) + 0.1);
+  color: var(--color-text);
+}
+
+.prose--wide {
+  max-width: none;
+}
+
+.prose--lg {
+  font-size: 1.1875rem;
+}
+
+/* ---- Rhythm: one rule spaces every block; headings get extra room above ---- */
+.prose > :where(* + *) {
+  margin-block: var(--space-3) 0;
+}
+
+.prose > :where(h2) {
+  margin-block-start: var(--space-6);
+}
+
+.prose > :where(h3) {
+  margin-block-start: var(--space-5);
+}
+
+.prose > :where(h4, h5, h6) {
+  margin-block-start: var(--space-4);
+}
+
+.prose > :where(h2, h3, h4, h5, h6) + :where(*) {
+  margin-block-start: var(--space-2);
+}
+
+.prose :where(h2, h3, h4, h5, h6) {
+  scroll-margin-top: calc(var(--header-height) + var(--space-3));
+}
+
+.prose :where(h1) {
+  margin-block-end: var(--space-3);
+}
+
+/* ---- Inline ---- */
+.prose :where(a) {
+  text-decoration-thickness: 0.1em;
+}
+
+.prose :where(strong) {
+  font-weight: 650;
+  color: var(--color-text);
+}
+
+.prose :where(code, kbd, samp):not(pre *) {
+  padding: 0.12em 0.4em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
+.prose :where(kbd) {
+  border-block-end-width: 2px;
+}
+
+.prose :where(mark) {
+  padding: 0 0.2em;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent-contrast);
+  background-color: var(--color-accent);
+}
+
+/* ---- Lists ---- */
+.prose :where(ul, ol) {
+  padding-inline-start: 1.4em;
+}
+
+.prose :where(li) {
+  padding-inline-start: 0.25em;
+}
+
+.prose :where(li + li) {
+  margin-block-start: var(--space-2);
+}
+
+.prose :where(li)::marker {
+  color: var(--color-text-muted);
+}
+
+.prose :where(dt) {
+  font-weight: 650;
+}
+
+.prose :where(dd) {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+/* ---- Blocks ---- */
+.prose :where(blockquote) {
+  margin-inline: 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-4);
+  border-inline-start: 3px solid var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 1.1875em;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.prose :where(blockquote p + p) {
+  margin-block-start: var(--space-2);
+}
+
+.prose :where(blockquote cite, blockquote footer) {
+  display: block;
+  margin-block-start: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+
+.prose :where(pre) {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.prose :where(pre):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.prose :where(figure) {
+  margin-inline: 0;
+}
+
+.prose :where(img, video) {
+  border-radius: var(--radius-md);
+}
+
+.prose :where(figcaption) {
+  margin-block-start: var(--space-2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.prose :where(hr) {
+  margin-block: var(--space-5);
+}
+
+.prose :where(details) {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.prose :where(summary) {
+  font-weight: 650;
+}
+
+.prose :where(summary):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.prose :where(details[open] > summary) {
+  margin-block-end: var(--space-2);
+}
+
+/* ---- Tables: keep real table semantics. Wrap wide tables in <div class="table-scroll" tabindex="0" role="region"
+ * aria-label="..."> so they scroll inside the block instead of blowing out the page. ---- */
+.prose :where(table) {
+  width: 100%;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose :where(th, td) {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--color-border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.prose :where(thead th) {
+  border-block-end: 2px solid var(--color-text-muted);
+  font-weight: 650;
+  color: var(--color-text);
+}
+
+.prose :where(.table-scroll) {
+  overflow-x: auto;
+}
+
+.prose :where(.table-scroll):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

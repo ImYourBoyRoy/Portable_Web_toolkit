@@ -1,0 +1,7 @@
+/* ./src/styles/layout/layout.css — imports the layout sheets in cascade order. Tokens come from the theme template. */
+@import './layout-shell.css';
+@import './skip-link.css';
+@import './header.css';
+@import './nav.css';
+@import './footer.css';
+@import './breadcrumbs.css';

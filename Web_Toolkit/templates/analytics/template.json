@@ -1,0 +1,17 @@
+{
+  "name": "analytics",
+  "description": "Privacy-first consent banner (default off) and GA4 / PostHog / Cloudflare Web Analytics loaders that run only after consent.",
+  "requires": ["theme"],
+  "files": [
+    { "from": "components/*.astro", "to": "src/components/analytics/" },
+    { "from": "lib/*.ts", "to": "src/lib/analytics/" },
+    { "from": "styles/analytics-consent.css", "to": "src/styles/components/analytics-consent.css" },
+    { "from": "analytics.config.example.json", "to": "src/data/analytics.json", "keepExisting": true }
+  ],
+  "cssImports": ["./components/analytics-consent.css"],
+  "env": ["PUBLIC_GA4_ID", "PUBLIC_POSTHOG_KEY", "PUBLIC_POSTHOG_HOST", "PUBLIC_CF_BEACON_TOKEN"],
+  "next": [
+    "Render <AnalyticsConsent /> and the loaders you use in the base layout; put <PrivacyChoices /> in the footer privacy-choices slot.",
+    "Set the PUBLIC_* env vars in the project .env; add the provider hosts to CSP script-src/connect-src (see README)."
+  ]
+}

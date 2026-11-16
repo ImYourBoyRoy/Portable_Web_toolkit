@@ -1,5 +1,7 @@
 # How to use Portable Web Toolkit (human → agent prompts)
 
+> **Agents:** this is a human prompt guide (~4.7k tokens). Read only `## Healthy order of operations` and `## Full maintenance loop`; use `docs/TOOLS.md` to pick tools.
+
 This guide is for **you** (site owner / operator). Paste the prompts into your
 coding agent (Cursor, Claude, Codex, etc.). The agent should prefer toolkit
 CLIs over inventing scripts.

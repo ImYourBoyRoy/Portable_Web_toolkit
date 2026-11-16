@@ -97,3 +97,17 @@ test('status helper rejects apply mode', () => {
     fs.rmSync(temporary, { recursive: true, force: true });
   }
 });
+
+test('skill digests ignore CRLF so a Windows checkout verifies like a Linux one', async () => {
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const { treeDigest } = await import('../scripts/skill-lib.mjs');
+  const make = (eol) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-eol-'));
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), `---${eol}name: x${eol}---${eol}body${eol}`);
+    fs.writeFileSync(path.join(dir, 'blob.bin'), Buffer.from([13, 10, 0, 1]));
+    return dir;
+  };
+  assert.equal(treeDigest(make('\n')), treeDigest(make('\r\n')));
+});

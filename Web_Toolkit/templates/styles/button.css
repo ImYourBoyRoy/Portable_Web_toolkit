@@ -1,0 +1,179 @@
+/* ./Web_Toolkit/templates/styles/button.css
+ * Buttons for <button>, <a> and <input type="button">. Variants: primary, secondary (default), ghost.
+ * Every size keeps a 44px minimum hit area. Reads --color-*, --font-sans, --space-*, --radius-md, --shadow-soft,
+ * --dur-fast, --ease-out.
+ *
+ * Markup: <a class="btn btn--primary" href="/contact">Get in touch</a>
+ * States: :disabled, [aria-disabled="true"], .is-disabled, [aria-busy="true"] (loading, label stays visible).
+ */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  text-wrap: balance;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ---- Variants ---- */
+.btn--primary {
+  color: var(--color-accent-contrast);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn--primary:hover {
+  color: var(--color-accent-contrast);
+}
+
+.btn--ghost {
+  color: var(--color-link);
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.btn--ghost:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+    border-color: var(--color-text);
+    background-color: var(--color-surface-raised);
+  }
+
+  .btn--primary:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+    border-color: color-mix(in srgb, var(--color-accent) 88%, var(--color-text));
+    background-color: color-mix(in srgb, var(--color-accent) 88%, var(--color-text));
+  }
+
+  .btn--ghost:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+    border-color: transparent;
+    background-color: var(--color-surface);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn:hover:not(:disabled, [aria-disabled="true"], .is-disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+.btn:active:not(:disabled, [aria-disabled="true"], .is-disabled) {
+  transform: translateY(0);
+}
+
+/* ---- Sizes (height never drops below the 44px target; small only tightens type and padding) ---- */
+.btn--sm {
+  padding-inline: var(--space-3);
+  font-size: 0.875rem;
+}
+
+.btn--lg {
+  min-height: 3.5rem;
+  padding-inline: var(--space-5);
+  font-size: 1.125rem;
+  border-radius: var(--radius-lg);
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+.btn--icon {
+  width: 2.75rem;
+  padding: 0;
+}
+
+.btn__icon {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+}
+
+/* ---- Disabled: native or ARIA. Links cannot be disabled natively, so aria-disabled also blocks pointer events. ---- */
+.btn:disabled,
+.btn[aria-disabled="true"],
+.btn.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn[aria-disabled="true"],
+.btn.is-disabled {
+  pointer-events: none;
+}
+
+/* ---- Loading: spinner before the label; keep the text so the busy state is announced and the width is stable. ---- */
+.btn[aria-busy="true"] {
+  cursor: progress;
+  pointer-events: none;
+}
+
+.btn[aria-busy="true"]::before {
+  content: "";
+  flex: none;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn[aria-busy="true"]::before {
+    animation: btn-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Forced colors (Windows High Contrast): keep an edge on every variant ---- */
+@media (forced-colors: active) {
+  .btn,
+  .btn--ghost {
+    border-color: currentColor;
+  }
+}

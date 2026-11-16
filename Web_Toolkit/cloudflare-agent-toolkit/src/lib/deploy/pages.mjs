@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { binaryCommand, detectPackageManager } from '../../../../shared/lib/package-manager.mjs';
 import { spawnSync } from 'node:child_process';
 import { toBool } from '../format.mjs';
 import {
@@ -11,18 +12,25 @@ import {
   resolvePagesProjectName,
 } from './context.mjs';
 
+/** Wrangler through the site's package manager (npx for npm sites, pnpm exec for pnpm sites). */
+function wranglerRunner(args, projectRoot = process.cwd()) {
+  return binaryCommand(detectPackageManager(projectRoot).name, 'wrangler', args);
+}
+
 function ensurePagesProject(projectName, deployEnv) {
+  const [bin, args] = wranglerRunner(['pages', 'project', 'list']);
   const list = spawnSync(
-    'npx',
-    ['wrangler', 'pages', 'project', 'list'],
+    bin,
+    args,
     { encoding: 'utf8', shell: process.platform === 'win32', env: deployEnv },
   );
   if (list.stdout?.includes(projectName)) return;
 
   console.log(`- Creating Pages project: ${projectName}`);
+  const [createBin, createArgs] = wranglerRunner(['pages', 'project', 'create', projectName, '--production-branch', 'main']);
   spawnSync(
-    'npx',
-    ['wrangler', 'pages', 'project', 'create', projectName, '--production-branch', 'main'],
+    createBin,
+    createArgs,
     { stdio: 'inherit', shell: process.platform === 'win32', env: deployEnv },
   );
 }
@@ -30,7 +38,7 @@ function ensurePagesProject(projectName, deployEnv) {
 export function deployPagesToCloudflare({ projectRoot, projectName, deployEnv }) {
   const clientDir = path.join(projectRoot, 'dist', 'client');
   if (!fs.existsSync(clientDir)) {
-    throw new Error(`Missing ${clientDir}. Run npm run build first.`);
+    throw new Error(`Missing ${clientDir}. Run the site build first (pnpm run build).`);
   }
 
   const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-pages-deploy-'));
@@ -39,9 +47,10 @@ export function deployPagesToCloudflare({ projectRoot, projectName, deployEnv })
 
   ensurePagesProject(projectName, deployEnv);
 
+  const [deployBin, deployArgs] = wranglerRunner(['pages', 'deploy', '.', '--project-name', projectName, '--commit-dirty=true'], projectRoot);
   const result = spawnSync(
-    'npx',
-    ['wrangler', 'pages', 'deploy', '.', '--project-name', projectName, '--commit-dirty=true'],
+    deployBin,
+    deployArgs,
     { cwd: stagingDir, stdio: 'inherit', shell: process.platform === 'win32', env: deployEnv },
   );
 
@@ -63,7 +72,7 @@ export function runDeployPages(flags = {}) {
   console.log(`- Apply: ${apply ? 'yes' : 'no (dry-run)'}`);
 
   if (!fs.existsSync(clientDir)) {
-    throw new Error(`Missing ${clientDir}. Run npm run build first.`);
+    throw new Error(`Missing ${clientDir}. Run the site build first (pnpm run build).`);
   }
 
   if (!apply) {
