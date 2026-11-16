@@ -30,6 +30,11 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
 
+      - name: Install WCAGate engine
+        # The wcag-auditor wrapper tests need @imyourboyroy/wcagate under Web_Toolkit/node_modules.
+        # This used to be installed only as a side effect of the toolkit auto-update preflight.
+        run: npm install --prefix Web_Toolkit --ignore-scripts --allow-git=all
+
       - name: Validate repository
         run: npm run validate
 

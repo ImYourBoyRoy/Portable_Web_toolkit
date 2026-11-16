@@ -7,6 +7,7 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ### Fixed
 
+- **CI** installs the WCAGate engine (`npm install --prefix Web_Toolkit`) before `npm run validate`. The wcag-auditor wrapper tests had only passed because the auto-update preflight installed it as a side effect, which stopped once `--help` and `--apply` invocations skipped the preflight.
 - **site-starter `OptimizedPicture.astro`** used shell-style `#` comments inside its frontmatter, so `astro check` reported 53 errors in every new project. They are `//` comments now.
 
 ## [0.5.0] - 2026-11-15
