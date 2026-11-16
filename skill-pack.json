@@ -2,7 +2,7 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.4.0",
-  "toolkit_version": "0.5.0",
+  "toolkit_version": "0.5.1",
   "source_base_commit": "fffa17c8f95e3613b0b1530107e06e010fe16675",
   "skills": [
     {
