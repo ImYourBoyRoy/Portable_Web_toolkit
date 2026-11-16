@@ -5,6 +5,10 @@ Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **site-starter `OptimizedPicture.astro`** used shell-style `#` comments inside its frontmatter, so `astro check` reported 53 errors in every new project. They are `//` comments now.
+
 ## [0.5.0] - 2026-11-15
 
 ### Added
