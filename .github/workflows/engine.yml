@@ -53,7 +53,7 @@ jobs:
 
       - name: Rust toolchain (current stable, no pin)
         run: |
-          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
           rustup default stable
           if [ -n "${{ matrix.target }}" ]; then rustup target add "${{ matrix.target }}"; fi
           rustc --version
