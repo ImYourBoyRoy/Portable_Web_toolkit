@@ -19,18 +19,13 @@ jobs:
     name: Release and toolkit validation (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
-    # Windows reports without blocking until its first green run proves the suite there; Linux and macOS block.
-    continue-on-error: ${{ matrix.experimental == true }}
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        include:
-          - os: windows-latest
-            experimental: true
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Check out repository
