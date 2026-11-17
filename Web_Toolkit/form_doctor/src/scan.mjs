@@ -27,6 +27,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { collectGraph, lineOf, matchBrace, stripComments } from './analysis.mjs';
 
+/** Paths in findings are always forward-slashed, so reports read the same on Windows, macOS and Linux. */
+const relPath = (root, file) => path.relative(root, file).split(path.sep).join('/');
+
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.astro', '.wrangler', '.git', 'output', 'Web_Toolkit', 'reference_files', '.agents', '.runtime', 'coverage', 'tests', 'test', '__tests__', '.next', '.vercel', 'tasklist', 'docs']);
 const MARKUP_EXT = new Set(['.astro', '.html', '.svelte', '.vue', '.tsx', '.jsx']);
 const CODE_EXT = new Set(['.ts', '.mts', '.js', '.mjs', '.tsx']);
@@ -77,12 +80,12 @@ function readText(file, malformed, root) {
   try {
     const stat = fs.statSync(file);
     if (stat.size > MAX_FILE_BYTES) {
-      malformed.push(finding('malformed-surface', 'fail', path.relative(root, file), 1, `File is larger than ${MAX_FILE_BYTES} bytes and was not analysed.`, 'Split the file or exclude it deliberately.'));
+      malformed.push(finding('malformed-surface', 'fail', relPath(root, file), 1, `File is larger than ${MAX_FILE_BYTES} bytes and was not analysed.`, 'Split the file or exclude it deliberately.'));
       return null;
     }
     return fs.readFileSync(file, 'utf8');
   } catch (error) {
-    malformed.push(finding('malformed-surface', 'fail', path.relative(root, file), 1, `File could not be read (${error.code ?? 'error'}).`, 'Fix permissions or remove the file.'));
+    malformed.push(finding('malformed-surface', 'fail', relPath(root, file), 1, `File could not be read (${error.code ?? 'error'}).`, 'Fix permissions or remove the file.'));
     return null;
   }
 }
@@ -186,9 +189,9 @@ function tryBlocks(source) {
 const HONEST_CATCH = /\bthrow\b|\b5\d\d\b|errorResponse|serverError|internalError/;
 
 function analyseHandler(entryFile, graph, root) {
-  const rel = path.relative(root, entryFile);
+  const rel = relPath(root, entryFile);
   const findings = [];
-  const files = [...graph.entries()].map(([file, text]) => ({ file, rel: path.relative(root, file), text, source: stripComments(text) }));
+  const files = [...graph.entries()].map(([file, text]) => ({ file, rel: relPath(root, file), text, source: stripComments(text) }));
   const combined = files.map((f) => f.source).join('\n');
 
   // Swallowed send errors: a catch whose try body sends mail must answer 5xx or rethrow.
@@ -307,7 +310,7 @@ export function scanProject(projectRoot) {
     const text = read(file);
     if (text === null) continue;
     if (!/<form\b/i.test(text) && !/FormData\s*\(/.test(text)) continue;
-    const rel = path.relative(root, file);
+    const rel = relPath(root, file);
     const result = scanMarkup(text, rel);
     findings.push(...result.findings);
     forms.push(...result.forms);
@@ -321,7 +324,7 @@ export function scanProject(projectRoot) {
     if (markupFiles.includes(file)) continue;
     const text = read(file);
     if (text === null || !/FormData\s*\(/.test(text) || !/\bfetch\s*\(/.test(text)) continue;
-    const rel = path.relative(root, file);
+    const rel = relPath(root, file);
     clientFiles.push(rel);
     findings.push(...checkClientStatus(stripComments(text), rel));
   }
@@ -340,7 +343,7 @@ export function scanProject(projectRoot) {
     const key = [...graph.keys()].sort().join('|');
     if (analysed.has(key)) continue;
     analysed.add(key);
-    handlers.push(path.relative(root, file));
+    handlers.push(relPath(root, file));
     findings.push(...analyseHandler(file, graph, root));
   }
 

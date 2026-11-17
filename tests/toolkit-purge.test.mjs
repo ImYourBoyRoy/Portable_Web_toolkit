@@ -10,11 +10,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const { collectTargets, removeTarget, isInsideRoot } = await import(
-  path.join(here, '..', 'Web_Toolkit', 'toolkit_purge', 'src', 'lib', 'targets.mjs')
+  pathToFileURL(path.join(here, '..', 'Web_Toolkit', 'toolkit_purge', 'src', 'lib', 'targets.mjs')).href
 );
 
 function makeSandbox() {

@@ -151,12 +151,39 @@ function processGroup(pid) {
   return validPid(value) ? value : null;
 }
 
+/** Windows: parent pid and creation time (epoch ms) of a process through CIM; null when the process is gone. */
+function winProcess(pid) {
+  const script = `$p = Get-CimInstance Win32_Process -Filter 'ProcessId=${Number(pid)}'; if ($p) { '{0} {1}' -f $p.ParentProcessId, ([DateTimeOffset]$p.CreationDate).ToUnixTimeMilliseconds() }`;
+  const [parent, created] = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script]).trim().split(' ').map(Number);
+  return Number.isFinite(created) ? { parent: validPid(parent) ? parent : null, created } : null;
+}
+
+/**
+ * Windows has no process groups, so ownership is the parent chain: reaching `rootPid` means ours. A listener that is older than
+ * `rootPid` cannot be its descendant, so it is foreign (the dev server that was already on the port). Anything else is unknown (null),
+ * never guessed: a parent that exited leaves a broken chain.
+ */
+function windowsListenerBelongsTo(port, rootPid) {
+  const listener = listenerInfo(port);
+  if (!listener) return null;
+  if (listener.pid === rootPid) return true;
+  const start = winProcess(listener.pid);
+  if (!start) return null;
+  let parent = start.parent;
+  for (let depth = 0; depth < 25 && parent !== null; depth += 1) {
+    if (parent === rootPid) return true;
+    parent = winProcess(parent)?.parent ?? null;
+  }
+  const root = winProcess(rootPid);
+  return root && start.created < root.created ? false : null;
+}
+
 /**
  * Whether the process listening on `port` is `rootPid` or one of its descendants (same process group, or a parent chain that
- * reaches it): true, false, or null when it cannot be told (no ss/lsof/ps, or Windows).
+ * reaches it): true, false, or null when it cannot be told (no ss/lsof/ps, or an ambiguous Windows chain).
  */
 export function listenerBelongsTo(port, rootPid) {
-  if (IS_WINDOWS) return null;
+  if (IS_WINDOWS) return windowsListenerBelongsTo(port, rootPid);
   const listener = listenerInfo(port);
   if (!listener) return null;
   if (listener.pid === rootPid || processGroup(listener.pid) === rootPid) return true;

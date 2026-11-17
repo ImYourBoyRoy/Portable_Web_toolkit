@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const template = path.join(root, 'Web_Toolkit/templates/discovery');
-const { htmlToMarkdown } = await import(path.join(template, 'scripts/lib/html-to-markdown.mjs'));
+const { htmlToMarkdown } = await import(pathToFileURL(path.join(template, 'scripts/lib/html-to-markdown.mjs')).href);
 
 const page = (title, body, canonical) => `<!doctype html><html><head><title>${title}</title><meta name="description" content="${title} description"><link rel="canonical" href="${canonical}"></head><body><nav>menu</nav><main>${body}</main><footer>foot</footer></body></html>`;
 

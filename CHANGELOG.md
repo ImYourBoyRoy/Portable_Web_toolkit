@@ -3,6 +3,14 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.6.3] - 2026-11-17
+
+### Fixed (Windows: verified on a real Windows Server 2025 guest)
+
+- `dev-server`: the "does this listener belong to the server we started" check returned unknown on Windows, so a foreign server answering on our port was never refused. It now follows the parent chain through CIM and treats a listener older than our process as foreign; ambiguous chains stay unknown.
+- `form-doctor` and `package-updater` reported file paths with backslashes on Windows; reported paths are always forward-slashed.
+- Tests: dynamic imports use `file://` URLs; Windows-only tests (`tests/dev-server-windows.test.mjs`) cover the `npm` shim, whole-tree stop and foreign-process protection. Full suite passes on Linux, macOS 26 and Windows Server 2025.
+
 ## [0.6.2] - 2026-11-17
 
 ### Fixed (macOS: found by the first macOS CI run)

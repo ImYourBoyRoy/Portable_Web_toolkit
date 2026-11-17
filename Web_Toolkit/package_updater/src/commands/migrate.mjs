@@ -87,7 +87,7 @@ export function findOtherNpmMentions(projectRoot) {
   for (const file of candidates) {
     if (!fs.existsSync(file) || !fs.statSync(file).isFile()) continue;
     fs.readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
-      if (/\bnpm (run|ci|install|i|update|exec)\b|\bnpx\b/.test(line)) found.push(`${path.relative(projectRoot, file)}:${index + 1}: ${line.trim().slice(0, 100)}`);
+      if (/\bnpm (run|ci|install|i|update|exec)\b|\bnpx\b/.test(line)) found.push(`${path.relative(projectRoot, file).split(path.sep).join('/')}:${index + 1}: ${line.trim().slice(0, 100)}`);
     });
   }
   return found;

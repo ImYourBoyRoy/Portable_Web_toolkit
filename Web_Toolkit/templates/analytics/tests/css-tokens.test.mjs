@@ -35,8 +35,9 @@ test('the contract exposes a usable token vocabulary', () => {
 });
 
 test('analytics and contact each ship at least one stylesheet', () => {
-  assert.ok(files.some((f) => f.includes('/analytics/')), 'analytics css missing');
-  assert.ok(files.some((f) => f.includes('/contact/')), 'contact css missing');
+  const posix = files.map((f) => f.split(/[\\/]/).join('/'));
+  assert.ok(posix.some((f) => f.includes('/analytics/')), 'analytics css missing');
+  assert.ok(posix.some((f) => f.includes('/contact/')), 'contact css missing');
 });
 
 for (const file of files) {
