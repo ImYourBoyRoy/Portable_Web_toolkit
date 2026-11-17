@@ -2,7 +2,7 @@
   "schema": 1,
   "package": "portable-web-toolkit-skills",
   "version": "1.4.0",
-  "toolkit_version": "0.6.3",
+  "toolkit_version": "0.6.4",
   "source_base_commit": "fffa17c8f95e3613b0b1530107e06e010fe16675",
   "skills": [
     {
@@ -93,7 +93,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-readiness",
-      "content_sha256": "5620cf02b63dd9bd9653bc5e601e06fdddab1a4a1995ddfa753561fd0a1e5dd3"
+      "content_sha256": "13a6c30bfce25542f8b3936b9bcecd850b3936abf2f35af8c8d20bf3a638c5b0"
     },
     {
       "name": "site-starter",
@@ -102,7 +102,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/site-starter",
-      "content_sha256": "affdf45c552b55a2f6c48ad26a4f34e4e7bb0718e63d1e3b2c43b72c4f39e463"
+      "content_sha256": "6fdd10dc84ec33d17171a6be5d31e754abb082a06e408beef7522cebae054fd4"
     },
     {
       "name": "site-templates",
@@ -129,7 +129,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/toolkit-update",
-      "content_sha256": "3742c11e8e22db3c016e6e607621c56a885a97c807a47edb7ba62cc548e44c78"
+      "content_sha256": "791221158449039ae13b342f7395f0dbc7f40cfef0217206d32a9f9b94ae26ca"
     },
     {
       "name": "vectorize-pipeline",
@@ -138,7 +138,7 @@
       "status": "experimental",
       "install_by_default": false,
       "path": "skills/vectorize-pipeline",
-      "content_sha256": "978564be13b9641c9a5a2011e8270ac356f7a39c1d65bf1bfe1c2348e9c3227b"
+      "content_sha256": "4a073b1c484628d6f8b231d9c5a4e0b49cf100c7754bc0110833796c3473c1db"
     },
     {
       "name": "wcag-auditor",
@@ -147,7 +147,7 @@
       "status": "stable",
       "install_by_default": false,
       "path": "skills/wcag-auditor",
-      "content_sha256": "2f9646b81d4989c530d2dbce864abc5639d0a534e1bf502d6fe9100accaa10cc"
+      "content_sha256": "1bc6956ddc1380cb9ee50ead7d45d861b8f706de614bf79c0e47efe63d2d69e3"
     }
   ]
 }

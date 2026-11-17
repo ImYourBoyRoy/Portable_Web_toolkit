@@ -1,11 +1,11 @@
 // ./src/lib/env.mjs
 /**
  * Python Environment & Runtime Management for Brand Doctor.
- * Handles prioritized interpreter resolution and pyenv-native integration.
+ * Handles prioritized interpreter resolution and Enchi integration (formerly pyenv-native).
  * 
  * resolution order:
  * 1. BRAND_DOCTOR_PYTHON env var
- * 2. active pyenv-native selected interpreter
+ * 2. active Enchi selected interpreter
  * 3. project-root .venv
  * 4. system python3
  * 5. system python
@@ -28,7 +28,7 @@ export function resolveBrandDoctorPython(projectRoot) {
     }
   }
 
-  // 2. active pyenv-native selected interpreter
+  // 2. active Enchi selected interpreter
   const pyenvPython = findPyenvNativePython(projectRoot);
   if (pyenvPython) return pyenvPython;
 
@@ -48,12 +48,26 @@ export function resolveBrandDoctorPython(projectRoot) {
 }
 
 /**
- * Queries pyenv-native for the active interpreter path.
+ * The Enchi CLI (formerly pyenv-native, renamed in 0.8.0): `enchi`, or `pyenv` on a machine that has not upgraded yet.
+ * Returns '' when neither runs.
+ */
+export function enchiCommand() {
+  for (const name of ['enchi', 'pyenv']) {
+    const probe = spawnSync(name, ['--version'], { encoding: 'utf8' });
+    if (!probe.error && probe.status === 0) return name;
+  }
+  return '';
+}
+
+/**
+ * Queries Enchi for the active interpreter path.
  */
 function findPyenvNativePython(projectRoot) {
   try {
-    // We run 'pyenv prefix' within the project root to respect local selection
-    const result = spawnSync('pyenv', ['prefix'], { 
+    const enchi = enchiCommand();
+    if (!enchi) return null;
+    // We run 'enchi prefix' within the project root to respect local selection
+    const result = spawnSync(enchi, ['prefix'], { 
       cwd: projectRoot, 
       encoding: 'utf8' 
     });
@@ -75,7 +89,7 @@ function findPyenvNativePython(projectRoot) {
       }
     }
   } catch (err) {
-    // pyenv not found or failed
+    // Enchi not found or failed
   }
   return null;
 }

@@ -31,17 +31,18 @@ Engine: `scripts/setup-interactive.sh` / `scripts/setup-interactive.ps1` → `bo
 ### Core (required bundle)
 
 - Git
-- Node.js (current line from manifest)
-- **pyenv-native** (`pyenv` CLI) — exclusive Python version manager on Windows, macOS, and Linux
-- **pyenv-gui** — desktop companion; launch with `pyenv gui` ([GUI docs](https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md))
-- Python 3.14+ preferred (3.13+ minimum) **only** via pyenv-native — never system/winget/Homebrew Python
+- Node.js: the **latest release of the required major**, resolved from nodejs.org at run time and checksum verified (the major comes from the repo-root `.node-version`)
+- **pnpm**: the toolkit's package manager, installed when missing (user scope, no admin)
+- **Enchi** (`enchi` CLI; formerly pyenv-native) — exclusive Python version manager on Windows, macOS, and Linux. A machine that still has pyenv-native is upgraded in place.
+- **Enchi GUI** — desktop companion; launch with `enchi gui` ([GUI docs](https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md))
+- Python 3.14+ preferred (3.13+ minimum) **only** via Enchi — never system/winget/Homebrew Python
 - pip in a workspace-named virtual environment
 
 ### Included for agents (no per-tool prompts)
 
 - Python Playwright + Chromium inside the managed venv (for agent browser tools)
 
-Optional package managers (pnpm, Bun, uv, gh, .NET) are not prompted individually; install them later if needed.
+Optional tools (Bun, uv, gh, .NET) are not prompted individually; install them later if needed.
 
 ### macOS prerequisite
 
@@ -73,17 +74,17 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ### Required host tools
 
 - Git
-- Node.js **26.0.0 or newer** (exact pin: **repo-root** [`.node-version`](../../.node-version) (the version it names is the one CI and bootstrap use) — not under `Web_Toolkit/`)
+- Node.js on the required **major** (the repo-root [`.node-version`](../../.node-version) names only the major, for example `26`; CI and bootstrap resolve the latest release of it, nothing is pinned to a patch). `prepare-host` brings Node to that major's latest release; `doctor` checks the major floor offline.
 - npm
 - npx
-- `pyenv-native` **0.2.30 or newer** (`pyenv` CLI)
-- **pyenv-gui** present (launch: `pyenv gui`)
-- Python 3.14+ preferred (3.13+ minimum) provisioned through `pyenv-native` only — bootstrap sets `pyenv global` to the desired installed line **and** a workspace `local` venv
-- pip inside the `pyenv-native`-managed workspace venv
+- **pnpm** 10 or newer
+- **Enchi** 0.8.0 or newer (`enchi` CLI; the legacy `pyenv` CLI is accepted for detection and upgraded in place)
+- **Enchi GUI** present (launch: `enchi gui`)
+- Python 3.14+ preferred (3.13+ minimum) provisioned through Enchi only — bootstrap sets `enchi global` to the desired installed line **and** a workspace `local` venv
+- pip inside the Enchi-managed workspace venv
 
 ### Recommended extras
 
-- pnpm
 - Bun
 - uv
 - GitHub CLI
@@ -111,10 +112,10 @@ The Node CLI is now **diagnostic-only**. Use the OS-native bootstrap scripts for
 ## Manifest-driven policy
 
 - The source of truth is now `Setup_agent_environment/config/host-bootstrap.manifest.json`.
-- Node policy is **latest/current only** — minimum **26.x**; exact pin lives at **repository root** `.node-version` (read the file for the current version). Bootstrap tarball targets that pin (verify against https://nodejs.org/dist/ before bumps). Do **not** add a second `.node-version` under `Web_Toolkit/`.
+- Node policy is **latest release of the required major**. The major lives at **repository root** `.node-version` (for example `26`); bootstrap reads `https://nodejs.org/dist/latest-v<major>.x/SHASUMS256.txt`, installs the newest build for the platform and verifies its SHA-256. No Node version or download URL is stored in the manifest, so there is nothing to bump. Do **not** add a second `.node-version` under `Web_Toolkit/`. Offline, an existing Node on the major is accepted and a missing Node fails clearly.
 - Python policy prefers the **3.14** line (`desired_prefix` / `fallback_version` in the manifest) while accepting **3.13+** as minimum.
-- **`tool.python.install_policy` = `pyenv-native-only`** — system/winget/Homebrew Python installs are out of policy.
-- Bootstrap must install **pyenv-native + pyenv-gui**; operators launch the GUI with `pyenv gui`.
+- **`tool.python.install_policy` = `enchi-only`** — system/winget/Homebrew Python installs are out of policy.
+- Bootstrap must install **pnpm, Enchi and the Enchi GUI**; operators launch the GUI with `enchi gui`.
 - The workspace venv name is derived from the normalized workspace folder name.
 - Older Node lines are treated as out-of-policy and are never silently accepted or downgraded into compatibility.
 
@@ -127,37 +128,39 @@ Automatic repair uses `winget`, targets **current/latest Node**, and never insta
 Typical package targets:
 
 - `winget install --id Git.Git`
-- `winget install --id OpenJS.NodeJS`
-- `pyenv-native` install script from the latest GitHub release (`pyenv` CLI)
-- `pyenv-gui` binary from the same release assets → `%USERPROFILE%\.pyenv\bin\pyenv-gui.exe` (launch: `pyenv gui`)
-- optional: `pnpm.pnpm`, `Oven-sh.Bun`, `astral-sh.uv`, `GitHub.cli`, `Microsoft.DotNet.SDK.10`
+- Node: the official `.msi` for the required major's latest release from nodejs.org, checksum verified (`winget install --id OpenJS.NodeJS` is the fallback)
+- `winget install --id pnpm.pnpm` (fallback: the official `get.pnpm.io` installer); user scope, no admin
+- Enchi install script from the latest GitHub release (`enchi` CLI; an existing pyenv-native is upgraded in place)
+- `enchi-gui-windows-x64.exe` from the same release assets, checksum verified → `%USERPROFILE%\.enchi\bin\enchi-gui.exe` (launch: `enchi gui`)
+- optional: `Oven-sh.Bun`, `astral-sh.uv`, `GitHub.cli`, `Microsoft.DotNet.SDK.10`
 
 ### macOS
 
-Automatic repair uses Homebrew for Node and optional extras, and **pyenv-native + pyenv-gui** for Python (not `brew install python`).
+Automatic repair installs Node from the official nodejs.org tarball (checksum verified; Homebrew is only a fallback), pnpm through its official installer, and **Enchi + the Enchi GUI** for Python (not `brew install python`).
 
 Typical package targets:
 
 - `xcode-select --install` when Command Line Tools are missing
 - `brew install git`
-- `brew install node`
-- optional: `brew install pnpm bun uv gh`
+- Node: the latest tarball of the required major from nodejs.org, SHA-256 verified, into `/usr/local/lib/nodejs` (needs sudo)
+- pnpm: `curl -fsSL https://get.pnpm.io/install.sh | sh` (user scope)
+- optional: `brew install bun uv gh`
 - optional: `brew install --cask dotnet-sdk`
-- `curl -fsSL https://github.com/imyourboyroy/pyenv-native/releases/latest/download/install.sh | sh`
-- download `pyenv-gui-macos-*` into `~/.pyenv/bin/pyenv-gui` (launch: `pyenv gui`)
+- `curl -fsSL https://github.com/imyourboyroy/pyenv-native/releases/latest/download/install.sh | sh` (installs Enchi; an existing pyenv-native is upgraded in place)
+- `enchi-gui-macos-*` if the Enchi bundle did not already include the GUI (launch: `enchi gui`)
 
 ### Linux
 
 Automatic repair now treats **Node separately** from the distro package manager:
 
-- Node installs from the official **Node current** archive defined in the manifest
+- Node installs from the newest official archive of the required major on nodejs.org, SHA-256 verified; pnpm installs in user scope
 - Optional extras can still use supported distro package managers:
   - `apt-get`
   - `dnf`
   - `yum`
   - `pacman`
   - `zypper`
-- Python still installs only through `pyenv-native` + `pyenv-gui` (never distro `python3` packages for toolkit Python)
+- Python still installs only through Enchi + the Enchi GUI (never distro `python3` packages for toolkit Python)
 
 ### Architecture caveat
 

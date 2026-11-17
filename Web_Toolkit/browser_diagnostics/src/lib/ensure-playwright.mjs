@@ -70,7 +70,7 @@ export function ensurePythonPlaywrightReady({ projectRoot, autoInstall = true } 
   }
 
   if (!pythonImportWorks(cwd)) {
-    warnings.push('Playwright install finished but import still fails — check the active Python/pyenv venv.');
+    warnings.push('Playwright install finished but import still fails — check the active Python/Enchi venv.');
     return { ok: false, actions, warnings };
   }
 

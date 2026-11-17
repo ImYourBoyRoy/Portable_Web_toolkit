@@ -3,6 +3,29 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.6.4] - 2026-11-17
+
+### Changed (host setup: dynamic Node, pnpm required, Enchi)
+
+- **Node is resolved at run time, never pinned.** The manifest no longer carries Node versions or download URLs. Setup reads `nodejs.org/dist/latest-v<major>.x/SHASUMS256.txt`, installs the newest build of the required major for the platform (tarball on macOS/Linux, `.msi` on Windows) and verifies its SHA-256. The required major is the repo-root `.node-version`, now a bare major (`26`); CI and the site starter follow it. `prepare-host` brings Node to that major's latest release; `doctor` stays offline.
+- **pnpm is a core tool, installed when missing** (user scope, no admin): the official installer on macOS/Linux, winget then `get.pnpm.io` on Windows; an old pnpm is updated with `pnpm self-update`.
+- **Enchi replaces pyenv-native** (renamed in 0.8.0; same repository). `enchi` is detected first and the legacy `pyenv` second, in `~/.enchi` or an existing `~/.pyenv` that the release installer upgrades in place; minimum 0.8.0. The GUI is checked or downloaded as `enchi-gui-<os>-<arch>` with its published checksum. The old `pyenv-gui-*` download URLs return 404 since 0.8.0 and are gone. `brand_doctor` and the Node doctor use `enchi` too.
+- Detection moved into one shared library per platform (`scripts/lib/host-tools.sh`, `scripts/lib/host-tools.ps1`) used by both the wizard and bootstrap, so the two no longer drift.
+- The weekly `toolchain-refresh` GitHub workflow is replaced by an agent task in the `toolkit-update` skill ("Refresh the toolkit's own starters"): the same steps, run on request, nothing pushed or merged without the user's yes.
+- `CLAUDE.md` added (imports `AGENTS.md`). `AGENTS.md` now states the pnpm, Enchi and no-pins rules and lists `dev-ports`, `form-doctor` and `site-templates`. Skills and the onboarding stages say `pnpm`, not `npm`.
+
+### Fixed (found by running setup on a real macOS 26 guest and a real Windows Server 2025 guest)
+
+- macOS: `bootstrap.sh` used bash 4 expansions (`${var,,}`) and died on the stock bash 3.2, after which the wizard still printed "SUCCESS" and installed nothing. Replaced with a portable helper, the wizard now reports a failed bootstrap, and a test forbids bash 4-only syntax in the scripts.
+- macOS/Linux: an account with passwordless sudo was blocked, because `sudo -v` demands a password even under NOPASSWD. Setup now tests `sudo -n true` first.
+- Windows: `Invoke-Pyenv` declared a parameter named `$Args`, PowerShell's automatic variable, so every Enchi call dropped its arguments and just printed help; Python provisioning looked successful without doing anything. Renamed, with a test.
+- Windows: `Resolve-LatestNode` read an unset script variable under strict mode.
+- The Node doctor read `pip 26.3 from /…/3.15.2/…` as version 3.15.2 (the first `x.y.z`, found in the path) and failed the pip floor; it now prefers the number after the tool name.
+
+### Changed
+
+- The weekly `toolchain-refresh` GitHub workflow is replaced by an agent task in the `toolkit-update` skill ("Refresh the toolkit's own starters"): the same steps (doctor, `refresh-starters --apply`, README sync, validate), run on request, with the held-back packages reported and nothing pushed or merged without the user's yes. No bot token, no scheduled PRs.
+
 ## [0.6.3] - 2026-11-17
 
 ### Fixed (Windows: verified on a real Windows Server 2025 guest)

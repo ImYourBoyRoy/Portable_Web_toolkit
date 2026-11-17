@@ -40,7 +40,7 @@ function printHelp() {
     ],
     notes: [
       'Uses Python Playwright. Soft-ensures the package + Chromium unless --skip-playwright-install.',
-      'Setup_agent_environment can also provision Playwright in the managed pyenv venv.',
+      'Setup_agent_environment can also provision Playwright in the managed Enchi venv.',
       'This tool is non-mutating and designed to surface browser/runtime issues before publish or after live changes.'
     ],
     exitCodes: [

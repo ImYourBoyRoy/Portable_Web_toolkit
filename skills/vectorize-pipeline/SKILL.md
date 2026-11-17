@@ -27,7 +27,7 @@ node ./Web_Toolkit/vectorize_pipeline/bin/vectorize-pipeline.mjs from-font \
   --apply
 ```
 
-First time: `cd Web_Toolkit/vectorize_pipeline && npm install`
+First time: `cd Web_Toolkit/vectorize_pipeline && pnpm install --frozen-lockfile`
 
 Inspect package scripts before installing. Use the repository-approved
 environment and do not install VTracer, Python packages, or fonts globally

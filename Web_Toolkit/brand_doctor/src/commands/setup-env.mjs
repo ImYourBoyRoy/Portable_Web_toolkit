@@ -1,13 +1,13 @@
 // ./src/commands/setup-env.mjs
 /**
  * setup-env command: bootstrapping the Python environment.
- * Prioritizes pyenv-native for managed environments.
+ * Prioritizes Enchi (formerly pyenv-native) for managed environments.
  */
 
 import { spawnSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { resolveBrandDoctorPython } from '../lib/env.mjs';
+import { enchiCommand, resolveBrandDoctorPython } from '../lib/env.mjs';
 import { resolveProjectRoot, TOOL_ROOT } from '../lib/paths.mjs';
 
 const MANAGED_VENV_NAME = 'brand-doctor';
@@ -19,25 +19,25 @@ export async function runSetupEnv(options = {}) {
 
   let resolvedExec = null;
 
-  // 1. Detect pyenv-native
-  const hasPyenv = isCommandAvailable('pyenv');
+  // 1. Detect Enchi (`enchi`, or the legacy `pyenv` before the 0.8.0 rename)
+  const enchi = enchiCommand();
 
-  if (hasPyenv && !requestedPython) {
-    console.log(`\x1b[32m[pyenv-native]\x1b[0m Detected pyenv-native. Preferring managed venv...`);
+  if (enchi && !requestedPython) {
+    console.log(`\x1b[32m[enchi]\x1b[0m Detected Enchi. Preferring managed venv...`);
     
     // Check if brand-doctor venv exists
-    const venvList = spawnSync('pyenv', ['venv', 'list'], { encoding: 'utf8' }).stdout || '';
+    const venvList = spawnSync(enchi, ['venv', 'list'], { encoding: 'utf8' }).stdout || '';
     if (!venvList.includes(MANAGED_VENV_NAME)) {
       console.log(`\x1b[33m[setup-env]\x1b[0m Fetching active python version...`);
-      const vName = spawnSync('pyenv', ['version-name'], { encoding: 'utf8' }).stdout.trim();
+      const vName = spawnSync(enchi, ['version-name'], { encoding: 'utf8' }).stdout.trim();
       
       console.log(`\x1b[33m[setup-env]\x1b[0m Creating managed venv '${MANAGED_VENV_NAME}' using ${vName}...`);
-      spawnSync('pyenv', ['venv', 'create', vName, MANAGED_VENV_NAME], { stdio: 'inherit' });
+      spawnSync(enchi, ['venv', 'create', vName, MANAGED_VENV_NAME], { stdio: 'inherit' });
     }
 
     // Bind project to this venv
     console.log(`\x1b[33m[setup-env]\x1b[0m Binding project to managed venv...`);
-    spawnSync('pyenv', ['venv', 'use', MANAGED_VENV_NAME], { cwd: projectRoot, stdio: 'inherit' });
+    spawnSync(enchi, ['venv', 'use', MANAGED_VENV_NAME], { cwd: projectRoot, stdio: 'inherit' });
     
     // Resolve it to verify
     resolvedExec = resolveBrandDoctorPython(projectRoot);

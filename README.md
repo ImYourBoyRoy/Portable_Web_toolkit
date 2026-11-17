@@ -1,13 +1,13 @@
 # Portable Web Toolkit
 
 <!-- VERSIONS:BEGIN -->
-**Toolkit Release:** `v0.6.3`
+**Toolkit Release:** `v0.6.4`
 
 | Component / Dependency | Version Pin | Source Location |
 |---|---|---|
-| **Toolkit Release** | `v0.6.3` | [`VERSION`](./VERSION) |
+| **Toolkit Release** | `v0.6.4` | [`VERSION`](./VERSION) |
 | **Node.js Engine Target** | `>=26` | [`package.json`](./package.json) |
-| **Node.js Runtime Pin** | `26.13.0` | [`.node-version`](./.node-version) |
+| **Node.js Runtime Pin** | `26` | [`.node-version`](./.node-version) |
 | **Astro Framework** | `^7.4.12` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 | **@astrojs/cloudflare** | `^14.4.8` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
 | **Cloudflare Wrangler** | `^4.162.0` | [`site-starter/workers.package.json`](./site-starter/workers.package.json) |
@@ -45,7 +45,7 @@ Follow onboarding stages S0–S9 with a checkpoint after each stage.
 Use the host question / confirm UI (popup) when available; otherwise ask clearly in chat.
 
 S0 Access/sandbox — detect limits; prefer full agent control.
-S1 Host bootstrap — ask before Setup_Agent_Environment (Git, Node, pyenv-native, Python).
+S1 Host bootstrap — ask before Setup_Agent_Environment (Git, Node, pnpm, Enchi, Python).
 S2 Toolkit + skills — global portable-web-toolkit-router ONLY; purge legacy heavy PWT skills;
    link project skills with manage-project-skills.mjs --skills site-onboarding,…
 S3 Cloudflare API token — guide Custom token with Zone/Account Edit scopes, API Tokens Write,
@@ -125,7 +125,7 @@ Manual launchers (same flow, with the Y prompt):
 
 Administrator (Windows UAC) or `sudo` (macOS/Linux) prompts appear when needed — approve them in the terminal/dialog. Details: [`Web_Toolkit/Setup_agent_environment/README.md`](./Web_Toolkit/Setup_agent_environment/README.md).
 
-**Python is exclusively managed by [pyenv-native](https://github.com/imyourboyroy/pyenv-native)** — the `pyenv` CLI plus **pyenv-gui** (launch with `pyenv gui`). Core setup installs both. Do **not** install system, winget, or Homebrew Python for toolkit work.
+**Python is exclusively managed by [Enchi](https://github.com/imyourboyroy/pyenv-native)** (formerly pyenv-native) — the `enchi` CLI plus the **Enchi GUI** (launch with `enchi gui`). Core setup installs both, plus pnpm and the latest Node of the required major. Do **not** install system, winget, or Homebrew Python for toolkit work.
 
 ---
 

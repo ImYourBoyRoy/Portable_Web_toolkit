@@ -19,7 +19,7 @@ this client before running commands.
 node ./Web_Toolkit/site_readiness/bin/site-readiness.mjs run --project-root . --site-profile ./<name>.site-profile.json
 ```
 
-Shortcuts: `npm run readiness` | `npm run readiness:fix`
+Shortcuts: `pnpm run readiness` | `pnpm run readiness:fix`
 
 An ordinary readiness request may write its diagnostic reports but does not
 apply project fixes. Do not use `readiness:fix` or any mutation flag without

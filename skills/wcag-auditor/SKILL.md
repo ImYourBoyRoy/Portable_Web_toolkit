@@ -15,8 +15,8 @@ Evidence gate only — not a WCAG conformance certificate. Not a GUI.
 
 1. Client project has a linked `Web_Toolkit/` and `*.site-profile.json`.
 2. Playwright peers in the **client** project (`playwright`, `@axe-core/playwright`).
-3. Chromium browser binary (`npx playwright install chromium`). The CLI auto-installs these unless `--skip-playwright-install`.
-4. Engine present: `core-path` must contain `node_modules/@imyourboyroy/wcagate`. If missing: `cd Web_Toolkit && npm install --allow-git=all` (or let auto-ensure run).
+3. Chromium browser binary (`pnpm exec playwright install chromium`). The CLI auto-installs these unless `--skip-playwright-install`.
+4. Engine present: `core-path` must contain `node_modules/@imyourboyroy/wcagate`. If missing: `cd Web_Toolkit && pnpm install` (or let auto-ensure run; it falls back to npm only when pnpm is absent).
 
 ## Preferred commands
 
@@ -48,7 +48,7 @@ Use `--sitemap=<url|file>` to name a sitemap. Persist these in the profile under
 
 Confirm: `node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs core-path` ends with `node_modules/@imyourboyroy/wcagate`.
 
-Refresh engine without a toolkit version bump: `cd Web_Toolkit && npm run wcagate:update` (or `doctor --update-engine`).
+Refresh engine without a toolkit version bump: `cd Web_Toolkit && pnpm run wcagate:update` (or `doctor --update-engine`).
 
 ## After every run — tell the user
 

@@ -113,7 +113,8 @@
     },
     "toolkit-update": {
       "positive": [
-        "Compare my Portable Web Toolkit checkout with the latest public source and plan a safe reconciliation."
+        "Compare my Portable Web Toolkit checkout with the latest public source and plan a safe reconciliation.",
+        "Refresh the toolkit's own starter and template dependency ranges to the newest compatible versions."
       ],
       "near_miss": [
         "Update the npm dependencies in this unrelated application.",

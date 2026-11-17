@@ -75,7 +75,7 @@ Copy from `Web_Toolkit/templates/discovery/` per README: robots, sitemap, llms, 
 
 1. `BRAND_GUIDE.md` + `*.site-profile.json`
 2. `.env` from `.env.example` (never commit)
-3. `npm run build` → `npm run discovery:doctor`
+3. `pnpm run build` → `pnpm run discovery:doctor`
 4. **site-readiness** → **portable-web-toolkit** for deploy
 
 ## Rules

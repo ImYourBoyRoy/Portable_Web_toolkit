@@ -3,7 +3,7 @@
 #
 # Host setup for macOS/Linux — pure Bash, no Node required.
 # Scans for missing/outdated agent tools, shows one list, then a single Y
-# (or --yes / --agent) to continue. bootstrap.sh installs Node/pyenv/etc.
+# (or --yes / --agent) to continue. bootstrap.sh installs Node/pnpm/Enchi/etc.
 # and will prompt for sudo when elevation is needed.
 #
 # Usage:
@@ -17,6 +17,9 @@ TOOLKIT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MANIFEST_PATH="$TOOLKIT_ROOT/Setup_agent_environment/config/host-bootstrap.manifest.json"
 BOOTSTRAP_SH="$SCRIPT_DIR/bootstrap.sh"
 REPO_ROOT="$(cd "$TOOLKIT_ROOT/.." && pwd)"
+
+# shellcheck source=lib/host-tools.sh
+source "$SCRIPT_DIR/lib/host-tools.sh"
 
 WORKSPACE="$(pwd)"
 AUTO_YES=false
@@ -67,48 +70,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-manifest_get() {
-  local key="$1" default="${2:-}"
-  local line
-  [[ -f "$MANIFEST_PATH" ]] || { printf '%s' "$default"; return; }
-  line="$(grep -m1 "\"$key\"" "$MANIFEST_PATH" 2>/dev/null || true)"
-  [[ -z "$line" ]] && { printf '%s' "$default"; return; }
-  printf '%s' "$line" | sed -E 's/^[[:space:]]*"[^"]+"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/'
-}
-
-version_ge() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
-
-command_version() {
-  command -v "$1" >/dev/null 2>&1 || return 1
-  "$1" "${@:2}" 2>/dev/null | head -n1 | tr -d '\r'
-}
-
-resolve_pyenv() {
-  if command -v pyenv >/dev/null 2>&1; then command -v pyenv; return; fi
-  if [[ -x "$HOME/.pyenv/bin/pyenv" ]]; then printf '%s' "$HOME/.pyenv/bin/pyenv"; return; fi
-  printf ''
-}
-
-pyenv_version() {
-  local cmd ver
-  cmd="$(resolve_pyenv)"
-  [[ -n "$cmd" ]] || return 1
-  ver="$("$cmd" --version 2>/dev/null | head -n1 || true)"
-  ver="${ver##* }"
-  [[ -n "$ver" ]] || return 1
-  printf '%s' "$ver"
-}
-
-pyenv_gui_available() {
-  local bin_name="pyenv-gui"
-  command -v "$bin_name" >/dev/null 2>&1 && return 0
-  [[ -x "$HOME/.pyenv/bin/$bin_name" ]] && return 0
-  local cmd
-  cmd="$(resolve_pyenv)"
-  [[ -n "$cmd" ]] || return 1
-  "$cmd" gui --help >/dev/null 2>&1
-}
-
 ask_yes_no() {
   local prompt="$1"
   local answer
@@ -122,8 +83,9 @@ ask_yes_no() {
 }
 
 TOOLKIT_VERSION="$(tr -d '[:space:]' < "$REPO_ROOT/VERSION" 2>/dev/null || echo unknown)"
-NODE_REQUIRED="$(manifest_get "tool.node.required_version" "26.0.0")"
-PYENV_REQUIRED="$(manifest_get "tool.pyenv_native.minimum_version" "0.2.30")"
+NODE_MAJOR="$(node_major)"
+ENCHI_REQUIRED="$(manifest_get "tool.enchi.minimum_version" "0.8.0")"
+PNPM_REQUIRED="$(manifest_get "tool.pnpm.minimum_version" "10.0.0")"
 PYTHON_REQUIRED="$(manifest_get "tool.python.minimum_version" "3.13.0")"
 
 GAPS=()
@@ -131,6 +93,9 @@ OK_LINES=()
 
 add_gap() { GAPS+=("$1"); }
 add_ok() { OK_LINES+=("$1"); }
+
+add_enchi_path
+add_pnpm_path
 
 # --- scan ---
 GIT_VER="$(command_version git --version || true)"
@@ -140,52 +105,62 @@ else
   add_gap "Git — not installed"
 fi
 
+# Node: the required major comes from .node-version; the release is whatever nodejs.org lists as latest for that major.
 NODE_VER="$(command_version node --version 2>/dev/null | sed 's/^v//' || true)"
-if [[ -n "$NODE_VER" ]] && version_ge "$NODE_VER" "$NODE_REQUIRED"; then
-  add_ok "Node.js — $NODE_VER (requires >= $NODE_REQUIRED)"
-else
-  if [[ -n "$NODE_VER" ]]; then
-    add_gap "Node.js — installed $NODE_VER (requires >= $NODE_REQUIRED)"
+if node_needs_install; then
+  if [[ -z "$NODE_VER" ]]; then
+    add_gap "Node.js — not installed (latest Node $NODE_MAJOR.x will be installed)"
+  elif resolve_latest_node 2>/dev/null; then
+    add_gap "Node.js — installed $NODE_VER (latest $NODE_MAJOR.x is $NODE_LATEST_VERSION)"
   else
-    add_gap "Node.js — not installed (requires >= $NODE_REQUIRED)"
+    add_gap "Node.js — installed $NODE_VER (requires Node $NODE_MAJOR or newer)"
   fi
-fi
-
-PYENV_VER="$(pyenv_version || true)"
-if [[ -n "$PYENV_VER" ]] && version_ge "$PYENV_VER" "$PYENV_REQUIRED"; then
-  add_ok "pyenv-native (pyenv) — $PYENV_VER"
 else
-  if [[ -n "$PYENV_VER" ]]; then
-    add_gap "pyenv-native (pyenv) — installed $PYENV_VER (requires >= $PYENV_REQUIRED)"
-  else
-    add_gap "pyenv-native (pyenv) — not installed (requires >= $PYENV_REQUIRED)"
-  fi
+  add_ok "Node.js — $NODE_VER (Node $NODE_MAJOR line)"
 fi
 
-if pyenv_gui_available; then
-  add_ok "pyenv-gui — present (launch: pyenv gui)"
+PNPM_VER="$(pnpm_version || true)"
+if [[ -n "$PNPM_VER" ]] && version_ge "$PNPM_VER" "$PNPM_REQUIRED"; then
+  add_ok "pnpm — $PNPM_VER"
+elif [[ -n "$PNPM_VER" ]]; then
+  add_gap "pnpm — installed $PNPM_VER (requires >= $PNPM_REQUIRED)"
 else
-  add_gap "pyenv-gui — not installed (launch after setup: pyenv gui)"
+  add_gap "pnpm — not installed (the toolkit's package manager)"
 fi
 
-# Python/pip count as healthy only when pyenv-native is available (policy: pyenv-native-only).
+ENCHI_VER="$(enchi_version || true)"
+if [[ -n "$ENCHI_VER" ]] && version_ge "$ENCHI_VER" "$ENCHI_REQUIRED"; then
+  add_ok "Enchi — $ENCHI_VER"
+elif [[ -n "$ENCHI_VER" ]]; then
+  add_gap "Enchi — installed $ENCHI_VER (requires >= $ENCHI_REQUIRED; upgrades in place from pyenv-native)"
+else
+  add_gap "Enchi — not installed (requires >= $ENCHI_REQUIRED)"
+fi
+
+if enchi_gui_available; then
+  add_ok "Enchi GUI — present (launch: enchi gui)"
+else
+  add_gap "Enchi GUI — not installed (launch after setup: enchi gui)"
+fi
+
+# Python/pip count as healthy only when Enchi is available (policy: Enchi-only).
 PY_VER=""
-if [[ -n "${PYENV_VER:-}" ]]; then
+if [[ -n "${ENCHI_VER:-}" ]]; then
   PY_VER="$(command_version python --version 2>/dev/null | sed -E 's/^Python[[:space:]]+//' || true)"
   if [[ -z "$PY_VER" ]]; then
     PY_VER="$(command_version python3 --version 2>/dev/null | sed -E 's/^Python[[:space:]]+//' || true)"
   fi
 fi
-if [[ -n "$PYENV_VER" && -n "$PY_VER" ]] && version_ge "$PY_VER" "$PYTHON_REQUIRED"; then
-  add_ok "Python — $PY_VER (via pyenv-native; requires >= $PYTHON_REQUIRED)"
+if [[ -n "$ENCHI_VER" && -n "$PY_VER" ]] && version_ge "$PY_VER" "$PYTHON_REQUIRED"; then
+  add_ok "Python — $PY_VER (via Enchi; requires >= $PYTHON_REQUIRED)"
 else
-  add_gap "Python — not installed or not under pyenv-native (requires >= $PYTHON_REQUIRED)"
+  add_gap "Python — not installed or not under Enchi (requires >= $PYTHON_REQUIRED)"
 fi
 
-if [[ -n "$PYENV_VER" ]] && command_version pip --version >/dev/null 2>&1; then
+if [[ -n "$ENCHI_VER" ]] && command_version pip --version >/dev/null 2>&1; then
   add_ok "pip — $(command_version pip --version | head -c 80)"
 else
-  add_gap "pip — not installed under pyenv-native workspace venv"
+  add_gap "pip — not installed under the Enchi workspace venv"
 fi
 
 echo
@@ -213,11 +188,11 @@ if [[ ${#OK_LINES[@]} -gt 0 ]]; then
   for line in "${OK_LINES[@]}"; do echo "    ✓ $line"; done
   echo
 fi
-echo "  Setup will install/update the agent baseline (Git, Node, pyenv-native,"
-echo "  pyenv-gui, Python workspace venv, pip)."
+echo "  Setup will install/update the agent baseline (Git, Node, pnpm, Enchi,"
+echo "  Enchi GUI, Python workspace venv, pip)."
 if [[ "$(uname -s)" == "Darwin" ]]; then
   echo "  On macOS: a GUI administrator dialog appears next (then possibly sudo)."
-  echo "  Node installs from the official nodejs.org tarball (Homebrew not required)."
+  echo "  Node installs from the official nodejs.org tarball, checksum verified (Homebrew not required)."
 else
   echo "  sudo may ask for your password."
 fi
@@ -253,8 +228,8 @@ ARGS=(
   --install-python-playwright true
 )
 
-bash "$BOOTSTRAP_SH" "${ARGS[@]}"
-exit_code=$?
+# `set -e` would end this script on a failed bootstrap and skip the summary; capture the status instead of trusting it.
+if bash "$BOOTSTRAP_SH" "${ARGS[@]}"; then exit_code=0; else exit_code=$?; fi
 
 echo
 if [[ "$exit_code" -eq 0 ]]; then

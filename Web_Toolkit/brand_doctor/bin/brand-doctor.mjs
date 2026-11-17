@@ -29,7 +29,7 @@ function printHelp() {
       'brand-doctor repair-og --project-root <path> --apply'
     ],
     commands: [
-      { name: 'setup-env', description: 'Bootstrap the Python environment (preferring pyenv-native managed venvs) and install dependencies.' },
+      { name: 'setup-env', description: 'Bootstrap the Python environment (preferring Enchi-managed venvs) and install dependencies.' },
       { name: 'audit', description: 'Check Open Graph metadata, icons, Brand Guide, and branding assets with design-integrity warnings.' },
       { name: 'sync-tokens', description: 'Map Brand Guide hex colors into src/styles/tokens.css (and optional profile branding.colors). Dry-run unless --apply.' },
       { name: 'generate-og', description: 'Generate a declarative OG image from JSON spec/config or site discovery.' },

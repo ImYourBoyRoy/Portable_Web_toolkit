@@ -43,7 +43,7 @@ function printHelp() {
     notes: [
       'Native bootstrap wrappers are now the only supported install/repair path.',
       'This Node CLI is retained for post-bootstrap read-only diagnostics.',
-      'Required baseline: Git, Node 26+, pyenv-native 0.2.30+ (`pyenv` CLI) + pyenv-gui (`pyenv gui`), Python 3.14+ preferred (3.13+ minimum) only via pyenv-native, and pip inside the managed workspace venv. Never install system/winget/Homebrew Python for toolkit work.'
+      'Required baseline: Git, Node (latest release of the required major), pnpm 10+, Enchi 0.8.0+ (`enchi` CLI, formerly pyenv-native) + Enchi GUI (`enchi gui`), Python 3.14+ preferred (3.13+ minimum) only via Enchi, and pip inside the managed workspace venv. Never install system/winget/Homebrew Python for toolkit work.'
     ],
     exitCodes: [
       { name: '0', description: 'Healthy or successfully repaired.' },

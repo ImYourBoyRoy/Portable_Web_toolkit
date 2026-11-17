@@ -113,4 +113,14 @@ node ./Web_Toolkit/package_updater/bin/package-updater.mjs refresh-starters --ap
 node ./Web_Toolkit/package_updater/bin/package-updater.mjs doctor                        # lint starters: no exact pins, valid ranges, engine floors
 ```
 
+## Refresh the toolkit's own starters (maintainer task, on request)
+
+Not scheduled: run it when asked, or when `doctor` flags a stale starter.
+
+1. `node ./Web_Toolkit/package_updater/bin/package-updater.mjs doctor --offline`
+2. `node ./Web_Toolkit/package_updater/bin/package-updater.mjs refresh-starters --apply`, then `node scripts/sync-readme-versions.mjs`.
+3. `git diff --quiet` means the starters are current: stop and say so.
+4. `pnpm run validate` must pass before anything is committed.
+5. Commit on a `chore/toolchain-refresh` branch and report what changed and every held-back package with its reason. Push, open a PR or merge only when the user says so.
+
 Ranges are `^`/`~`/`>=`, never exact. A package held back (for example `typescript` on 6.x while `@astrojs/check` peers `^5 || ^6`) is printed with its reason and lifts itself once a release allows the new major. If an Astro integration has no release for a new Astro major, Astro holds on the previous major and names the laggard. The package manager is detected (pnpm is the default; an npm/yarn/bun lockfile is respected).

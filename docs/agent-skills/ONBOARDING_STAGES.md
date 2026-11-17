@@ -29,7 +29,7 @@ After **every** stage below:
 | Stage | Name | Outcome |
 |-------|------|---------|
 | **S0** | Access and sandbox | Know whether the agent can elevate / reach the network |
-| **S1** | Host bootstrap | Git, Node, pyenv-native, Python, Playwright ready |
+| **S1** | Host bootstrap | Git, Node, pnpm, Enchi, Python, Playwright ready |
 | **S2** | Toolkit and skills | Light global router + project skills linked |
 | **S3** | Cloudflare account + API token | Valid `CLOUDFLARE_API_TOKEN` in project `.env`; token-audit clean |
 | **S4** | Cloudflare MCP / plugin | Official Cloudflare agent skills + MCP for this IDE |
@@ -76,7 +76,7 @@ Doctor / verify:
 bash ./Web_Toolkit/scripts/bootstrap.sh doctor --workspace .
 ```
 
-Expect: Git, Node matching `.node-version`, npm, **pyenv-native** + **pyenv-gui**, Python via pyenv (global set to latest installed desired line **and** workspace `local` venv), Playwright Chromium in that venv.
+Expect: Git, Node on the `.node-version` major (latest release), npm, **pnpm**, **Enchi** + **Enchi GUI**, Python via Enchi (global set to latest installed desired line **and** workspace `local` venv), Playwright Chromium in that venv.
 
 Do **not** install system / winget / Homebrew Python for toolkit work.
 
@@ -235,7 +235,7 @@ node <toolkit>/scripts/link-web-toolkit.mjs \
 
 4. Copy discovery templates per `Web_Toolkit/templates/discovery/README.md`.
 
-**Checkpoint:** List created files. Ask permission to `npm install` / `project-init apply-safe`.
+**Checkpoint:** List created files. Ask permission to `pnpm install` / `project-init apply-safe`.
 
 ---
 
@@ -283,11 +283,11 @@ Default output: `./<site-id>.site-profile.json`. See `Web_Toolkit/init_site_prof
 Prefer toolkit entry points:
 
 ```bash
-npm install
-npm run check   # if present
-npm run build
-npm run discovery:doctor   # Workers: ./dist/client · Pages: ./dist
-npm run readiness
+pnpm install
+pnpm run check   # if present
+pnpm run build
+pnpm run discovery:doctor   # Workers: ./dist/client · Pages: ./dist
+pnpm run readiness
 # optional
 node ./Web_Toolkit/wcag_auditor/bin/wcag-auditor.mjs …
 node ./Web_Toolkit/pagespeed_diagnostics/bin/pagespeed-diagnostics.mjs …
@@ -325,7 +325,7 @@ Follow [`Web_Toolkit/OPERATIONS.md`](../../Web_Toolkit/OPERATIONS.md):
 | Analytics (PostHog + GA4) | Explain WHY in S5; wire keys in S7 section C — do not treat as silent optional |
 | Email on domain | Check MX; warn before zone harden / orange-cloud proxy that can break mail |
 | Headers / CSP | `headers-deploy` before first production publish |
-| WCAG | `Web_Toolkit/wcag_auditor` wrapper; engine via `cd Web_Toolkit && npm install --allow-git=all`; Playwright peers in the **client** project |
+| WCAG | `Web_Toolkit/wcag_auditor` wrapper; engine via `cd Web_Toolkit && pnpm install`; Playwright peers in the **client** project |
 | Instagram | Optional skill; only with user consent + `INSTAGRAM_USERNAME` |
 | package-updater | Latest floors; TypeScript stays `^6.0.3` until `@astrojs/check` peers allow 7 |
 | Privacy / export | `privacy-check` + `toolkit-purge` before sharing a toolkit copy |

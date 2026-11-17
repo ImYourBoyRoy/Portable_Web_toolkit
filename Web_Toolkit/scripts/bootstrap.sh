@@ -18,6 +18,9 @@ INSTALL_PYTHON_PLAYWRIGHT=true
 OPTIONAL_TOOLS=""
 SUDO_KEEPALIVE_PID=""
 
+# shellcheck source=lib/host-tools.sh
+source "$SCRIPT_DIR/lib/host-tools.sh"
+
 TMP_DIR="${TMPDIR:-/tmp}/portable-web-toolkit-bootstrap.$$"
 mkdir -p "$TMP_DIR"
 CURRENT_FILE="$TMP_DIR/current.jsonl"
@@ -30,14 +33,6 @@ cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
-
-manifest_get() {
-  local key="$1" default="${2:-}"
-  local line
-  line="$(grep -m1 "\"$key\"" "$MANIFEST_PATH" || true)"
-  [[ -z "$line" ]] && { printf '%s' "$default"; return; }
-  printf '%s' "$line" | sed -E 's/^[[:space:]]*"[^"]+"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/'
-}
 
 json_escape() {
   local value="${1//\\/\\\\}"
@@ -61,89 +56,8 @@ report_array() {
   paste -sd, "$file" | sed 's/^/[/' | sed 's/$/]/'
 }
 
-version_ge() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
 is_windowsish() { [[ "$(uname -s)" =~ ^(MSYS|MINGW|CYGWIN) ]]; }
-command_version() { command -v "$1" >/dev/null 2>&1 || return 1; "$1" "${@:2}" 2>/dev/null | head -n1 | tr -d '\r'; }
-normalize_env_name() { local n; n="$(printf '%s' "${1,,}" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"; printf '%s' "${n:-workspace}"; }
-
-download_file() {
-  local url="$1" dest="$2"
-  if command -v curl >/dev/null 2>&1; then curl -fsSL "$url" -o "$dest"; return; fi
-  if command -v wget >/dev/null 2>&1; then wget -qO "$dest" "$url"; return; fi
-  echo "curl or wget is required to download $url" >&2
-  return 1
-}
-
-download_pipe_sh() {
-  local url="$1"
-  if command -v curl >/dev/null 2>&1; then curl -fsSL "$url" | sh; return; fi
-  if command -v wget >/dev/null 2>&1; then wget -qO- "$url" | sh; return; fi
-  echo "curl or wget is required to download $url" >&2
-  return 1
-}
-
-resolve_pyenv() {
-  if command -v pyenv >/dev/null 2>&1; then command -v pyenv; return; fi
-  if [[ -x "$HOME/.pyenv/bin/pyenv" ]]; then printf '%s' "$HOME/.pyenv/bin/pyenv"; return; fi
-  printf ''
-}
-
-add_pyenv_path() {
-  for entry in "$HOME/.pyenv/bin" "$HOME/.pyenv/shims"; do
-    [[ -d "$entry" ]] || continue
-    case ":$PATH:" in *":$entry:"*) ;; *) PATH="$entry:$PATH" ;; esac
-  done
-  export PATH
-}
-
-invoke_pyenv() {
-  local pyenv_cmd
-  pyenv_cmd="$(resolve_pyenv)"
-  [[ -n "$pyenv_cmd" ]] || { echo "pyenv-native is not available in PATH." >&2; return 1; }
-  add_pyenv_path
-  if [[ $# -ge 2 && "$1" == "--cwd" ]]; then
-    local cwd="$2"; shift 2
-    ( cd "$cwd" && "$pyenv_cmd" "$@" )
-  else
-    "$pyenv_cmd" "$@"
-  fi
-}
-
-resolve_pyenv_gui() {
-  local bin_name
-  bin_name="$(manifest_get "tool.pyenv_gui.binary_name.posix" "pyenv-gui")"
-  if command -v "$bin_name" >/dev/null 2>&1; then command -v "$bin_name"; return; fi
-  if [[ -x "$HOME/.pyenv/bin/$bin_name" ]]; then printf '%s' "$HOME/.pyenv/bin/$bin_name"; return; fi
-  if [[ -x "$HOME/.pyenv/$bin_name" ]]; then printf '%s' "$HOME/.pyenv/$bin_name"; return; fi
-  return 1
-}
-
-pyenv_gui_available() {
-  resolve_pyenv_gui >/dev/null 2>&1 && return 0
-  invoke_pyenv gui --help >/dev/null 2>&1 && return 0
-  return 1
-}
-
-pyenv_gui_download_url() {
-  local os arch
-  os="$(uname -s)"
-  arch="$(uname -m)"
-  case "$os" in
-    Darwin)
-      case "$arch" in
-        arm64|aarch64) manifest_get "tool.pyenv_gui.macos.arm64.download_url" ;;
-        *) manifest_get "tool.pyenv_gui.macos.x64.download_url" ;;
-      esac
-      ;;
-    Linux)
-      case "$arch" in
-        x86_64|amd64) manifest_get "tool.pyenv_gui.linux.x64.download_url" ;;
-        *) echo "" ;;
-      esac
-      ;;
-    *) echo "" ;;
-  esac
-}
+normalize_env_name() { local n; n="$(lower "$1" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"; printf '%s' "${n:-workspace}"; }
 
 parse_args() {
   local args=("$@") i token
@@ -154,13 +68,13 @@ parse_args() {
       --workspace) [[ $((i+1)) -lt ${#args[@]} ]] && WORKSPACE="$(cd "${args[$((i+1))]}" 2>/dev/null && pwd || printf '%s' "${args[$((i+1))]}")" ;;
       --json) JSON_OUTPUT=true ;;
       --skip-workspace-checks) SKIP_WORKSPACE_CHECKS=true ;;
-      --allow-installs) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && ALLOW_INSTALLS=true || ALLOW_INSTALLS=false ;;
-      --install-optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && INSTALL_OPTIONAL_TOOLS=true || INSTALL_OPTIONAL_TOOLS=false ;;
-      --install-python-playwright) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "${args[$((i+1))],,}" =~ ^(1|true|yes|on)$ ]] && INSTALL_PYTHON_PLAYWRIGHT=true || INSTALL_PYTHON_PLAYWRIGHT=false ;;
-      --optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && OPTIONAL_TOOLS="${args[$((i+1))],,}" ;;
+      --allow-installs) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "$(lower "${args[$((i+1))]}")" =~ ^(1|true|yes|on)$ ]] && ALLOW_INSTALLS=true || ALLOW_INSTALLS=false ;;
+      --install-optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "$(lower "${args[$((i+1))]}")" =~ ^(1|true|yes|on)$ ]] && INSTALL_OPTIONAL_TOOLS=true || INSTALL_OPTIONAL_TOOLS=false ;;
+      --install-python-playwright) [[ $((i+1)) -lt ${#args[@]} ]] && [[ "$(lower "${args[$((i+1))]}")" =~ ^(1|true|yes|on)$ ]] && INSTALL_PYTHON_PLAYWRIGHT=true || INSTALL_PYTHON_PLAYWRIGHT=false ;;
+      --optional-tools) [[ $((i+1)) -lt ${#args[@]} ]] && OPTIONAL_TOOLS="$(lower "${args[$((i+1))]}")" ;;
     esac
   done
-  COMMAND="${COMMAND,,}"
+  COMMAND="$(lower "$COMMAND")"
 }
 
 macos_has_gui_session() {
@@ -190,6 +104,12 @@ ensure_sudo() {
   [[ "$ALLOW_INSTALLS" == true ]] || return 0
   [[ "$(id -u)" -eq 0 ]] && return 0
   command -v sudo >/dev/null 2>&1 || { report_add failed "sudo" "" "" "" "system" "failed" "sudo is required for automatic installs." "Install sudo or run as root."; return 1; }
+
+  # Passwordless sudo (NOPASSWD, CI, containers): `sudo -v` would still demand a password, so test a real command first.
+  if sudo -n true >/dev/null 2>&1; then
+    report_add current "Administrator privileges" "" "granted" "granted" "sudo (passwordless)" "ready" "Elevation ready for installs without a password prompt"
+    return 0
+  fi
 
   echo
   if macos_has_gui_session; then
@@ -263,35 +183,6 @@ ensure_clt() {
   return 1
 }
 
-install_node_from_tarball() {
-  local url="$1" install_root="$2" archive_name="$3"
-  local archive extract_dir version_tag
-  [[ -n "$url" && -n "$install_root" ]] || return 1
-  archive="$TMP_DIR/$archive_name"
-  echo "[Web Toolkit] Downloading Node from official tarball..."
-  download_file "$url" "$archive" || return 1
-  version_tag="$(basename "$url")"
-  version_tag="${version_tag%.tar.gz}"
-  version_tag="${version_tag%.tar.xz}"
-  extract_dir="$install_root/$version_tag"
-  sudo mkdir -p "$install_root" /usr/local/bin
-  sudo rm -rf "$extract_dir"
-  case "$archive" in
-    *.tar.xz) sudo tar -xJf "$archive" -C "$install_root" ;;
-    *.tar.gz|*.tgz) sudo tar -xzf "$archive" -C "$install_root" ;;
-    *) echo "Unsupported archive: $archive" >&2; return 1 ;;
-  esac
-  [[ -x "$extract_dir/bin/node" ]] || { echo "Node binary missing in extracted tree: $extract_dir/bin/node" >&2; return 1; }
-  sudo ln -sf "$extract_dir/bin/node" /usr/local/bin/node
-  sudo ln -sf "$extract_dir/bin/npm" /usr/local/bin/npm
-  sudo ln -sf "$extract_dir/bin/npx" /usr/local/bin/npx
-  [[ -x "$extract_dir/bin/corepack" ]] && sudo ln -sf "$extract_dir/bin/corepack" /usr/local/bin/corepack || true
-  # Ensure /usr/local/bin is on PATH for the rest of this session (common on fresh macOS).
-  case ":$PATH:" in *":/usr/local/bin:"*) ;; *) PATH="/usr/local/bin:$PATH"; export PATH ;; esac
-  hash -r
-  return 0
-}
-
 linux_pkg_manager() {
   for pm in apt-get dnf yum pacman zypper; do command -v "$pm" >/dev/null 2>&1 && { printf '%s' "$pm"; return; }; done
   printf ''
@@ -349,162 +240,207 @@ ensure_git_posix() {
   esac
 }
 
+install_node_from_tarball() {
+  local url="$1" install_root="$2" archive_name="$3" expected_sha="$4"
+  local archive extract_dir version_tag actual_sha
+  [[ -n "$url" && -n "$install_root" ]] || return 1
+  archive="$TMP_DIR/$archive_name"
+  echo "[Web Toolkit] Downloading $(basename "$url") from nodejs.org..."
+  download_file "$url" "$archive" || return 1
+  actual_sha="$(sha256_of "$archive" || true)"
+  if [[ -z "$expected_sha" || "$actual_sha" != "$expected_sha" ]]; then
+    echo "Checksum mismatch for $(basename "$url") (expected ${expected_sha:-none}, got ${actual_sha:-none}); not installing it." >&2
+    return 1
+  fi
+  version_tag="$(basename "$url")"
+  version_tag="${version_tag%.tar.gz}"
+  version_tag="${version_tag%.tar.xz}"
+  extract_dir="$install_root/$version_tag"
+  sudo mkdir -p "$install_root" /usr/local/bin
+  sudo rm -rf "$extract_dir"
+  case "$archive" in
+    *.tar.xz) sudo tar -xJf "$archive" -C "$install_root" ;;
+    *.tar.gz|*.tgz) sudo tar -xzf "$archive" -C "$install_root" ;;
+    *) echo "Unsupported archive: $archive" >&2; return 1 ;;
+  esac
+  [[ -x "$extract_dir/bin/node" ]] || { echo "Node binary missing in extracted tree: $extract_dir/bin/node" >&2; return 1; }
+  sudo ln -sf "$extract_dir/bin/node" /usr/local/bin/node
+  sudo ln -sf "$extract_dir/bin/npm" /usr/local/bin/npm
+  sudo ln -sf "$extract_dir/bin/npx" /usr/local/bin/npx
+  [[ -x "$extract_dir/bin/corepack" ]] && sudo ln -sf "$extract_dir/bin/corepack" /usr/local/bin/corepack || true
+  # Ensure /usr/local/bin is on PATH for the rest of this session (common on fresh macOS).
+  path_prepend /usr/local/bin
+  hash -r
+  return 0
+}
+
 ensure_node_posix() {
-  local required before after source_label url install_root arch os prefer_tarball installed=false
-  required="$(manifest_get "tool.node.required_version")"
+  local major required before after source_label install_root os installed=false latest_note
+  major="$(node_major)"
+  required="${major}.0.0"
   before="$(command_version node --version | sed 's/^v//' || true)"
-  if [[ -n "$before" ]] && version_ge "$before" "$required"; then
-    report_add current "Node.js" "$required" "$before" "$before" "PATH" "already-current" "Node satisfies the latest-current policy"
+  if ! node_needs_install; then
+    report_add current "Node.js" "$major.x (latest)" "$before" "$before" "PATH" "already-current" "Node $before satisfies the Node $major line"
     report_add current "npm" "" "$(command_version npm --version || true)" "$(command_version npm --version || true)" "Node bundle" "already-current" "npm available with Node"
     report_add current "npx" "" "$(command_version npx --version || true)" "$(command_version npx --version || true)" "Node bundle" "already-current" "npx available with Node"
     return
   fi
-
+  if ! resolve_latest_node; then
+    report_add failed "Node.js" "$major.x (latest)" "$before" "" "nodejs.org" "failed" "Could not read the latest Node $major release list from nodejs.org." "Check network access to nodejs.org, then rerun setup."
+    return 1
+  fi
+  latest_note="Node $NODE_LATEST_VERSION (latest $major.x)"
   os="$(uname -s)"
-  arch="$(uname -m)"
-  prefer_tarball="$(manifest_get "tool.node.posix.prefer_official_tarball" "true")"
   source_label="nodejs.org"
-
   if [[ "$os" == "Darwin" ]]; then
-    # Official Node tarball is primary — Homebrew is optional fallback only.
-    # Fresh Macs often lack brew; requiring it was a setup failure mode.
-    case "$arch" in
-      arm64) url="$(manifest_get "tool.node.macos.arm64.tarball_url")" ;;
-      x86_64) url="$(manifest_get "tool.node.macos.x64.tarball_url")" ;;
-      *) report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Unsupported macOS architecture: $arch" "Install Node manually from nodejs.org, then rerun setup."; return 1 ;;
-    esac
     install_root="$(manifest_get "tool.node.macos.install_root" "/usr/local/lib/nodejs")"
-    if [[ "$prefer_tarball" == "true" ]] || ! command -v brew >/dev/null 2>&1; then
-      if install_node_from_tarball "$url" "$install_root" "node-darwin.tar.gz"; then
-        installed=true
-        source_label="nodejs.org"
-      elif command -v brew >/dev/null 2>&1; then
-        echo "[Web Toolkit] Official Node tarball failed — falling back to Homebrew..."
-        brew install "$(manifest_get "tool.node.macos.brew_formula" "node")" && installed=true
-        source_label="homebrew:node"
-      fi
-    else
-      if brew install "$(manifest_get "tool.node.macos.brew_formula" "node")"; then
-        installed=true
-        source_label="homebrew:node"
-      elif install_node_from_tarball "$url" "$install_root" "node-darwin.tar.gz"; then
-        installed=true
-        source_label="nodejs.org"
-      fi
-    fi
-    if [[ "$installed" != true ]]; then
-      report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Could not install Node (official tarball failed; Homebrew unavailable or also failed)." "Approve admin/sudo when prompted, check network access to nodejs.org, then rerun setup."
-      return 1
+    # The official tarball is primary (checksum verified); Homebrew is only a fallback. Fresh Macs often lack brew.
+    if install_node_from_tarball "$NODE_LATEST_URL" "$install_root" "node-darwin.tar.gz" "$NODE_LATEST_SHA256"; then
+      installed=true
+    elif command -v brew >/dev/null 2>&1; then
+      echo "[Web Toolkit] Official Node tarball failed; falling back to Homebrew..."
+      brew install "$(manifest_get "tool.node.macos.brew_formula" "node")" && installed=true
+      source_label="homebrew:node"
     fi
   else
-    case "$arch" in
-      x86_64) url="$(manifest_get "tool.node.linux.x64.tarball_url")" ;;
-      aarch64|arm64) url="$(manifest_get "tool.node.linux.arm64.tarball_url")" ;;
-      *) report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Unsupported Linux architecture: $arch" "Use a manually provisioned Node current release for this architecture."; return 1 ;;
-    esac
     install_root="$(manifest_get "tool.node.linux.install_root" "/usr/local/lib/nodejs")"
-    if ! install_node_from_tarball "$url" "$install_root" "node-linux.tar.xz"; then
-      report_add failed "Node.js" "$required" "$before" "" "nodejs.org" "failed" "Official Node tarball install failed." "Install the latest Node current release manually, then rerun bootstrap."
-      return 1
-    fi
-    source_label="nodejs.org"
+    install_node_from_tarball "$NODE_LATEST_URL" "$install_root" "node-linux.tar.xz" "$NODE_LATEST_SHA256" && installed=true
   fi
-
+  if [[ "$installed" != true ]]; then
+    report_add failed "Node.js" "$major.x (latest)" "$before" "" "$source_label" "failed" "Could not install $latest_note (download, checksum or extraction failed)." "Approve admin/sudo when prompted, check network access to nodejs.org, then rerun setup."
+    return 1
+  fi
+  hash -r
   after="$(command_version node --version | sed 's/^v//' || true)"
   if [[ -n "$after" ]] && version_ge "$after" "$required"; then
-    report_add installed "Node.js" "$required" "$before" "$after" "$source_label" "installed-or-updated" "Installed or updated Node.js current line"
+    report_add installed "Node.js" "$major.x (latest)" "$before" "$after" "$source_label" "installed-or-updated" "Installed $latest_note"
     report_add installed "npm" "" "" "$(command_version npm --version || true)" "Node bundle" "available" "npm available after Node install"
     report_add installed "npx" "" "" "$(command_version npx --version || true)" "Node bundle" "available" "npx available after Node install"
   else
-    report_add failed "Node.js" "$required" "$before" "$after" "$source_label" "failed" "Node did not satisfy the required current line after install" "Install the latest Node current release manually, then rerun bootstrap."
+    report_add failed "Node.js" "$major.x (latest)" "$before" "$after" "$source_label" "failed" "Node did not satisfy the Node $major line after install" "Install the latest Node $major release manually, then rerun bootstrap."
     return 1
   fi
 }
 
-ensure_pyenv_native_posix() {
-  local required before
-  required="$(manifest_get "tool.pyenv_native.minimum_version")"
-  add_pyenv_path
-  before="$(invoke_pyenv --version 2>/dev/null | head -n1 || true)"
-  before="${before##* }"
+# pnpm is the toolkit's package manager, so it is installed when missing (user space, no sudo): the official standalone
+# installer, then npm into ~/.local as a fallback. An existing pnpm below the floor is updated with `pnpm self-update`.
+ensure_pnpm_posix() {
+  local required before after
+  required="$(manifest_get "tool.pnpm.minimum_version" "10.0.0")"
+  before="$(pnpm_version || true)"
   if [[ -n "$before" ]] && version_ge "$before" "$required"; then
-    report_add current "pyenv-native (pyenv)" "$required" "$before" "$before" "PATH" "already-current" "pyenv-native CLI satisfies policy"
+    report_add current "pnpm" ">= $required" "$before" "$before" "PATH" "already-current" "pnpm $before is the toolkit package manager"
     return
   fi
-  if [[ -n "$before" ]]; then invoke_pyenv self-update; else download_pipe_sh "$(manifest_get "tool.pyenv_native.posix.install_url")"; fi
-  add_pyenv_path
-  local after; after="$(invoke_pyenv --version 2>/dev/null | head -n1 || true)"; after="${after##* }"
-  if [[ -n "$after" ]] && version_ge "$after" "$required"; then
-    report_add installed "pyenv-native (pyenv)" "$required" "$before" "$after" "github-release-installer/self-update" "installed-or-updated" "pyenv-native CLI ready — use \`pyenv\` / \`pyenv gui\`"
-  else
-    report_add failed "pyenv-native (pyenv)" "$required" "$before" "$after" "github-release-installer/self-update" "failed" "pyenv-native did not satisfy policy after install/update" "Install pyenv-native manually from the latest GitHub release and rerun bootstrap."
+  if [[ -n "$before" ]]; then pnpm self-update >/dev/null 2>&1 || true; fi
+  after="$(pnpm_version || true)"
+  if [[ -z "$after" ]] || ! version_ge "$after" "$required"; then
+    download_pipe_sh "$(manifest_get "tool.pnpm.posix.install_url" "https://get.pnpm.io/install.sh")" >/dev/null 2>&1 || true
+    add_pnpm_path; hash -r
+    after="$(pnpm_version || true)"
   fi
-}
-
-ensure_pyenv_gui_posix() {
-  local url target_dir target_path before bin_name
-  add_pyenv_path
-  bin_name="$(manifest_get "tool.pyenv_gui.binary_name.posix" "pyenv-gui")"
-  target_dir="$HOME/.pyenv/bin"
-  target_path="$target_dir/$bin_name"
-  before=""
-  pyenv_gui_available && before="present"
-  if [[ -n "$before" ]]; then
-    report_add current "pyenv-gui" "" "$before" "$before" "pyenv-native" "already-current" "pyenv-gui available — launch with \`pyenv gui\`"
-    return
-  fi
-  url="$(pyenv_gui_download_url)"
-  if [[ -z "$url" ]]; then
-    report_add failed "pyenv-gui" "" "" "" "github-release" "failed" "No pyenv-gui download URL for this OS/arch" "See $(manifest_get "tool.pyenv_gui.docs_url") or build with cargo build --release -p pyenv-gui"
-    return 1
-  fi
-  mkdir -p "$target_dir"
-  if curl -fsSL "$url" -o "$target_path" && chmod +x "$target_path"; then
-    add_pyenv_path
-    if pyenv_gui_available || [[ -x "$target_path" ]]; then
-      report_add installed "pyenv-gui" "" "" "present" "github-release" "installed" "pyenv-gui installed — launch with \`pyenv gui\`"
-      return
+  if [[ -z "$after" ]] || ! version_ge "$after" "$required"; then
+    if command -v npm >/dev/null 2>&1 && npm install --global --prefix "$HOME/.local" pnpm >/dev/null 2>&1; then
+      path_prepend "$HOME/.local/bin"; hash -r
+      after="$(command_version pnpm --version || true)"
     fi
   fi
-  report_add failed "pyenv-gui" "" "" "" "github-release" "failed" "Could not install pyenv-gui binary" "Download from pyenv-native release assets into ~/.pyenv/bin and run \`pyenv gui\`."
+  if [[ -n "$after" ]] && version_ge "$after" "$required"; then
+    report_add installed "pnpm" ">= $required" "$before" "$after" "get.pnpm.io" "installed-or-updated" "pnpm ready; open a new terminal if \`pnpm\` is not found"
+  else
+    report_add failed "pnpm" ">= $required" "$before" "$after" "get.pnpm.io" "failed" "pnpm could not be installed" "Run: npm install --global pnpm, then rerun setup."
+  fi
+}
+
+# Enchi (formerly pyenv-native). An older pyenv-native is upgraded in place by `self-update`, or by the release installer.
+ensure_enchi_posix() {
+  local required before after
+  required="$(manifest_get "tool.enchi.minimum_version" "0.8.0")"
+  add_enchi_path
+  before="$(enchi_version || true)"
+  if [[ -n "$before" ]] && version_ge "$before" "$required"; then
+    report_add current "Enchi" "$required" "$before" "$before" "PATH" "already-current" "Enchi CLI satisfies policy"
+    return
+  fi
+  if [[ -n "$before" ]]; then invoke_enchi self-update >/dev/null 2>&1 || true; fi
+  after="$(enchi_version || true)"
+  if [[ -z "$after" ]] || ! version_ge "$after" "$required"; then
+    download_pipe_sh "$(manifest_get "tool.enchi.posix.install_url" "https://github.com/imyourboyroy/pyenv-native/releases/latest/download/install.sh")" || true
+    add_enchi_path; hash -r
+    after="$(enchi_version || true)"
+  fi
+  if [[ -n "$after" ]] && version_ge "$after" "$required"; then
+    report_add installed "Enchi" "$required" "$before" "$after" "github-release-installer/self-update" "installed-or-updated" "Enchi CLI ready; use \`enchi\` / \`enchi gui\`"
+  else
+    report_add failed "Enchi" "$required" "$before" "$after" "github-release-installer/self-update" "failed" "Enchi did not satisfy policy after install/update" "Install Enchi from the latest GitHub release (imyourboyroy/pyenv-native) and rerun bootstrap."
+  fi
+}
+
+ensure_enchi_gui_posix() {
+  local url target_dir target_path before expected actual
+  add_enchi_path
+  before=""
+  enchi_gui_available && before="present"
+  if [[ -n "$before" ]]; then
+    report_add current "Enchi GUI" "" "$before" "$before" "enchi" "already-current" "Enchi GUI available; launch with \`enchi gui\`"
+    return
+  fi
+  url="$(enchi_gui_download_url)"
+  if [[ -z "$url" ]]; then
+    report_add failed "Enchi GUI" "" "" "" "github-release" "failed" "No Enchi GUI download for this OS/arch" "See https://github.com/imyourboyroy/pyenv-native/blob/main/docs/GUI.md"
+    return 1
+  fi
+  target_dir="$(dirname "$(resolve_enchi)")"
+  [[ -n "$target_dir" && "$target_dir" != "." ]] || target_dir="$HOME/.enchi/bin"
+  target_path="$target_dir/enchi-gui"
+  mkdir -p "$target_dir"
+  expected="$(download_text "$url.sha256" | awk '{print $1}' | head -n1 || true)"
+  if download_file "$url" "$target_path.part" && actual="$(sha256_of "$target_path.part" || true)" && [[ -n "$expected" && "$actual" == "$expected" ]]; then
+    chmod +x "$target_path.part" && mv "$target_path.part" "$target_path"
+    add_enchi_path
+    report_add installed "Enchi GUI" "" "" "present" "github-release" "installed" "Enchi GUI installed; launch with \`enchi gui\`"
+    return
+  fi
+  rm -f "$target_path.part"
+  report_add failed "Enchi GUI" "" "" "" "github-release" "failed" "Could not download and verify the Enchi GUI binary" "Download enchi-gui for your platform from the Enchi release assets and run \`enchi gui\`."
   return 1
 }
 
 ensure_python_runtime_posix() {
   local required desired before_python before_pip versions_output venv_name target_spec after_python after_pip
   required="$(manifest_get "tool.python.minimum_version")"
-  desired="$(invoke_pyenv latest "$(manifest_get "tool.python.desired_prefix")" 2>/dev/null | head -n1 || true)"
+  desired="$(invoke_enchi latest "$(manifest_get "tool.python.desired_prefix")" 2>/dev/null | head -n1 || true)"
   [[ -n "$desired" ]] || desired="$(manifest_get "tool.python.fallback_version")"
   venv_name="$(normalize_env_name "$(basename "$WORKSPACE")")"
   before_python="$(command_version python --version || true)"
   before_pip="$(command_version pip --version || true)"
-  versions_output="$(invoke_pyenv versions 2>/dev/null || true)"
-  grep -Fq "$desired" <<<"$versions_output" || invoke_pyenv install "$desired"
+  versions_output="$(invoke_enchi versions 2>/dev/null || true)"
+  grep -Fq "$desired" <<<"$versions_output" || invoke_enchi install "$desired"
   # Prefer the desired line as the user-global Python (latest installed for that prefix).
-  invoke_pyenv global "$desired" || true
+  invoke_enchi global "$desired" || true
   target_spec="$desired/envs/$venv_name"
-  versions_output="$(invoke_pyenv versions 2>/dev/null || true)"
-  grep -Fq "$target_spec" <<<"$versions_output" || invoke_pyenv venv create "$desired" "$venv_name"
-  invoke_pyenv --cwd "$WORKSPACE" local "$target_spec"
-  invoke_pyenv --cwd "$WORKSPACE" exec python -m pip install --upgrade pip
-  after_python="$(invoke_pyenv --cwd "$WORKSPACE" exec python --version | head -n1 || true)"
-  after_pip="$(invoke_pyenv --cwd "$WORKSPACE" exec python -m pip --version | head -n1 || true)"
-  report_add installed "Python runtime" "$required" "$before_python" "$after_python" "pyenv-native" "installed-or-selected" "Workspace bound to $target_spec; pyenv global set to $desired"
-  report_add installed "pip" "" "$before_pip" "$after_pip" "pyenv-native" "installed-or-updated" "pip upgraded inside the managed venv"
+  versions_output="$(invoke_enchi versions 2>/dev/null || true)"
+  grep -Fq "$target_spec" <<<"$versions_output" || invoke_enchi venv create "$desired" "$venv_name"
+  invoke_enchi --cwd "$WORKSPACE" local "$target_spec"
+  invoke_enchi --cwd "$WORKSPACE" exec python -m pip install --upgrade pip
+  after_python="$(invoke_enchi --cwd "$WORKSPACE" exec python --version | head -n1 || true)"
+  after_pip="$(invoke_enchi --cwd "$WORKSPACE" exec python -m pip --version | head -n1 || true)"
+  report_add installed "Python runtime" "$required" "$before_python" "$after_python" "enchi" "installed-or-selected" "Workspace bound to $target_spec; Enchi global set to $desired"
+  report_add installed "pip" "" "$before_pip" "$after_pip" "enchi" "installed-or-updated" "pip upgraded inside the managed venv"
 }
 
 ensure_python_playwright_posix() {
-  [[ "$INSTALL_PYTHON_PLAYWRIGHT" == true ]] || { report_add skipped "Python Playwright" "" "" "" "pyenv-native venv" "skipped" "Flag disabled"; return; }
+  [[ "$INSTALL_PYTHON_PLAYWRIGHT" == true ]] || { report_add skipped "Python Playwright" "" "" "" "enchi venv" "skipped" "Flag disabled"; return; }
   local before
-  before="$(invoke_pyenv --cwd "$WORKSPACE" exec python -m playwright --version 2>/dev/null | head -n1 || true)"
-  [[ -n "$before" ]] && { report_add current "Python Playwright" "" "$before" "$before" "pyenv-native venv" "already-current" "Playwright already installed in the managed venv"; return; }
+  before="$(invoke_enchi --cwd "$WORKSPACE" exec python -m playwright --version 2>/dev/null | head -n1 || true)"
+  [[ -n "$before" ]] && { report_add current "Python Playwright" "" "$before" "$before" "enchi venv" "already-current" "Playwright already installed in the managed venv"; return; }
   local package browser after
   package="$(manifest_get "tool.python_playwright.package" "playwright")"
   browser="$(manifest_get "tool.python_playwright.browser" "chromium")"
-  invoke_pyenv --cwd "$WORKSPACE" exec python -m pip install "$package"
-  invoke_pyenv --cwd "$WORKSPACE" exec python -m playwright install "$browser"
-  after="$(invoke_pyenv --cwd "$WORKSPACE" exec python -m playwright --version | head -n1 || true)"
-  report_add installed "Python Playwright" "" "$before" "$after" "pyenv-native venv" "installed" "Installed $package + $browser"
+  invoke_enchi --cwd "$WORKSPACE" exec python -m pip install "$package"
+  invoke_enchi --cwd "$WORKSPACE" exec python -m playwright install "$browser"
+  after="$(invoke_enchi --cwd "$WORKSPACE" exec python -m playwright --version | head -n1 || true)"
+  report_add installed "Python Playwright" "" "$before" "$after" "enchi venv" "installed" "Installed $package + $browser"
 }
 
 optional_tool_selected() {
@@ -564,27 +500,43 @@ invoke_node_doctor() {
 }
 
 doctor_only() {
-  local node_required node_version git_version pyenv_version python_version pip_version
-  node_required="$(manifest_get "tool.node.required_version")"
+  local major node_version git_version enchi_ver pnpm_ver python_version pip_version enchi_required pnpm_required
+  major="$(node_major)"
+  enchi_required="$(manifest_get "tool.enchi.minimum_version" "0.8.0")"
+  pnpm_required="$(manifest_get "tool.pnpm.minimum_version" "10.0.0")"
   git_version="$(command_version git --version || true)"
   node_version="$(command_version node --version | sed 's/^v//' || true)"
-  pyenv_version="$(invoke_pyenv --version 2>/dev/null | head -n1 || true)"; pyenv_version="${pyenv_version##* }"
+  add_enchi_path; add_pnpm_path
+  enchi_ver="$(enchi_version || true)"
+  pnpm_ver="$(pnpm_version || true)"
   python_version="$(command_version python --version || true)"
   pip_version="$(command_version pip --version || true)"
   [[ -n "$git_version" ]] && report_add current "Git" "" "$git_version" "$git_version" "PATH" "already-current" "Git available" || report_add failed "Git" "" "" "" "PATH" "missing" "Git not found in PATH"
-  if [[ -n "$node_version" ]] && version_ge "$node_version" "$node_required"; then
-    report_add current "Node.js" "$node_required" "$node_version" "$node_version" "PATH" "already-current" "Node satisfies policy"
+  # Doctor never touches the network: it checks the Node major floor; `prepare-host` also brings the major to its latest release.
+  if [[ -n "$node_version" ]] && version_ge "$node_version" "${major}.0.0"; then
+    report_add current "Node.js" "$major.x" "$node_version" "$node_version" "PATH" "already-current" "Node satisfies the Node $major line"
   else
-    report_add failed "Node.js" "$node_required" "$node_version" "" "PATH" "out-of-policy" "Node missing or below the required current line"
+    report_add failed "Node.js" "$major.x" "$node_version" "" "PATH" "out-of-policy" "Node missing or below the required major"
   fi
-  [[ -n "$pyenv_version" ]] && report_add current "pyenv-native (pyenv)" "$(manifest_get "tool.pyenv_native.minimum_version")" "$pyenv_version" "$pyenv_version" "PATH" "available" "pyenv-native CLI available" || report_add failed "pyenv-native (pyenv)" "$(manifest_get "tool.pyenv_native.minimum_version")" "" "" "PATH" "missing" "pyenv-native CLI not found — do not use system Python"
-  if pyenv_gui_available; then
-    report_add current "pyenv-gui" "" "present" "present" "pyenv-native" "available" "pyenv-gui available — launch with \`pyenv gui\`"
+  if [[ -n "$pnpm_ver" ]] && version_ge "$pnpm_ver" "$pnpm_required"; then
+    report_add current "pnpm" ">= $pnpm_required" "$pnpm_ver" "$pnpm_ver" "PATH" "available" "pnpm available"
   else
-    report_add failed "pyenv-gui" "" "" "" "pyenv-native" "missing" "pyenv-gui missing — required companion; install via bootstrap or release assets"
+    report_add failed "pnpm" ">= $pnpm_required" "$pnpm_ver" "" "PATH" "missing" "pnpm missing or too old; the toolkit's package manager. Run prepare-host to install it"
   fi
-  [[ -n "$python_version" ]] && report_add current "Python runtime" "$(manifest_get "tool.python.minimum_version")" "$python_version" "$python_version" "PATH/pyenv" "available" "Python executable available under pyenv-native" || report_add failed "Python runtime" "$(manifest_get "tool.python.minimum_version")" "" "" "PATH/pyenv" "missing" "Python executable not found under pyenv-native"
-  [[ -n "$pip_version" ]] && report_add current "pip" "" "$pip_version" "$pip_version" "PATH/pyenv" "available" "pip available" || report_add failed "pip" "" "" "" "PATH/pyenv" "missing" "pip not found"
+  if [[ -n "$enchi_ver" ]] && version_ge "$enchi_ver" "$enchi_required"; then
+    report_add current "Enchi" "$enchi_required" "$enchi_ver" "$enchi_ver" "PATH" "available" "Enchi CLI available"
+  elif [[ -n "$enchi_ver" ]]; then
+    report_add failed "Enchi" "$enchi_required" "$enchi_ver" "" "PATH" "outdated" "Enchi (formerly pyenv-native) is below $enchi_required; prepare-host upgrades it in place"
+  else
+    report_add failed "Enchi" "$enchi_required" "" "" "PATH" "missing" "Enchi CLI not found; do not use system Python"
+  fi
+  if enchi_gui_available; then
+    report_add current "Enchi GUI" "" "present" "present" "enchi" "available" "Enchi GUI available; launch with \`enchi gui\`"
+  else
+    report_add failed "Enchi GUI" "" "" "" "enchi" "missing" "Enchi GUI missing; install via bootstrap or the Enchi release assets"
+  fi
+  [[ -n "$python_version" ]] && report_add current "Python runtime" "$(manifest_get "tool.python.minimum_version")" "$python_version" "$python_version" "PATH/enchi" "available" "Python executable available under Enchi" || report_add failed "Python runtime" "$(manifest_get "tool.python.minimum_version")" "" "" "PATH/enchi" "missing" "Python executable not found under Enchi"
+  [[ -n "$pip_version" ]] && report_add current "pip" "" "$pip_version" "$pip_version" "PATH/enchi" "available" "pip available" || report_add failed "pip" "" "" "" "PATH/enchi" "missing" "pip not found"
   workspace_checks
 }
 
@@ -627,8 +579,9 @@ main() {
       fi
       ensure_git_posix || true
       ensure_node_posix || true
-      ensure_pyenv_native_posix || true
-      ensure_pyenv_gui_posix || true
+      ensure_pnpm_posix || true
+      ensure_enchi_posix || true
+      ensure_enchi_gui_posix || true
       ensure_python_runtime_posix || true
       ensure_optional_posix || true
       ensure_python_playwright_posix || true

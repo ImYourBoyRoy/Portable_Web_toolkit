@@ -62,6 +62,9 @@ None of these override safety policy or explicit repository constraints.
   default; explicitly relaxed or runtime-only resources are INFO when absent,
   while present-but-invalid resources fail. Do not create a parallel
   generator.
+- **Package manager:** pnpm is the default (`pnpm install`, `pnpm run <script>`, `pnpm exec`). A site with an npm/yarn/bun lockfile keeps its manager; `package-updater migrate` converts one on request. npm is only the fallback when pnpm is missing, and the host setup installs pnpm.
+- **Python:** Enchi (`enchi`, formerly pyenv-native, `enchi gui` for the dashboard) is the toolkit's Python manager on Windows, macOS and Linux. Use `enchi exec python …`, `enchi venv …` and `enchi doctor` for toolkit Python work, never system, Homebrew or winget Python. A machine that still has the old `pyenv` CLI is upgraded in place by the host setup. Do not impose it on an unrelated client project.
+- **Host tools, no pins:** Node is the latest release of the major in the repo-root `.node-version` (a bare major), resolved from nodejs.org at setup time; nothing in the manifests or scripts names a Node, pnpm or Enchi version to install.
 - **Servers and ports:** never assume a port is free (4321 is often the user's own dev server). Pick one with `dev-ports free --preferred <n>`; servers the toolkit starts are registered and are yours to stop (`dev-ports release --port <n>`, `cleanup`) during tests and when finished. Never stop a process the toolkit did not start: show the user its pid, command and directory (`dev-ports who --port <n>`), and only after their explicit yes pass that exact pid as `--approved-pid`.
 - **Styles:** external CSS in `src/styles/` with tokens; run `stylesheet-check scan --root <project>` when changing UI CSS.
 - **Accessibility:** toolkit sites use `Web_Toolkit/wcag_auditor` (WCAGate wrapper) only — never resolve `AI/wcag-auditor`. Engine is `github:imyourboyroy/WCAGate` in `Web_Toolkit/node_modules`. Evidence gate — not a conformance certificate.
@@ -103,6 +106,9 @@ See `Web_Toolkit/OPERATIONS.md` for the full numbered list. Short form:
 | Toolkit report | `Web_Toolkit/toolkit_report/bin/toolkit-report.mjs` |
 | Stylesheet check | `Web_Toolkit/stylesheet_check/bin/stylesheet-check.mjs` |
 | Site doctor | `Web_Toolkit/site_doctor/bin/site-doctor.mjs` |
+| Dev ports (free port, who owns it, release only ours) | `Web_Toolkit/dev_ports/bin/dev-ports.mjs` |
+| Form doctor (contact and intake forms) | `Web_Toolkit/form_doctor/bin/form-doctor.mjs` |
+| Site templates (contact, intake, fonts, layout, themes) | `Web_Toolkit/site_templates/bin/site-templates.mjs` |
 
 Pass `--site-profile <path>` whenever the target site is not the default example profile.
 
@@ -126,7 +132,7 @@ and change only explicitly selected clients and skills.
 
 **Core:** `portable-web-toolkit-router` (global default), `site-onboarding`,
 `portable-web-toolkit`, `site-readiness`, `site-starter`, `site-maintenance`,
-`wcag-auditor`, `pagespeed-diagnostics`, `discovery-doctor`, `toolkit-update`
+`site-templates`, `wcag-auditor`, `pagespeed-diagnostics`, `discovery-doctor`, `toolkit-update`
 
 **Optional:** `brand-doctor`, `image-pipeline`, `instagram-clone`, `site-theme`,
 `vectorize-pipeline`

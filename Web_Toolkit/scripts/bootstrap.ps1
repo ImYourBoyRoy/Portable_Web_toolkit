@@ -11,40 +11,8 @@ $ManifestPath = Join-Path $ToolkitRoot 'Setup_agent_environment\config\host-boot
 $NodeDoctorPath = Join-Path $ToolkitRoot 'Setup_agent_environment\bin\agent-env-setup.mjs'
 $ElevationMarker = '--bootstrap-elevated'
 
-function Get-Manifest { Get-Content -Raw $ManifestPath | ConvertFrom-Json }
-function Get-ManifestValue($Manifest, [string]$Key, [string]$Default = '') { $property = $Manifest.PSObject.Properties[$Key]; if ($property) { [string]$property.Value } else { $Default } }
-function Resolve-CommandPath([string]$Name) {
-    $commands = @(Get-Command $Name -All -ErrorAction SilentlyContinue)
-    if (-not $commands -or $commands.Count -eq 0) { return '' }
-    $preferred = $commands | Where-Object { $_.CommandType -eq 'Application' -and $_.Path } | Select-Object -First 1
-    if ($preferred) { return $preferred.Path }
-    $fallback = $commands | Where-Object { $_.Source } | Select-Object -First 1
-    if ($fallback) { return $fallback.Source }
-    ''
-}
-function Resolve-VersionProbePath([string]$Name) {
-    if ($Name -in @('python', 'pip')) {
-        $pyenv = Resolve-PyenvCommand
-        if ($pyenv) {
-            try {
-                $resolved = (& $pyenv 'which' $Name 2>$null | Select-Object -First 1).Trim()
-                if ($resolved -and (Test-Path $resolved)) { return $resolved }
-            } catch {}
-        }
-    }
-    Resolve-CommandPath $Name
-}
-function Get-CommandVersion([string]$Name, [string[]]$Args = @('--version')) {
-    if (-not $Args -or $Args.Count -eq 0) { $Args = @('--version') }
-    $cmd = Resolve-VersionProbePath $Name
-    if (-not $cmd) { return '' }
-    try {
-        $line = & $cmd @Args 2>$null | Select-Object -First 1
-        if ($null -eq $line) { return '' }
-        $line.ToString().Trim()
-    } catch { '' }
-}
-function Compare-Version([string]$Left, [string]$Right) { $lp = (($Left -replace '^[^0-9]*', '') -split '\.') | ? { $_ -match '^\d+$' } | % { [int]$_ }; $rp = (($Right -replace '^[^0-9]*', '') -split '\.') | ? { $_ -match '^\d+$' } | % { [int]$_ }; $count = [Math]::Max($lp.Count, $rp.Count); for ($i = 0; $i -lt $count; $i++) { $l = if ($i -lt $lp.Count) { $lp[$i] } else { 0 }; $r = if ($i -lt $rp.Count) { $rp[$i] } else { 0 }; if ($l -gt $r) { return 1 }; if ($l -lt $r) { return -1 } }; return 0 }
+. (Join-Path $PSScriptRoot 'lib\host-tools.ps1')
+
 function ConvertTo-NormalizedEnvName([string]$Value) { $n = ($Value.ToLowerInvariant() -replace '[^a-z0-9]+', '-') -replace '^-+', '' -replace '-+$', ''; if ([string]::IsNullOrWhiteSpace($n)) { 'workspace' } else { $n } }
 function Test-IsAdmin { $identity = [Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object Security.Principal.WindowsPrincipal($identity); $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) }
 
@@ -128,13 +96,12 @@ function Save-Report([hashtable]$Report, [bool]$EmitJson) {
 function Test-NeedsInstall($Manifest, [hashtable]$Flags) {
     if (-not (Get-CommandVersion 'git')) { return $true }
     
-    $nodeRequired = Get-ManifestValue $Manifest 'tool.node.required_version'
-    $nodeVersion = Get-CommandVersion 'node'
-    if (-not $nodeVersion -or (Compare-Version $nodeVersion $nodeRequired) -lt 0) { return $true }
-    
-    $pyenvRequired = Get-ManifestValue $Manifest 'tool.pyenv_native.minimum_version'
-    $pyenvVersion = Get-PyenvVersion
-    if (-not $pyenvVersion -or (Compare-Version $pyenvVersion $pyenvRequired) -lt 0) { return $true }
+    if (Test-NodeNeedsInstall $Manifest) { return $true }
+
+    # pnpm installs in user scope (no admin), so a missing pnpm never triggers the UAC prompt on its own.
+    $enchiRequired = Get-ManifestValue $Manifest 'tool.enchi.minimum_version' '0.8.0'
+    $enchiVersion = Get-EnchiVersion
+    if (-not $enchiVersion -or (Compare-Version $enchiVersion $enchiRequired) -lt 0) { return $true }
     
     $pythonRequired = Get-ManifestValue $Manifest 'tool.python.minimum_version'
     $pythonVersion = Get-CommandVersion 'python'
@@ -144,7 +111,7 @@ function Test-NeedsInstall($Manifest, [hashtable]$Flags) {
     $venvName = ConvertTo-NormalizedEnvName (Split-Path -Leaf $workspace)
     $desiredVersion = Resolve-DesiredPythonVersion $Manifest
     try {
-        $versionsOutput = (Invoke-Pyenv -Args @('versions') 2>$null) -join "`n"
+        $versionsOutput = (Invoke-Enchi -Arguments @('versions') 2>$null) -join "`n"
         if ($versionsOutput -notmatch [Regex]::Escape($desiredVersion)) { return $true }
         $targetSpec = "$desiredVersion/envs/$venvName"
         if ($versionsOutput -notmatch [Regex]::Escape($targetSpec)) { return $true }
@@ -152,7 +119,7 @@ function Test-NeedsInstall($Manifest, [hashtable]$Flags) {
 
     if ($Flags['install-python-playwright']) {
         try {
-            $playwrightVersion = (Invoke-Pyenv -Args @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $workspace 2>$null | Select-Object -First 1).Trim()
+            $playwrightVersion = (Invoke-Enchi -Arguments @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $workspace 2>$null | Select-Object -First 1).Trim()
             if (-not $playwrightVersion) { return $true }
         } catch { return $true }
     }
@@ -241,49 +208,6 @@ function Invoke-WingetEnsurePackage([string]$Id, [string]$Label) {
     if ($LASTEXITCODE -ne 0) { throw "winget failed while managing $Label ($Id)." }
 }
 
-function Resolve-PyenvCommand {
-    $root = Join-Path $env:USERPROFILE '.pyenv'
-    foreach ($path in @((Join-Path $root 'bin\pyenv.exe'), (Join-Path $root 'pyenv.exe'))) { if (Test-Path $path) { return $path } }
-    $candidate = Resolve-CommandPath 'pyenv'
-    if ($candidate) { return $candidate }
-    if (Test-Path $root) { $found = Get-ChildItem -Path $root -Recurse -Filter pyenv.exe -File -ErrorAction SilentlyContinue | Select-Object -First 1; if ($found) { return $found.FullName } }
-    ''
-}
-
-function Add-PyenvToPath {
-    foreach ($pathEntry in @((Join-Path $env:USERPROFILE '.pyenv\bin'), (Join-Path $env:USERPROFILE '.pyenv\shims'))) {
-        if ((Test-Path $pathEntry) -and (($env:PATH -split ';') -notcontains $pathEntry)) { $env:PATH = "$pathEntry;$env:PATH" }
-    }
-}
-function Get-PyenvVersion { $pyenv = Resolve-PyenvCommand; if (-not $pyenv) { return '' }; Add-PyenvToPath; try { (& $pyenv --version 2>$null | Select-Object -First 1).Trim() } catch { '' } }
-function Invoke-Pyenv([string[]]$Args, [string]$WorkingDirectory = '') { $pyenv = Resolve-PyenvCommand; if (-not $pyenv) { throw 'pyenv-native is not available in PATH.' }; Add-PyenvToPath; if ($WorkingDirectory) { Push-Location $WorkingDirectory; try { & $pyenv @Args } finally { Pop-Location } } else { & $pyenv @Args } }
-
-function Get-PyenvGuiPath {
-    $binName = 'pyenv-gui.exe'
-    $root = Join-Path $env:USERPROFILE '.pyenv'
-    foreach ($path in @(
-        (Join-Path $root "bin\$binName"),
-        (Join-Path $root $binName),
-        (Resolve-CommandPath 'pyenv-gui')
-    )) {
-        if ($path -and (Test-Path $path)) { return $path }
-    }
-    if (Test-Path $root) {
-        $found = Get-ChildItem -Path $root -Recurse -Filter $binName -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) { return $found.FullName }
-    }
-    return $null
-}
-
-function Test-PyenvGuiAvailable {
-    if (Get-PyenvGuiPath) { return $true }
-    $pyenv = Resolve-PyenvCommand
-    if (-not $pyenv) { return $false }
-    try {
-        $help = & $pyenv 'gui' '--help' 2>$null
-        return $LASTEXITCODE -eq 0 -or ($help -and "$help" -match 'gui')
-    } catch { return $false }
-}
 
 function Ensure-Git([hashtable]$Report) {
     $before = Get-CommandVersion 'git'
@@ -292,85 +216,145 @@ function Ensure-Git([hashtable]$Report) {
     Add-ReportEntry $Report failed 'Git' '' $before '' 'winget:Git.Git' 'failed' 'Git still missing after install attempt' 'Install Git manually and rerun bootstrap.'
 }
 
+# --- Node: the required MAJOR is the repo-root .node-version (a major or a full version; only the major counts), else the
+# manifest. The release is the latest of that major on nodejs.org, read from its own checksum file: nothing here names a version.
+
+# True when Node must be installed or updated: below the required major, or (when nodejs.org answers) behind that major's
+# latest release. A newer major than required is accepted; being offline never forces an update.
+
+function Install-NodeMsi($Latest) {
+    $msi = Join-Path $env:TEMP $Latest.File
+    try {
+        Invoke-WebRequest -Uri $Latest.Url -OutFile $msi -UseBasicParsing
+        $actual = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actual -ne $Latest.Sha256) { throw "Checksum mismatch for $($Latest.File); not installing it." }
+        $process = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$msi`"", '/qn', '/norestart') -Wait -PassThru
+        if ($process.ExitCode -notin @(0, 3010)) { throw "msiexec exited with code $($process.ExitCode)." }
+    } finally { Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue }
+}
+
 function Ensure-Node($Manifest, [hashtable]$Report) {
-    $required = Get-ManifestValue $Manifest 'tool.node.required_version'
+    $major = Get-NodeMajor $Manifest
+    $required = "$major.x (latest)"
     $before = Get-CommandVersion 'node'
-    if ($before -and (Compare-Version $before $required) -ge 0) {
-        Add-ReportEntry $Report current 'Node.js' $required $before $before 'PATH' 'already-current' 'Node satisfies the latest-current policy'
+    if (-not (Test-NodeNeedsInstall $Manifest)) {
+        Add-ReportEntry $Report current 'Node.js' $required $before $before 'PATH' 'already-current' "Node $before satisfies the Node $major line"
         foreach ($tool in @('npm','npx')) { $version = Get-CommandVersion $tool; Add-ReportEntry $Report current $tool '' $version $version 'Node bundle' 'already-current' "$tool available with Node" }
         return
     }
+    $latest = Resolve-LatestNode $Manifest
     $packageId = Get-ManifestValue $Manifest 'tool.node.windows.package_id'
-    try {
-        Invoke-WingetEnsurePackage $packageId 'Node.js'
-        $after = Get-CommandVersion 'node'
-        if ($after -and (Compare-Version $after $required) -ge 0) {
-            Add-ReportEntry $Report installed 'Node.js' $required $before $after "winget:$packageId" 'installed-or-updated' 'Installed or updated Node.js current line'
-            foreach ($tool in @('npm','npx')) { $version = Get-CommandVersion $tool; Add-ReportEntry $Report installed $tool '' '' $version 'Node bundle' 'available' "$tool available after Node install" }
-            return
-        }
-    } catch {
-        Add-ReportEntry $Report failed 'Node.js' $required $before '' "winget:$packageId" 'failed' $_.Exception.Message 'Install the latest Node current release manually, then rerun bootstrap.'
+    $source = 'nodejs.org'
+    $installed = $false
+    $problem = ''
+    if ($latest) {
+        try { Install-NodeMsi $latest; $installed = $true } catch { $problem = $_.Exception.Message }
+    } else { $problem = 'Could not read the latest Node release list from nodejs.org.' }
+    if (-not $installed) {
+        try { Invoke-WingetEnsurePackage $packageId 'Node.js'; $installed = $true; $source = "winget:$packageId" }
+        catch { Add-ReportEntry $Report failed 'Node.js' $required $before '' 'nodejs.org' 'failed' "$problem $($_.Exception.Message)".Trim() 'Install the latest Node release for your major from nodejs.org, then rerun bootstrap.'; return }
+    }
+    Add-PathEntry (Join-Path $env:ProgramFiles 'nodejs')
+    $after = Get-CommandVersion 'node'
+    if ($after -and (Compare-Version $after "$major.0.0") -ge 0) {
+        Add-ReportEntry $Report installed 'Node.js' $required $before $after $source 'installed-or-updated' "Installed Node $after ($major line)"
+        foreach ($tool in @('npm','npx')) { $version = Get-CommandVersion $tool; Add-ReportEntry $Report installed $tool '' '' $version 'Node bundle' 'available' "$tool available after Node install" }
         return
     }
-    Add-ReportEntry $Report failed 'Node.js' $required $before (Get-CommandVersion 'node') "winget:$packageId" 'failed' 'Node did not satisfy the required current line after install' 'Install the latest Node current release manually, then rerun bootstrap.'
+    Add-ReportEntry $Report failed 'Node.js' $required $before $after $source 'failed' "Node did not satisfy the Node $major line after install" 'Open a new terminal or install the latest Node release manually, then rerun bootstrap.'
 }
 
-function Install-PyenvNative($Manifest) {
-    $url = Get-ManifestValue $Manifest 'tool.pyenv_native.windows.install_url'
-    $tempPath = Join-Path $env:TEMP 'pyenv-native-install.ps1'
-    Invoke-WebRequest -Uri $url -OutFile $tempPath
+# --- pnpm: the toolkit's package manager, installed when missing (user scope, no admin): winget, then the official installer.
+
+function Ensure-Pnpm($Manifest, [hashtable]$Report) {
+    $required = Get-ManifestValue $Manifest 'tool.pnpm.minimum_version' '10.0.0'
+    $before = Get-PnpmVersion
+    if ($before -and (Compare-Version $before $required) -ge 0) { Add-ReportEntry $Report current 'pnpm' ">= $required" $before $before 'PATH' 'already-current' "pnpm $before is the toolkit package manager"; return }
+    if ($before) { try { & pnpm self-update 2>$null | Out-Null } catch {} }
+    $after = Get-PnpmVersion
+    if (-not $after -or (Compare-Version $after $required) -lt 0) {
+        $packageId = Get-ManifestValue $Manifest 'tool.pnpm.windows.package_id' 'pnpm.pnpm'
+        try { Invoke-WingetEnsurePackage $packageId 'pnpm' } catch {
+            try {
+                $script = Join-Path $env:TEMP 'pnpm-install.ps1'
+                Invoke-WebRequest -Uri (Get-ManifestValue $Manifest 'tool.pnpm.windows.install_url' 'https://get.pnpm.io/install.ps1') -OutFile $script -UseBasicParsing
+                & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script | Out-Null
+                Remove-Item -LiteralPath $script -Force -ErrorAction SilentlyContinue
+            } catch {}
+        }
+        $after = Get-PnpmVersion
+    }
+    if ($after -and (Compare-Version $after $required) -ge 0) { Add-ReportEntry $Report installed 'pnpm' ">= $required" $before $after 'winget/get.pnpm.io' 'installed-or-updated' 'pnpm ready; open a new terminal if `pnpm` is not found' }
+    else { Add-ReportEntry $Report failed 'pnpm' ">= $required" $before $after 'winget/get.pnpm.io' 'failed' 'pnpm could not be installed' 'Run: npm install --global pnpm, then rerun bootstrap.' }
+}
+
+# --- Enchi (formerly pyenv-native, renamed in 0.8.0): CLI enchi.exe, root %USERPROFILE%\.enchi or an existing .pyenv upgraded
+# in place. A machine that has not upgraded yet still has pyenv.exe, so both names and both roots are looked up.
+
+# The parameter is NOT called $Args: that is PowerShell's automatic variable, and a parameter of that name silently drops every
+# argument (enchi then prints its help, and a failed install looks like success).
+function Invoke-Enchi([string[]]$Arguments, [string]$WorkingDirectory = '') {
+    $enchi = Resolve-EnchiCommand
+    if (-not $enchi) { throw 'Enchi is not available in PATH.' }
+    Add-EnchiToPath
+    if ($WorkingDirectory) { Push-Location $WorkingDirectory; try { & $enchi @Arguments } finally { Pop-Location } } else { & $enchi @Arguments }
+}
+
+function Install-Enchi($Manifest) {
+    $url = Get-ManifestValue $Manifest 'tool.enchi.windows.install_url'
+    $tempPath = Join-Path $env:TEMP 'enchi-install.ps1'
+    Invoke-WebRequest -Uri $url -OutFile $tempPath -UseBasicParsing
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath
     Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
-    Add-PyenvToPath
+    Add-EnchiToPath
 }
 
-function Ensure-PyenvNative($Manifest, [hashtable]$Report) {
-    $required = Get-ManifestValue $Manifest 'tool.pyenv_native.minimum_version'
-    Add-PyenvToPath
-    $before = Get-PyenvVersion
+function Ensure-Enchi($Manifest, [hashtable]$Report) {
+    $required = Get-ManifestValue $Manifest 'tool.enchi.minimum_version' '0.8.0'
+    Add-EnchiToPath
+    $before = Get-EnchiVersion
     try {
-        if ($before -and (Compare-Version $before $required) -ge 0) { Add-ReportEntry $Report current 'pyenv-native (pyenv)' $required $before $before 'PATH' 'already-current' 'pyenv-native CLI satisfies policy'; return }
-        if ($before) { Invoke-Pyenv -Args @('self-update') | Out-Null } else { Install-PyenvNative $Manifest }
-        $after = Get-PyenvVersion
-        if ($after -and (Compare-Version $after $required) -ge 0) { Add-ReportEntry $Report installed 'pyenv-native (pyenv)' $required $before $after 'github-release-installer/self-update' 'installed-or-updated' 'pyenv-native CLI ready — use `pyenv` / `pyenv gui`' ; return }
+        if ($before -and (Compare-Version $before $required) -ge 0) { Add-ReportEntry $Report current 'Enchi' $required $before $before 'PATH' 'already-current' 'Enchi CLI satisfies policy'; return }
+        if ($before) { try { Invoke-Enchi -Arguments @('self-update') | Out-Null } catch {} }
+        $after = Get-EnchiVersion
+        if (-not $after -or (Compare-Version $after $required) -lt 0) { Install-Enchi $Manifest; $after = Get-EnchiVersion }
+        if ($after -and (Compare-Version $after $required) -ge 0) { Add-ReportEntry $Report installed 'Enchi' $required $before $after 'github-release-installer/self-update' 'installed-or-updated' 'Enchi CLI ready; use `enchi` / `enchi gui`'; return }
     } catch {
-        Add-ReportEntry $Report failed 'pyenv-native (pyenv)' $required $before '' 'github-release-installer/self-update' 'failed' $_.Exception.Message 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
+        Add-ReportEntry $Report failed 'Enchi' $required $before '' 'github-release-installer/self-update' 'failed' $_.Exception.Message 'Install Enchi from the latest GitHub release (imyourboyroy/pyenv-native) and rerun bootstrap.'
         return
     }
-    Add-ReportEntry $Report failed 'pyenv-native (pyenv)' $required $before (Get-PyenvVersion) 'github-release-installer/self-update' 'failed' 'pyenv-native did not satisfy policy after install/update' 'Install pyenv-native manually from the latest GitHub release and rerun bootstrap.'
+    Add-ReportEntry $Report failed 'Enchi' $required $before (Get-EnchiVersion) 'github-release-installer/self-update' 'failed' 'Enchi did not satisfy policy after install/update' 'Install Enchi from the latest GitHub release (imyourboyroy/pyenv-native) and rerun bootstrap.'
 }
 
-function Ensure-PyenvGui($Manifest, [hashtable]$Report) {
-    Add-PyenvToPath
-    $targetDir = Join-Path $env:USERPROFILE '.pyenv\bin'
-    $targetPath = Join-Path $targetDir (Get-ManifestValue $Manifest 'tool.pyenv_gui.binary_name.windows' 'pyenv-gui.exe')
-    $url = Get-ManifestValue $Manifest 'tool.pyenv_gui.windows.x64.download_url'
-    $before = if (Test-PyenvGuiAvailable) { 'present' } else { '' }
+function Ensure-EnchiGui($Manifest, [hashtable]$Report) {
+    Add-EnchiToPath
+    $before = if (Test-EnchiGuiAvailable) { 'present' } else { '' }
+    if ($before) { Add-ReportEntry $Report current 'Enchi GUI' '' $before $before 'enchi' 'already-current' 'Enchi GUI available; launch with `enchi gui`'; return }
     try {
-        if ($before) {
-            Add-ReportEntry $Report current 'pyenv-gui' '' $before $before 'pyenv-native' 'already-current' 'pyenv-gui available — launch with `pyenv gui` or pyenv-gui.exe'
-            return
-        }
-        if (-not $url) { throw 'tool.pyenv_gui.windows.x64.download_url missing from manifest' }
+        if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { throw 'There is no Enchi GUI build for Windows on ARM yet.' }
+        $base = Get-ManifestValue $Manifest 'tool.enchi.release_base' 'https://github.com/imyourboyroy/pyenv-native/releases/latest/download'
+        $url = "$base/enchi-gui-windows-x64.exe"
+        $enchi = Resolve-EnchiCommand
+        $targetDir = if ($enchi) { Split-Path -Parent $enchi } else { Join-Path $env:USERPROFILE '.enchi\bin' }
+        $targetPath = Join-Path $targetDir (Get-ManifestValue $Manifest 'tool.enchi_gui.binary_name.windows' 'enchi-gui.exe')
         New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        Invoke-WebRequest -Uri $url -OutFile $targetPath
+        $expected = ((Invoke-WebRequest -Uri "$url.sha256" -UseBasicParsing).Content -split '\s+' | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+        Invoke-WebRequest -Uri $url -OutFile "$targetPath.part" -UseBasicParsing
+        $actual = (Get-FileHash -LiteralPath "$targetPath.part" -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $expected -or $actual -ne $expected) { Remove-Item -LiteralPath "$targetPath.part" -Force -ErrorAction SilentlyContinue; throw 'The Enchi GUI download did not match its published checksum.' }
+        Move-Item -LiteralPath "$targetPath.part" -Destination $targetPath -Force
         Unblock-File -LiteralPath $targetPath -ErrorAction SilentlyContinue
-        Add-PyenvToPath
-        if (Test-PyenvGuiAvailable -or (Test-Path $targetPath)) {
-            Add-ReportEntry $Report installed 'pyenv-gui' '' $before 'present' 'github-release' 'installed' 'pyenv-gui installed — launch with `pyenv gui`'
-            return
-        }
-        throw 'pyenv-gui binary missing after download'
+        Add-EnchiToPath
+        Add-ReportEntry $Report installed 'Enchi GUI' '' $before 'present' 'github-release' 'installed' 'Enchi GUI installed; launch with `enchi gui`'
     } catch {
-        Add-ReportEntry $Report failed 'pyenv-gui' '' $before '' 'github-release' 'failed' $_.Exception.Message 'Download pyenv-gui from the pyenv-native release assets and place it in %USERPROFILE%\.pyenv\bin, then run `pyenv gui`.'
+        Add-ReportEntry $Report failed 'Enchi GUI' '' $before '' 'github-release' 'failed' $_.Exception.Message 'Download enchi-gui-windows-x64.exe from the Enchi release assets into %USERPROFILE%\.enchi\bin, then run `enchi gui`.'
     }
 }
 
 function Resolve-DesiredPythonVersion($Manifest) {
     $prefix = Get-ManifestValue $Manifest 'tool.python.desired_prefix'
     $fallback = Get-ManifestValue $Manifest 'tool.python.fallback_version'
-    try { $resolved = (Invoke-Pyenv -Args @('latest', $prefix) 2>$null | Select-Object -First 1).Trim(); if ($resolved) { return $resolved } } catch {}
+    try { $resolved = (Invoke-Enchi -Arguments @('latest', $prefix) 2>$null | Select-Object -First 1).Trim(); if ($resolved) { return $resolved } } catch {}
     $fallback
 }
 
@@ -382,37 +366,37 @@ function Ensure-PythonRuntime($Manifest, [hashtable]$Report, [hashtable]$Flags) 
     $beforePip = Get-CommandVersion 'pip'
     $desiredVersion = Resolve-DesiredPythonVersion $Manifest
     try {
-        $versionsOutput = (Invoke-Pyenv -Args @('versions')) -join "`n"
-        if ($versionsOutput -notmatch [Regex]::Escape($desiredVersion)) { Invoke-Pyenv -Args @('install', $desiredVersion) | Out-Null; $versionsOutput = (Invoke-Pyenv -Args @('versions')) -join "`n" }
+        $versionsOutput = (Invoke-Enchi -Arguments @('versions')) -join "`n"
+        if ($versionsOutput -notmatch [Regex]::Escape($desiredVersion)) { Invoke-Enchi -Arguments @('install', $desiredVersion) | Out-Null; $versionsOutput = (Invoke-Enchi -Arguments @('versions')) -join "`n" }
         # Prefer the desired line as the user-global Python (latest installed for that prefix).
-        try { Invoke-Pyenv -Args @('global', $desiredVersion) | Out-Null } catch { }
+        try { Invoke-Enchi -Arguments @('global', $desiredVersion) | Out-Null } catch { }
         $targetSpec = "$desiredVersion/envs/$venvName"
-        if ($versionsOutput -notmatch [Regex]::Escape($targetSpec)) { Invoke-Pyenv -Args @('venv', 'create', $desiredVersion, $venvName) | Out-Null }
-        Invoke-Pyenv -Args @('local', $targetSpec) -WorkingDirectory $workspace | Out-Null
-        Invoke-Pyenv -Args @('exec', 'python', '-m', 'pip', 'install', '--upgrade', 'pip') -WorkingDirectory $workspace | Out-Null
-        $afterPython = (Invoke-Pyenv -Args @('exec', 'python', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
-        $afterPip = (Invoke-Pyenv -Args @('exec', 'python', '-m', 'pip', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
-        Add-ReportEntry $Report installed 'Python runtime' $required $beforePython $afterPython 'pyenv-native' 'installed-or-selected' "Workspace bound to $targetSpec; pyenv global set to $desiredVersion"
-        Add-ReportEntry $Report installed 'pip' '' $beforePip $afterPip 'pyenv-native' 'installed-or-updated' 'pip upgraded inside the managed venv'
+        if ($versionsOutput -notmatch [Regex]::Escape($targetSpec)) { Invoke-Enchi -Arguments @('venv', 'create', $desiredVersion, $venvName) | Out-Null }
+        Invoke-Enchi -Arguments @('local', $targetSpec) -WorkingDirectory $workspace | Out-Null
+        Invoke-Enchi -Arguments @('exec', 'python', '-m', 'pip', 'install', '--upgrade', 'pip') -WorkingDirectory $workspace | Out-Null
+        $afterPython = (Invoke-Enchi -Arguments @('exec', 'python', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
+        $afterPip = (Invoke-Enchi -Arguments @('exec', 'python', '-m', 'pip', '--version') -WorkingDirectory $workspace | Select-Object -First 1).Trim()
+        Add-ReportEntry $Report installed 'Python runtime' $required $beforePython $afterPython 'enchi' 'installed-or-selected' "Workspace bound to $targetSpec; Enchi global set to $desiredVersion"
+        Add-ReportEntry $Report installed 'pip' '' $beforePip $afterPip 'enchi' 'installed-or-updated' 'pip upgraded inside the managed venv'
         return
     } catch {
-        Add-ReportEntry $Report failed 'Python runtime' $required $beforePython '' 'pyenv-native' 'failed' $_.Exception.Message 'Run pyenv doctor, ensure shell integration is healthy, and rerun bootstrap.'
+        Add-ReportEntry $Report failed 'Python runtime' $required $beforePython '' 'enchi' 'failed' $_.Exception.Message 'Run enchi doctor, ensure shell integration is healthy, and rerun bootstrap.'
     }
 }
 
 function Ensure-PythonPlaywright($Manifest, [hashtable]$Report, [hashtable]$Flags) {
-    if (-not $Flags['install-python-playwright']) { Add-ReportEntry $Report skipped 'Python Playwright' '' '' '' 'pyenv-native venv' 'skipped' 'Flag disabled'; return }
-    try { $before = (Invoke-Pyenv -Args @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $Flags.workspace | Select-Object -First 1).Trim() } catch { $before = '' }
-    if ($before) { Add-ReportEntry $Report current 'Python Playwright' '' $before $before 'pyenv-native venv' 'already-current' 'Playwright already installed in the managed venv'; return }
+    if (-not $Flags['install-python-playwright']) { Add-ReportEntry $Report skipped 'Python Playwright' '' '' '' 'enchi venv' 'skipped' 'Flag disabled'; return }
+    try { $before = (Invoke-Enchi -Arguments @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $Flags.workspace | Select-Object -First 1).Trim() } catch { $before = '' }
+    if ($before) { Add-ReportEntry $Report current 'Python Playwright' '' $before $before 'enchi venv' 'already-current' 'Playwright already installed in the managed venv'; return }
     try {
         $package = Get-ManifestValue $Manifest 'tool.python_playwright.package' 'playwright'
         $browser = Get-ManifestValue $Manifest 'tool.python_playwright.browser' 'chromium'
-        Invoke-Pyenv -Args @('exec', 'python', '-m', 'pip', 'install', $package) -WorkingDirectory $Flags.workspace | Out-Null
-        Invoke-Pyenv -Args @('exec', 'python', '-m', 'playwright', 'install', $browser) -WorkingDirectory $Flags.workspace | Out-Null
-        $after = (Invoke-Pyenv -Args @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $Flags.workspace | Select-Object -First 1).Trim()
-        Add-ReportEntry $Report installed 'Python Playwright' '' $before $after 'pyenv-native venv' 'installed' "Installed $package + $browser"
+        Invoke-Enchi -Arguments @('exec', 'python', '-m', 'pip', 'install', $package) -WorkingDirectory $Flags.workspace | Out-Null
+        Invoke-Enchi -Arguments @('exec', 'python', '-m', 'playwright', 'install', $browser) -WorkingDirectory $Flags.workspace | Out-Null
+        $after = (Invoke-Enchi -Arguments @('exec', 'python', '-m', 'playwright', '--version') -WorkingDirectory $Flags.workspace | Select-Object -First 1).Trim()
+        Add-ReportEntry $Report installed 'Python Playwright' '' $before $after 'enchi venv' 'installed' "Installed $package + $browser"
     } catch {
-        Add-ReportEntry $Report failed 'Python Playwright' '' $before '' 'pyenv-native venv' 'failed' $_.Exception.Message 'Retry browser automation installation after confirming the managed venv is healthy.'
+        Add-ReportEntry $Report failed 'Python Playwright' '' $before '' 'enchi venv' 'failed' $_.Exception.Message 'Retry browser automation installation after confirming the managed venv is healthy.'
     }
 }
 
@@ -452,15 +436,18 @@ function Invoke-NodeDoctorIfAvailable([hashtable]$Report, [hashtable]$Flags) {
 }
 
 function Invoke-DoctorOnly($Manifest, [hashtable]$Report, [hashtable]$Flags) {
-    $nodeRequired = Get-ManifestValue $Manifest 'tool.node.required_version'
+    $nodeMajor = Get-NodeMajor $Manifest
     $nodeVersion = Get-CommandVersion 'node'
+    $pnpmRequired = Get-ManifestValue $Manifest 'tool.pnpm.minimum_version' '10.0.0'
+    # Doctor never touches the network: it checks the Node major floor; prepare-host also brings that major to its latest release.
     foreach ($pair in @(
         @{ name = 'Git'; version = (Get-CommandVersion 'git'); required = '' ; details = 'Git available' },
-        @{ name = 'Node.js'; version = $nodeVersion; required = $nodeRequired; details = 'Node missing or below the required current line' },
-        @{ name = 'pyenv-native (pyenv)'; version = (Get-PyenvVersion); required = (Get-ManifestValue $Manifest 'tool.pyenv_native.minimum_version'); details = 'pyenv-native CLI not found — install pyenv-native; do not use system Python' },
-        @{ name = 'pyenv-gui'; version = $(if (Test-PyenvGuiAvailable) { 'present' } else { '' }); required = ''; details = 'pyenv-gui missing — required companion; launch via `pyenv gui`' },
-        @{ name = 'Python runtime'; version = (Get-CommandVersion 'python'); required = (Get-ManifestValue $Manifest 'tool.python.minimum_version'); details = 'Python executable not found under pyenv-native' },
-        @{ name = 'pip'; version = (Get-CommandVersion 'pip'); required = ''; details = 'pip not found under pyenv-native venv' }
+        @{ name = 'Node.js'; version = $nodeVersion; required = "$nodeMajor.0.0"; details = "Node missing or below the required major ($nodeMajor)" },
+        @{ name = 'pnpm'; version = (Get-PnpmVersion); required = $pnpmRequired; details = 'pnpm missing or too old; it is the toolkit package manager. Run prepare-host to install it' },
+        @{ name = 'Enchi'; version = (Get-EnchiVersion); required = (Get-ManifestValue $Manifest 'tool.enchi.minimum_version' '0.8.0'); details = 'Enchi (formerly pyenv-native) missing or below the minimum; prepare-host installs or upgrades it. Do not use system Python' },
+        @{ name = 'Enchi GUI'; version = $(if (Test-EnchiGuiAvailable) { 'present' } else { '' }); required = ''; details = 'Enchi GUI missing; launch via `enchi gui`' },
+        @{ name = 'Python runtime'; version = (Get-CommandVersion 'python'); required = (Get-ManifestValue $Manifest 'tool.python.minimum_version'); details = 'Python executable not found under Enchi' },
+        @{ name = 'pip'; version = (Get-CommandVersion 'pip'); required = ''; details = 'pip not found under the Enchi venv' }
     )) {
         $ok = -not [string]::IsNullOrWhiteSpace($pair.version)
         if ($ok -and $pair.required) { $ok = (Compare-Version $pair.version $pair.required) -ge 0 }
@@ -481,13 +468,13 @@ try {
         'verify' { Invoke-DoctorOnly $manifest $report $parsed.flags }
         'fix' {
             if (-not $parsed.flags['allow-installs']) { Add-ReportEntry $report skipped 'Install phase' '' '' '' 'flags' 'skipped' 'Automatic installs disabled by flag' }
-            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PyenvGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
+            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-Pnpm $manifest $report; Ensure-Enchi $manifest $report; Ensure-EnchiGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
             Add-WorkspaceReadinessEntries $report $parsed.flags
             Invoke-NodeDoctorIfAvailable $report $parsed.flags
         }
         'prepare-host' {
             if (-not $parsed.flags['allow-installs']) { Add-ReportEntry $report skipped 'Install phase' '' '' '' 'flags' 'skipped' 'Automatic installs disabled by flag' }
-            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-PyenvNative $manifest $report; Ensure-PyenvGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
+            else { Ensure-Git $report; Ensure-Node $manifest $report; Ensure-Pnpm $manifest $report; Ensure-Enchi $manifest $report; Ensure-EnchiGui $manifest $report; Ensure-PythonRuntime $manifest $report $parsed.flags | Out-Null; Ensure-OptionalWindowsTools $manifest $report $parsed.flags; Ensure-PythonPlaywright $manifest $report $parsed.flags }
             Add-WorkspaceReadinessEntries $report $parsed.flags
             Invoke-NodeDoctorIfAvailable $report $parsed.flags
         }

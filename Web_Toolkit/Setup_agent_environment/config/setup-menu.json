@@ -6,7 +6,7 @@
     {
       "id": "core",
       "name": "Core host tools",
-      "description": "Git, Node.js 26+, pyenv-native (pyenv) + pyenv-gui, Python workspace venv, pip — Node is installed by bootstrap when missing",
+      "description": "Git, Node.js (latest release of the required major), pnpm, Enchi (formerly pyenv-native) + Enchi GUI, Python workspace venv, pip — missing tools are installed by bootstrap",
       "default": true,
       "locked": true
     }
@@ -19,5 +19,5 @@
     "default": true
   },
   "confirmPrompt": "The following software is not installed or is outdated. Press Y to continue setting up the local agent environment",
-  "pyenvNativeBlurb": "Python is managed exclusively by pyenv-native: the `pyenv` CLI plus the pyenv-gui desktop companion (launch with `pyenv gui`). Do not install system/winget/Homebrew Python for toolkit work."
+  "enchiBlurb": "Python is managed exclusively by Enchi (formerly pyenv-native): the `enchi` CLI plus the Enchi GUI desktop companion (launch with `enchi gui`). Do not install system/winget/Homebrew Python for toolkit work."
 }
