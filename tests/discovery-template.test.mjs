@@ -73,6 +73,16 @@ describe('discovery post-build and check scripts', () => {
     assert.equal(fs.readFileSync(path.join(dist, '_headers'), 'utf8').split('BEGIN discovery headers').length, 2, 'block must not be duplicated');
   });
 
+  it('runs when invoked through a symlinked directory (macOS tmpdir /var -> /private/var)', () => {
+    const { dir, dist } = makeProject();
+    const alias = `${dir}-alias`;
+    fs.symlinkSync(dir, alias, 'dir');
+    const result = spawnSync(process.execPath, [path.join(alias, 'scripts/discovery-postbuild.mjs'), path.join(alias, 'dist/client')], { encoding: 'utf8', cwd: alias });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /skipped \/contact\//, 'the script must do its work, not silently exit');
+    assert.ok(fs.existsSync(path.join(dist, 'about/index.md')));
+  });
+
   it('fails when a page with a Markdown URL has no HTML', () => {
     const { dir, dist } = makeProject();
     fs.rmSync(path.join(dist, 'about/index.html'));

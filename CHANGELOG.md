@@ -3,6 +3,15 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.6.2] - 2026-11-17
+
+### Fixed (macOS: found by the first macOS CI run)
+
+- The discovery template scripts (`discovery-postbuild.mjs`, `refresh-page-lastmod.mjs`) and `sync-fonts.mjs` decided whether they were the entry script by comparing `path.resolve(argv[1])` with `import.meta.url`, which Node resolves through symlinks. Invoked through a symlinked directory (macOS temp dirs and many project roots: `/var` is `/private/var`) they did nothing and exited 0. They now compare real paths. Regression test added.
+- Template and tool tests pass with `TMPDIR` pointed at a symlinked directory.
+
+Windows CI remains a reported, non-blocking leg; known open items are in the release notes.
+
 ## [0.6.1] - 2026-11-16
 
 ### Added (forms reliability)

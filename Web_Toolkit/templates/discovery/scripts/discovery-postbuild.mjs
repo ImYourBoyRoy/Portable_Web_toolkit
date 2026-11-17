@@ -168,7 +168,7 @@ export function run(distDir = path.resolve(process.cwd(), 'dist/client')) {
   return { twins, bundle, headers };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   try { run(process.argv[2] ? path.resolve(process.argv[2]) : undefined); } catch (error) { console.error(`discovery: ${error.message}`); process.exit(1); }
 }
