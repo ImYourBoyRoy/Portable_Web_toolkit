@@ -338,7 +338,7 @@ function Ensure-EnchiGui($Manifest, [hashtable]$Report) {
         $targetDir = if ($enchi) { Split-Path -Parent $enchi } else { Join-Path $env:USERPROFILE '.enchi\bin' }
         $targetPath = Join-Path $targetDir (Get-ManifestValue $Manifest 'tool.enchi_gui.binary_name.windows' 'enchi-gui.exe')
         New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        $expected = ((Invoke-WebRequest -Uri "$url.sha256" -UseBasicParsing).Content -split '\s+' | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+        $expected = ((Get-WebText "$url.sha256") -split '\s+' | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
         Invoke-WebRequest -Uri $url -OutFile "$targetPath.part" -UseBasicParsing
         $actual = (Get-FileHash -LiteralPath "$targetPath.part" -Algorithm SHA256).Hash.ToLowerInvariant()
         if (-not $expected -or $actual -ne $expected) { Remove-Item -LiteralPath "$targetPath.part" -Force -ErrorAction SilentlyContinue; throw 'The Enchi GUI download did not match its published checksum.' }

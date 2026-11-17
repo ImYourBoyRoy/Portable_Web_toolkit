@@ -64,7 +64,7 @@ function Resolve-LatestNode($Manifest) {
     $major = Get-NodeMajor $Manifest
     $base = Get-ManifestValue $Manifest 'tool.node.dist_base' 'https://nodejs.org/dist'
     $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
-    try { $sums = (Invoke-WebRequest -Uri "$base/latest-v$major.x/SHASUMS256.txt" -UseBasicParsing -TimeoutSec 20).Content } catch { return $null }
+    try { $sums = Get-WebText "$base/latest-v$major.x/SHASUMS256.txt" } catch { return $null }
     $match = [regex]::Match([string]$sums, "(?m)^([0-9a-f]{64})\s+(node-v(\d+\.\d+\.\d+)-$arch\.msi)\s*$")
     if (-not $match.Success) { return $null }
     $script:LatestNode = [pscustomobject]@{ Major = $major; Version = $match.Groups[3].Value; File = $match.Groups[2].Value; Sha256 = $match.Groups[1].Value; Url = "$base/latest-v$major.x/$($match.Groups[2].Value)" }
@@ -83,7 +83,13 @@ function Test-NodeNeedsInstall($Manifest) {
 }
 
 function Add-PnpmToPath {
-    foreach ($dir in @($env:PNPM_HOME, (Join-Path $env:LOCALAPPDATA 'pnpm'), (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'))) { Add-PathEntry $dir }
+    # pnpm 11 and later install the binary into <home>\bin; earlier standalone installs put it in <home> itself. Any of these
+    # variables can be unset (Join-Path would throw on a null), so each root is only used when it exists.
+    $roots = @()
+    if ($env:PNPM_HOME) { $roots += $env:PNPM_HOME }
+    if ($env:LOCALAPPDATA) { $roots += (Join-Path $env:LOCALAPPDATA 'pnpm') }
+    foreach ($root in $roots) { Add-PathEntry (Join-Path $root 'bin'); Add-PathEntry $root }
+    if ($env:LOCALAPPDATA) { Add-PathEntry (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links') }
 }
 
 function Get-PnpmVersion { Add-PnpmToPath; Get-CommandVersion 'pnpm' }
@@ -125,4 +131,51 @@ function Test-EnchiGuiAvailable {
     $enchi = Resolve-EnchiCommand
     if (-not $enchi) { return $false }
     try { $help = & $enchi 'gui' '--help' 2>$null; return $LASTEXITCODE -eq 0 -or ($help -and "$help" -match 'gui') } catch { return $false }
+}
+
+# GitHub serves a `.sha256` asset as application/octet-stream, which both Windows PowerShell and PowerShell 7 hand back as a byte[]
+# in `.Content`; splitting that on whitespace yields numbers, never the hash. Always decode to text first.
+function Get-WebText([string]$Uri) {
+    $response = Invoke-WebRequest -Uri $Uri -UseBasicParsing
+    if ($response.Content -is [byte[]]) { return [Text.Encoding]::UTF8.GetString($response.Content) }
+    [string]$response.Content
+}
+
+# --- setup engine (Rust): used when present; the scripts remain the fallback (TOOLKIT_SETUP_LEGACY=1 forces them).
+function Find-SetupEngine {
+    if ($env:TOOLKIT_SETUP_LEGACY -eq '1') { return '' }
+    $version = ''
+    $versionFile = Join-Path $ToolkitRoot '..\VERSION'
+    if (Test-Path -LiteralPath $versionFile) { $version = (Get-Content -LiteralPath $versionFile -TotalCount 1).Trim() }
+    # A downloaded engine is only used for the toolkit version it was fetched for; a local build needs no sidecar.
+    $downloaded = Join-Path $ToolkitRoot '.runtime\bin\toolkit-setup.exe'
+    $candidates = @()
+    if ((Test-Path -LiteralPath $downloaded) -and (Test-Path -LiteralPath "$downloaded.version") -and ((Get-Content -LiteralPath "$downloaded.version" -TotalCount 1).Trim() -eq $version)) { $candidates += $downloaded }
+    $candidates += (Join-Path $ToolkitRoot 'setup_engine\target\release\toolkit-setup.exe')
+    foreach ($path in $candidates) {
+        if (-not (Test-Path -LiteralPath $path)) { continue }
+        # An engine that cannot start (missing runtime, blocked, wrong architecture) is skipped so the scripts take over.
+        try { $null = & $path --version 2>$null; if ($LASTEXITCODE -eq 0) { return $path } } catch {}
+    }
+    ''
+}
+
+# Downloads the engine for this toolkit version from its GitHub release, verified against the published SHA-256.
+# Fails quietly (the scripts take over) when the release has no engine asset or the checksum does not match.
+function Get-SetupEngine([string]$RepoRoot) {
+    try {
+        if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { return $false }
+        $version = (Get-Content -LiteralPath (Join-Path $RepoRoot 'VERSION') -TotalCount 1).Trim()
+        $base = "https://github.com/imyourboyroy/Portable_Web_toolkit/releases/download/v$version"
+        $dest = Join-Path $ToolkitRoot '.runtime\bin\toolkit-setup.exe'
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
+        Invoke-WebRequest -Uri "$base/toolkit-setup-windows-x64.exe" -OutFile "$dest.part" -UseBasicParsing
+        $expected = ((Get-WebText "$base/toolkit-setup-windows-x64.exe.sha256") -split '\s+' | Where-Object { $_ } | Select-Object -First 1).ToLowerInvariant()
+        $actual = (Get-FileHash -LiteralPath "$dest.part" -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $expected -or $actual -ne $expected) { Remove-Item -LiteralPath "$dest.part" -Force -ErrorAction SilentlyContinue; return $false }
+        Move-Item -LiteralPath "$dest.part" -Destination $dest -Force
+        Unblock-File -LiteralPath $dest -ErrorAction SilentlyContinue
+        Set-Content -LiteralPath "$dest.version" -Value $version -Encoding ASCII
+        return $true
+    } catch { Remove-Item -LiteralPath "$($dest).part" -Force -ErrorAction SilentlyContinue; return $false }
 }

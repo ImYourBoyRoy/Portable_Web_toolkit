@@ -123,3 +123,10 @@ test('shouldSkip excludes secrets and runtime folders at any depth', () => {
     assert.equal(shouldSkip(rel, {}), false, rel);
   }
 });
+
+test('the setup engine build output is never exported', () => {
+  assert.equal(shouldSkip('setup_engine/target'), true);
+  assert.equal(shouldSkip('setup_engine/target/release/toolkit-setup'), true);
+  assert.equal(shouldSkip('setup_engine/src/main.rs'), false);
+  assert.equal(shouldSkip('setup_engine/Cargo.lock'), false);
+});

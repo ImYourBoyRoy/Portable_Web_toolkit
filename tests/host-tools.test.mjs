@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,7 +21,7 @@ const FAKE_LATEST = '26.99.0';
 const tag = `${process.platform === 'darwin' ? 'darwin' : 'linux'}-${process.arch === 'arm64' ? 'arm64' : 'x64'}`;
 const shasums = [
   `${'a'.repeat(64)}  node-v${FAKE_LATEST}-${tag}.tar.gz`,
-  `${'b'.repeat(64)}  node-v${FAKE_LATEST}-${tag}.tar.xz`,
+  `${'b'.repeat(64)}  node-v${FAKE_LATEST}-${tag}.tar.xz`, // a lookalike the resolver must never pick
   `${'c'.repeat(64)}  node-v${FAKE_LATEST}-x64.msi`,
   `${'d'.repeat(64)}  node-v${FAKE_LATEST}-arm64.msi`
 ].join('\n');
@@ -65,10 +66,10 @@ test('shell: the latest release of the required major is read from the checksum 
   const result = sh('resolve_latest_node && printf "%s|%s|%s" "$NODE_LATEST_VERSION" "$NODE_LATEST_URL" "$NODE_LATEST_SHA256"', bin);
   assert.equal(result.status, 0, result.stderr);
   const [version, url, sha] = result.stdout.split('|');
-  const ext = process.platform === 'darwin' ? 'tar.gz' : 'tar.xz';
+  const ext = 'tar.gz';
   assert.equal(version, FAKE_LATEST);
   assert.equal(url, `https://nodejs.org/dist/latest-v26.x/node-v${FAKE_LATEST}-${tag}.${ext}`);
-  assert.equal(sha, (ext === 'tar.gz' ? 'a' : 'b').repeat(64));
+  assert.equal(sha, 'a'.repeat(64), 'the .tar.gz is chosen, never the .tar.xz lookalike');
 });
 
 test('shell: node_needs_install follows the policy (major floor, latest patch of that major, newer major accepted, offline never forces)', { skip: !hasBash }, () => {
@@ -158,4 +159,132 @@ test('no PowerShell script declares a parameter named $Args (it shadows the auto
   };
   walk(root);
   assert.deepEqual(found, []);
+});
+
+test('the Rust engine pins no dependency: every Cargo.toml requirement is a range', () => {
+  const toml = fs.readFileSync(path.join(toolkit, 'setup_engine/Cargo.toml'), 'utf8');
+  const deps = toml.split('[dependencies]')[1].split(/\n\[/)[0];
+  const requirements = [...deps.matchAll(/(?:^|\s)(?:version\s*=\s*)?"([^"]+)"/gm)].map((m) => m[1]).filter((v) => /\d/.test(v));
+  assert.ok(requirements.length >= 4);
+  for (const requirement of requirements) assert.match(requirement, /^[\^~]|^>=|\*/, `${requirement} is an exact pin`);
+  assert.ok(fs.existsSync(path.join(toolkit, 'setup_engine/Cargo.lock')), 'Cargo.lock records what was resolved');
+});
+
+function engineSandbox({ checksumMatches = true } = {}) {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'engine-launcher-'));
+  const toolkitRoot = path.join(base, 'Web_Toolkit');
+  fs.mkdirSync(path.join(toolkitRoot, 'Setup_agent_environment/config'), { recursive: true });
+  fs.writeFileSync(path.join(base, 'VERSION'), '9.9.9\n');
+  fs.copyFileSync(manifestPath, path.join(toolkitRoot, 'Setup_agent_environment/config/host-bootstrap.manifest.json'));
+  const bin = path.join(base, 'bin');
+  fs.mkdirSync(bin);
+  // A runnable stand-in: the launcher refuses an engine whose `--version` does not succeed.
+  const body = '#!/bin/sh\nexit 0\n';
+  const sha = checksumMatches ? createHash('sha256').update(body).digest('hex') : '0'.repeat(64);
+  fs.writeFileSync(path.join(bin, 'curl'), `#!/bin/sh
+out=""; url=""
+while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift 2;; --max-time|--retry) shift 2;; -*) shift;; *) url="$1"; shift;; esac; done
+case "$url" in
+  *v9.9.9/toolkit-setup-*.sha256) echo "${sha}  asset" ;;
+  *v9.9.9/toolkit-setup-*) printf '#!/bin/sh\\nexit 0\\n' > "$out" ;;
+  *) exit 22 ;;
+esac
+`, { mode: 0o755 });
+  return { base, toolkitRoot, bin };
+}
+
+const engineSh = (script, { toolkitRoot, bin }, extraEnv = {}) => spawnSync('bash', ['-c', `source "${toolkit}/scripts/lib/host-tools.sh"; ${script}`], {
+  encoding: 'utf8',
+  env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, MANIFEST_PATH: manifestPath, TOOLKIT_ROOT: toolkitRoot, ...extraEnv }
+});
+
+test('launcher: fetch_engine downloads the asset for this version, verifies its SHA-256, and find_engine then returns it', { skip: !hasBash }, () => {
+  const box = engineSandbox();
+  assert.notEqual(engineSh('find_engine', box).status, 0, 'no engine yet');
+  const fetched = engineSh('fetch_engine', box);
+  assert.equal(fetched.status, 0, fetched.stderr);
+  const found = engineSh('find_engine', box);
+  assert.equal(found.stdout.trim(), path.join(box.toolkitRoot, '.runtime/bin/toolkit-setup'));
+  assert.equal(fs.readFileSync(found.stdout.trim(), 'utf8'), '#!/bin/sh\nexit 0\n');
+  assert.ok(fs.statSync(found.stdout.trim()).mode & 0o111, 'the engine is executable');
+});
+
+test('launcher: a download that fails its checksum is deleted and the scripts take over', { skip: !hasBash }, () => {
+  const box = engineSandbox({ checksumMatches: false });
+  assert.notEqual(engineSh('fetch_engine', box).status, 0);
+  assert.equal(fs.existsSync(path.join(box.toolkitRoot, '.runtime/bin/toolkit-setup')), false);
+  assert.equal(fs.existsSync(path.join(box.toolkitRoot, '.runtime/bin/toolkit-setup.part')), false);
+  assert.notEqual(engineSh('find_engine', box).status, 0);
+});
+
+test('launcher: TOOLKIT_SETUP_LEGACY=1 ignores an installed engine', { skip: !hasBash }, () => {
+  const box = engineSandbox();
+  engineSh('fetch_engine', box);
+  assert.equal(engineSh('find_engine', box).status, 0);
+  assert.notEqual(engineSh('find_engine', box, { TOOLKIT_SETUP_LEGACY: '1' }).status, 0);
+});
+
+test('PowerShell and batch scripts are pure ASCII (Windows PowerShell 5.1 reads a BOM-less file as Windows-1252, where an em dash breaks the string)', () => {
+  const found = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (['node_modules', '.git', '.runtime', 'target'].includes(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(ps1|bat|cmd)$/i.test(entry.name)) {
+        fs.readFileSync(full).forEach((byte, index, bytes) => { if (byte > 127 && (index === 0 || bytes[index - 1] <= 127)) found.push(`${path.relative(root, full)} @ byte ${index}`); });
+      }
+    }
+  };
+  walk(root);
+  assert.deepEqual(found, []);
+});
+
+test('PowerShell: setup-interactive.ps1 runs end to end up to the confirmation and a "n" changes nothing (the real script, strict mode)', { skip: !hasPwsh, timeout: 90_000 }, () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ps-home-'));
+  const result = spawnSync('pwsh', ['-NoProfile', '-File', path.join(toolkit, 'scripts/setup-interactive.ps1'), '-Workspace', home], {
+    encoding: 'utf8',
+    input: 'n\n',
+    // PNPM_HOME is empty on purpose: unset or empty variables are the common case and must never make the scan throw.
+    env: { ...process.env, TOOLKIT_SETUP_LEGACY: '1', TOOLKIT_SETUP_OFFLINE: '1', USERPROFILE: home, LOCALAPPDATA: home, PNPM_HOME: '' }
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /Local Agent Environment/);
+  assert.match(result.stdout, /Cancelled - no changes made|Nothing to install/);
+  assert.doesNotMatch(result.stderr, /could not be loaded|ParserError|is not recognized/);
+});
+
+test('PowerShell: a checksum file served as a byte array is decoded to text before it is compared', { skip: !hasPwsh, timeout: 60_000 }, () => {
+  const hash = 'ab'.repeat(32);
+  const script = `
+Set-StrictMode -Version Latest
+$ToolkitRoot = '${toolkit.replace(/'/g, "''")}'
+$ManifestPath = '${manifestPath.replace(/'/g, "''")}'
+function Invoke-WebRequest { param($Uri, [switch]$UseBasicParsing) [pscustomobject]@{ Content = [Text.Encoding]::ASCII.GetBytes('${hash}  toolkit-setup-linux-x64' + [char]10) } }
+. (Join-Path $ToolkitRoot 'scripts/lib/host-tools.ps1')
+((Get-WebText 'https://example.invalid/x.sha256') -split '\\s+' | Where-Object { $_ } | Select-Object -First 1)`;
+  const result = spawnSync('pwsh', ['-NoProfile', '-Command', script], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), hash, 'a byte[] .Content must not be split into byte values');
+});
+
+test('launcher: a downloaded engine is used only for the toolkit version it was fetched for', { skip: !hasBash }, () => {
+  const box = engineSandbox();
+  engineSh('fetch_engine', box);
+  const exe = path.join(box.toolkitRoot, '.runtime/bin/toolkit-setup');
+  fs.writeFileSync(exe, '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  assert.equal(fs.readFileSync(`${exe}.version`, 'utf8').trim(), '9.9.9', 'the sidecar records the toolkit version');
+  assert.equal(engineSh('find_engine', box).status, 0, 'current version, healthy engine');
+  fs.writeFileSync(`${exe}.version`, '9.9.8\n');
+  assert.notEqual(engineSh('find_engine', box).status, 0, 'an engine fetched for an older toolkit is stale and ignored');
+  fs.rmSync(`${exe}.version`);
+  assert.notEqual(engineSh('find_engine', box).status, 0, 'no sidecar, no trust');
+});
+
+test('launcher: an engine that cannot start is skipped so the scripts take over', { skip: !hasBash }, () => {
+  const box = engineSandbox();
+  engineSh('fetch_engine', box);
+  const exe = path.join(box.toolkitRoot, '.runtime/bin/toolkit-setup');
+  fs.writeFileSync(exe, '#!/bin/sh\nexit 127\n', { mode: 0o755 });
+  assert.notEqual(engineSh('find_engine', box).status, 0, 'a broken engine never wins over the scripts');
 });

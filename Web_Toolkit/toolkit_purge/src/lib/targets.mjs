@@ -60,6 +60,8 @@ export function isGeneratedDirectory(current, stat, portableRoot) {
   if (!stat.isDirectory()) return false;
   const name = path.basename(current);
   if (GENERATED_DIRECTORY_NAMES.has(name)) return true;
+  // Rust build output of the setup engine (setup_engine/target), never a `target` folder anywhere else.
+  if (name === 'target' && path.basename(path.dirname(current)) === 'setup_engine' && path.resolve(path.dirname(path.dirname(current))) === path.resolve(portableRoot)) return true;
   if (name === 'output' || name === 'dist') {
     const parent = path.dirname(current);
     if (path.resolve(parent) === path.resolve(portableRoot)) return true;

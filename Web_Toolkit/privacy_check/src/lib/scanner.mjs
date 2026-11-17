@@ -27,7 +27,9 @@ function readScannableText(filePath, size) {
 const SKIPPED_SEGMENTS = new Set(['.git', 'node_modules', '.astro', '.runtime', '.wrangler', '.cf-agent', 'output', 'dist']);
 
 function shouldSkip(relativePath) {
-  return relativePath.split('/').some((segment) => SKIPPED_SEGMENTS.has(segment));
+  if (relativePath.split('/').some((segment) => SKIPPED_SEGMENTS.has(segment))) return true;
+  // Rust build output of the setup engine: machine-specific binaries that embed local paths (mirrors the export skip).
+  return `/${relativePath}/`.includes('/setup_engine/target/');
 }
 
 function redact(match) {

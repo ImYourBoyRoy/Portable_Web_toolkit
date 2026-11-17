@@ -1,7 +1,7 @@
 # ./Web_Toolkit/scripts/setup-interactive.ps1
 <#
 .SYNOPSIS
-  Local agent environment setup for Windows — pure PowerShell, no Node required.
+  Local agent environment setup for Windows - pure PowerShell, no Node required.
 
 .DESCRIPTION
   Scans for missing/outdated tools, shows one list, then a single Y (or -Yes/-Agent)
@@ -27,8 +27,8 @@ $RepoRoot = Split-Path -Parent $ToolkitRoot
 $ManifestPath = Join-Path $ToolkitRoot 'Setup_agent_environment\config\host-bootstrap.manifest.json'
 $BootstrapPs1 = Join-Path $ScriptDir 'bootstrap.ps1'
 
-. (Join-Path `$ScriptDir 'lib\host-tools.ps1')
-`$Manifest = Get-Manifest
+. (Join-Path $ScriptDir 'lib\host-tools.ps1')
+$Manifest = Get-Manifest
 
 function Ask-YesNo([string]$Prompt) {
     while ($true) {
@@ -47,6 +47,23 @@ $toolkitVersion = if (Test-Path (Join-Path $RepoRoot 'VERSION')) {
     (Get-Content -LiteralPath (Join-Path $RepoRoot 'VERSION') -Raw).Trim()
 } else { 'unknown' }
 
+# --- the setup engine, when present or downloadable for this version; otherwise the scripts below do the work ---
+$engine = Find-SetupEngine
+if (-not $engine -and $env:TOOLKIT_SETUP_LEGACY -ne '1') { if (Get-SetupEngine $RepoRoot) { $engine = Find-SetupEngine } }
+if ($engine) {
+    Write-Host ''
+    Write-Host "[setup] Using the setup engine: $engine (set TOOLKIT_SETUP_LEGACY=1 for the PowerShell scripts instead)"
+    & $engine --toolkit-root $ToolkitRoot --workspace $Workspace plan
+    $planJson = (& $engine --toolkit-root $ToolkitRoot --workspace $Workspace plan --json) -join "`n"
+    if ($planJson -match '"status": "(missing|outdated)"') {
+        if (-not $Yes -and -not (Ask-YesNo 'Press Y to install or update the items above')) { Write-Host '[setup] Cancelled - no changes made.'; exit 0 }
+        & $engine --toolkit-root $ToolkitRoot --workspace $Workspace install
+        exit $LASTEXITCODE
+    }
+    Write-Host '[SUCCESS] Nothing to install. Local agent environment is ready.'
+    exit 0
+}
+
 $nodeMajor = Get-NodeMajor $Manifest
 $enchiRequired = Get-ManifestValue $Manifest 'tool.enchi.minimum_version' '0.8.0'
 $pnpmRequired = Get-ManifestValue $Manifest 'tool.pnpm.minimum_version' '10.0.0'
@@ -59,38 +76,38 @@ Add-EnchiToPath
 Add-PnpmToPath
 
 $git = Get-CommandVersion 'git'
-if ($git) { [void]$ok.Add("Git — $git") } else { [void]$gaps.Add('Git — not installed') }
+if ($git) { [void]$ok.Add("Git - $git") } else { [void]$gaps.Add('Git - not installed') }
 
 # Node: the required major comes from .node-version; the release is whatever nodejs.org lists as latest for that major.
 $nodeRaw = Get-CommandVersion 'node'
 $nodeVer = if ($nodeRaw) { $nodeRaw -replace '^v', '' } else { '' }
 if (Test-NodeNeedsInstall $Manifest) {
     $latest = Resolve-LatestNode $Manifest
-    if (-not $nodeVer) { [void]$gaps.Add("Node.js — not installed (latest Node $nodeMajor.x will be installed)") }
-    elseif ($latest) { [void]$gaps.Add("Node.js — installed $nodeVer (latest $nodeMajor.x is $($latest.Version))") }
-    else { [void]$gaps.Add("Node.js — installed $nodeVer (requires Node $nodeMajor or newer)") }
+    if (-not $nodeVer) { [void]$gaps.Add("Node.js - not installed (latest Node $nodeMajor.x will be installed)") }
+    elseif ($latest) { [void]$gaps.Add("Node.js - installed $nodeVer (latest $nodeMajor.x is $($latest.Version))") }
+    else { [void]$gaps.Add("Node.js - installed $nodeVer (requires Node $nodeMajor or newer)") }
 } else {
-    [void]$ok.Add("Node.js — $nodeVer (Node $nodeMajor line)")
+    [void]$ok.Add("Node.js - $nodeVer (Node $nodeMajor line)")
 }
 
 $pnpmVer = (Get-PnpmVersion) -replace '^.*\s+', ''
-if ($pnpmVer -and (Compare-Version $pnpmVer $pnpmRequired) -ge 0) { [void]$ok.Add("pnpm — $pnpmVer") }
-elseif ($pnpmVer) { [void]$gaps.Add("pnpm — installed $pnpmVer (requires >= $pnpmRequired)") }
-else { [void]$gaps.Add("pnpm — not installed (the toolkit's package manager)") }
+if ($pnpmVer -and (Compare-Version $pnpmVer $pnpmRequired) -ge 0) { [void]$ok.Add("pnpm - $pnpmVer") }
+elseif ($pnpmVer) { [void]$gaps.Add("pnpm - installed $pnpmVer (requires >= $pnpmRequired)") }
+else { [void]$gaps.Add("pnpm - not installed (the toolkit's package manager)") }
 
 $enchiVer = (Get-EnchiVersion) -replace '^.*\s+', ''
 if ($enchiVer -and (Compare-Version $enchiVer $enchiRequired) -ge 0) {
-    [void]$ok.Add("Enchi — $enchiVer")
+    [void]$ok.Add("Enchi - $enchiVer")
 } elseif ($enchiVer) {
-    [void]$gaps.Add("Enchi — installed $enchiVer (requires >= $enchiRequired; upgrades in place from pyenv-native)")
+    [void]$gaps.Add("Enchi - installed $enchiVer (requires >= $enchiRequired; upgrades in place from pyenv-native)")
 } else {
-    [void]$gaps.Add("Enchi — not installed (requires >= $enchiRequired)")
+    [void]$gaps.Add("Enchi - not installed (requires >= $enchiRequired)")
 }
 
 if (Test-EnchiGuiAvailable) {
-    [void]$ok.Add('Enchi GUI — present (launch: enchi gui)')
+    [void]$ok.Add('Enchi GUI - present (launch: enchi gui)')
 } else {
-    [void]$gaps.Add('Enchi GUI — not installed (launch after setup: enchi gui)')
+    [void]$gaps.Add('Enchi GUI - not installed (launch after setup: enchi gui)')
 }
 
 # Python/pip count as healthy only when Enchi is available (policy: Enchi-only).
@@ -101,23 +118,23 @@ if ($enchiVer) {
     $pyVer = if ($pyRaw) { ($pyRaw -replace '^Python\s+', '').Trim() } else { '' }
 }
 if ($enchiVer -and $pyVer -and (Compare-Version $pyVer $pythonRequired) -ge 0) {
-    [void]$ok.Add("Python — $pyVer (via Enchi; requires >= $pythonRequired)")
+    [void]$ok.Add("Python - $pyVer (via Enchi; requires >= $pythonRequired)")
 } else {
-    [void]$gaps.Add("Python — not installed or not under Enchi (requires >= $pythonRequired)")
+    [void]$gaps.Add("Python - not installed or not under Enchi (requires >= $pythonRequired)")
 }
 
 $pip = if ($enchiVer) { Get-CommandVersion 'pip' } else { '' }
-if ($pip) { [void]$ok.Add("pip — $pip") } else { [void]$gaps.Add('pip — not installed under the Enchi workspace venv') }
+if ($pip) { [void]$ok.Add("pip - $pip") } else { [void]$gaps.Add('pip - not installed under the Enchi workspace venv') }
 
 Write-Host ''
-Write-Host '  Portable Web Toolkit — Local Agent Environment'
+Write-Host '  Portable Web Toolkit - Local Agent Environment'
 Write-Host "  Toolkit version: $toolkitVersion"
 Write-Host "  Workspace: $Workspace"
 Write-Host ''
 
 if ($gaps.Count -eq 0) {
     Write-Host '  All required local agent tools look current:'
-    foreach ($line in $ok) { Write-Host "    ✓ $line" }
+    foreach ($line in $ok) { Write-Host "    + $line" }
     Write-Host ''
     Write-Host '[SUCCESS] Nothing to install. Local agent environment is ready.'
     exit 0
@@ -125,11 +142,11 @@ if ($gaps.Count -eq 0) {
 
 Write-Host '  The following software is not installed or is outdated:'
 Write-Host ''
-foreach ($line in $gaps) { Write-Host "    • $line" }
+foreach ($line in $gaps) { Write-Host "    * $line" }
 Write-Host ''
 if ($ok.Count -gt 0) {
     Write-Host '  Already current:'
-    foreach ($line in $ok) { Write-Host "    ✓ $line" }
+    foreach ($line in $ok) { Write-Host "    + $line" }
     Write-Host ''
 }
 Write-Host '  Setup will install/update the agent baseline (Git, Node, pnpm, Enchi,'
@@ -138,7 +155,7 @@ Write-Host ''
 
 if (-not $Yes) {
     if (-not (Ask-YesNo 'Press Y to continue setting up the local agent environment')) {
-        Write-Host '[setup] Cancelled — no changes made.'
+        Write-Host '[setup] Cancelled - no changes made.'
         exit 0
     }
 } else {

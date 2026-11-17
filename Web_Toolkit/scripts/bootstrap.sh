@@ -304,7 +304,7 @@ ensure_node_posix() {
     fi
   else
     install_root="$(manifest_get "tool.node.linux.install_root" "/usr/local/lib/nodejs")"
-    install_node_from_tarball "$NODE_LATEST_URL" "$install_root" "node-linux.tar.xz" "$NODE_LATEST_SHA256" && installed=true
+    install_node_from_tarball "$NODE_LATEST_URL" "$install_root" "node-linux.tar.gz" "$NODE_LATEST_SHA256" && installed=true
   fi
   if [[ "$installed" != true ]]; then
     report_add failed "Node.js" "$major.x (latest)" "$before" "" "$source_label" "failed" "Could not install $latest_note (download, checksum or extraction failed)." "Approve admin/sudo when prompted, check network access to nodejs.org, then rerun setup."

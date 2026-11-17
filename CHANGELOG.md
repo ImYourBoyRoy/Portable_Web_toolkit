@@ -3,6 +3,18 @@
 All notable changes to Portable Web Toolkit are documented here.  
 Version tags match root `VERSION` and `Web_Toolkit/package.json`.
 
+## [0.6.5] - 2026-11-17
+
+### Added (setup engine)
+
+- **`toolkit-setup`** (`Web_Toolkit/setup_engine/`, Rust): plans and installs Git, Node, pnpm, Enchi, Enchi GUI, Python (workspace venv) and Python Playwright on Windows, macOS and Linux. `plan`, `install [item…]`, `status`, `events`, `session`. One OS approval opens a short administrator session served by an elevated copy of the binary that accepts only the closed operations `node.install` and `git.install` over loopback with a session token; a failed item is retried by name with no new prompt; the engine never reads a password. On a bare Ubuntu (only `curl`) the whole set installs end to end, including Python compiled from source: the admin session also runs a third closed operation, `python.build_deps`, that installs the compiler, `make`, `pkg-config` and the OpenSSL, zlib, bzip2, lzma, readline, sqlite, libffi and ncurses headers with the right package names per package manager. Node uses the `.tar.gz` on Linux (no `xz` needed) and installs `libatomic` when a minimal image lacks it, running Node before it is linked; the Windows MSI must carry a valid OpenJS Foundation signature in addition to its SHA-256. pnpm 11+ (`$PNPM_HOME/bin`) is found. The worker ignores the environment (the test overrides are compiled out of release builds), uses absolute system tool paths, downloads into an exclusive administrator-only directory, does not restore archive owners, refuses a Node major below the one it was built for, and writes no files in the user's folder. Only one install runs at a time (a lock), the state folder is created `0700`, and `sudo toolkit-setup install` installs only Git and Node. Progress is `.runtime/setup/state.json` plus `events.jsonl` for a model or a GUI to follow. Node stays system-wide (tarball into `/usr/local/lib/nodejs`, or the MSI) and is the latest release of the `.node-version` major, SHA-256 verified. Unit tests plus integration tests against a fake nodejs.org over `file://` and a real worker subprocess; `.github/workflows/engine.yml` builds static Linux and Windows binaries and, on a version tag, attaches them with checksums to the release. The launchers use the engine when present or published for the toolkit version (a stale or non-starting engine is ignored) and otherwise the scripts (`TOOLKIT_SETUP_LEGACY=1` forces them). The engine path writes `.runtime/setup/state.json`, not the legacy `setup-agent-environment.json` report, and does not run the legacy workspace-readiness checks.
+
+### Fixed (found by running the new engine and the wizards on real Windows and macOS guests)
+
+- **Windows wizard was broken in v0.6.4**: `setup-interactive.ps1` loaded its library through a stray backtick (`` `$ScriptDir ``), so it failed at startup. Fixed, with a test that runs the real script.
+- **Windows PowerShell 5.1 could not parse the wizard at all**: the script held em dashes and no BOM, which 5.1 reads as Windows-1252 (the dash's last byte becomes a smart quote). `.ps1`, `.bat` and `.cmd` files are now pure ASCII, enforced by a test. Before this the wizard only worked where PowerShell 7 was installed.
+- Engine: a successful Node install was reported as failed on a Mac where an older Node sat earlier on PATH; re-detection now uses the install folder it just linked. Windows 8.3 short paths (such as `PROGRA~1` or a short temp folder) were refused by the path-safety check, so no Windows install could run from a temp folder.
+
 ## [0.6.4] - 2026-11-17
 
 ### Changed (host setup: dynamic Node, pnpm required, Enchi)

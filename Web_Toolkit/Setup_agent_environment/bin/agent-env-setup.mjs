@@ -42,7 +42,7 @@ function printHelp() {
     ],
     notes: [
       'Native bootstrap wrappers are now the only supported install/repair path.',
-      'This Node CLI is retained for post-bootstrap read-only diagnostics.',
+      'This Node CLI is retained for post-bootstrap read-only diagnostics. Installs: `toolkit-setup plan|install|status` (Rust setup engine, one administrator approval per session).',
       'Required baseline: Git, Node (latest release of the required major), pnpm 10+, Enchi 0.8.0+ (`enchi` CLI, formerly pyenv-native) + Enchi GUI (`enchi gui`), Python 3.14+ preferred (3.13+ minimum) only via Enchi, and pip inside the managed workspace venv. Never install system/winget/Homebrew Python for toolkit work.'
     ],
     exitCodes: [

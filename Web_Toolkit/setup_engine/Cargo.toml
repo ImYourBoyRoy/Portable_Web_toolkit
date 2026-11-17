@@ -1,0 +1,24 @@
+[package]
+name = "toolkit-setup"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Portable Web Toolkit host setup engine: plans and installs Git, Node, pnpm, Enchi, Python and Playwright with one authorization session."
+
+[[bin]]
+name = "toolkit-setup"
+path = "src/main.rs"
+
+# Ranges, never exact pins (the toolkit rule); Cargo.lock records what was resolved.
+[dependencies]
+clap = { version = "^4.6", features = ["derive"] }
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+sha2 = "^0.11"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

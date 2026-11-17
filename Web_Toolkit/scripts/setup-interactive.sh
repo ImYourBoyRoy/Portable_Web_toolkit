@@ -82,6 +82,26 @@ ask_yes_no() {
   done
 }
 
+# --- the setup engine, when present or downloadable for this version; otherwise the scripts below do the work ---
+ENGINE="$(find_engine || true)"
+if [[ -z "$ENGINE" && "${TOOLKIT_SETUP_LEGACY:-}" != "1" ]]; then
+  if fetch_engine; then ENGINE="$(find_engine || true)"; fi
+fi
+if [[ -n "$ENGINE" ]]; then
+  echo
+  echo "[setup] Using the setup engine: $ENGINE (set TOOLKIT_SETUP_LEGACY=1 for the shell scripts instead)"
+  "$ENGINE" --toolkit-root "$TOOLKIT_ROOT" --workspace "$WORKSPACE" plan
+  if "$ENGINE" --toolkit-root "$TOOLKIT_ROOT" --workspace "$WORKSPACE" plan --json | grep -Eq '"status": "(missing|outdated)"'; then
+    if [[ "$AUTO_YES" != true ]] && ! ask_yes_no "Press Y to install or update the items above"; then
+      echo "[setup] Cancelled — no changes made."
+      exit 0
+    fi
+    exec "$ENGINE" --toolkit-root "$TOOLKIT_ROOT" --workspace "$WORKSPACE" install
+  fi
+  echo "[SUCCESS] Nothing to install. Local agent environment is ready."
+  exit 0
+fi
+
 TOOLKIT_VERSION="$(tr -d '[:space:]' < "$REPO_ROOT/VERSION" 2>/dev/null || echo unknown)"
 NODE_MAJOR="$(node_major)"
 ENCHI_REQUIRED="$(manifest_get "tool.enchi.minimum_version" "0.8.0")"

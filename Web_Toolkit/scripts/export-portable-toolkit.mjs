@@ -95,6 +95,8 @@ export function shouldSkip(relativePath, flags = {}) {
   if (normalized.startsWith('output/')) return true;
   if (normalized.includes('/output/')) return true;
   if (normalized.includes('/dist/')) return true;
+  // Rust build output of the setup engine: large, machine-specific, and its binaries embed local paths.
+  if (normalized === 'setup_engine/target' || normalized.startsWith('setup_engine/target/')) return true;
   if (normalized === 'node_modules' || normalized.startsWith('node_modules/')) return true;
   if (normalized.includes('/node_modules/')) return true;
   if (basename === 'package-lock.json') return true;

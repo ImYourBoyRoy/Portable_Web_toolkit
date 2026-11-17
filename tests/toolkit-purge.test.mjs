@@ -87,6 +87,18 @@ test('output/dist only match at the root or directly inside a tool folder', () =
   }
 });
 
+test('the setup engine build output (setup_engine/target) is generated; a target folder elsewhere is not', () => {
+  const sandbox = makeSandbox();
+  try {
+    fs.mkdirSync(path.join(sandbox.root, 'setup_engine', 'target', 'release'), { recursive: true });
+    fs.mkdirSync(path.join(sandbox.root, 'some_tool', 'target'), { recursive: true });
+    fs.mkdirSync(path.join(sandbox.root, 'setup_engine', 'src', 'target'), { recursive: true });
+    assert.deepEqual(rel(sandbox.root, collectTargets(sandbox.root)), ['setup_engine/target']);
+  } finally {
+    sandbox.cleanup();
+  }
+});
+
 test('zip archives only match beside the toolkit root', () => {
   const sandbox = makeSandbox();
   try {

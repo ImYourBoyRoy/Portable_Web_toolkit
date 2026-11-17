@@ -62,6 +62,16 @@ If limited: explain what will fail and ask the user to re-run with full agent pe
 
 **Goal:** Install or repair the agent workstation using the toolkit bootstrap only.
 
+Preferred, when the setup engine is present (the launchers fetch it for the toolkit version when published):
+
+```bash
+toolkit-setup plan --json      # read-only: statuses and which items need administrator approval
+toolkit-setup install          # all that need it; or `toolkit-setup install node` for one item / a retry
+toolkit-setup status --json    # per-item results; never ask the user to type a password into chat
+```
+
+Otherwise the launchers run the equivalent scripts:
+
 ```bash
 # From the toolkit repo root (agent-friendly; user still enters password if needed)
 bash ./Setup_Agent_Environment.sh --yes --workspace <client-or-toolkit-path>

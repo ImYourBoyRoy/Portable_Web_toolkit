@@ -2,6 +2,22 @@
 
 Prepare a workstation for **AI-assisted Astro / Cloudflare** development.
 
+## Setup engine (preferred) and scripts (fallback)
+
+The launchers below use the Rust **setup engine** ([`../setup_engine/`](../setup_engine/README.md)) when its binary is present or
+published for this toolkit version, and the shell/PowerShell scripts otherwise (`TOOLKIT_SETUP_LEGACY=1` forces the scripts). The
+engine asks the OS for administrator approval **once**, can install or retry a single item by name, and writes
+`.runtime/setup/state.json` plus an event log that a model or a GUI can follow:
+
+```bash
+toolkit-setup plan --json        # read-only
+toolkit-setup install            # everything that needs it
+toolkit-setup install node       # one item (or retry a failed one)
+```
+
+The engine reports through `.runtime/setup/state.json` and `events.jsonl`; the legacy `setup-agent-environment.json` report and the
+workspace-readiness checks below belong to the script path (`bootstrap.*`, `agent-env-setup doctor`).
+
 ## Interactive wizard (recommended)
 
 Scans for missing/outdated tools, shows **one list**, then a single confirmation:

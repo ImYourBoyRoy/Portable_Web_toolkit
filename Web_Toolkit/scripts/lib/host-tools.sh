@@ -74,7 +74,8 @@ node_platform_tag() {
   printf '%s-%s' "$os" "$arch"
 }
 
-node_archive_ext() { if [[ "$(uname -s)" == Darwin ]]; then printf 'tar.gz'; else printf 'tar.xz'; fi; }
+# .tar.gz on both: the smaller .tar.xz would need `xz` installed, which a minimal Linux machine often lacks.
+node_archive_ext() { printf 'tar.gz'; }
 
 # Newest release of the required major for this platform, read from nodejs.org's own checksum file.
 # Sets NODE_LATEST_VERSION (no "v"), NODE_LATEST_URL, NODE_LATEST_FILE, NODE_LATEST_SHA256. Fails quietly when offline.
@@ -196,10 +197,54 @@ add_pnpm_path() {
   dir="$(pnpm_home)"
   [[ -d "$dir" ]] || return 0
   export PNPM_HOME="$dir"
+  # pnpm 11 and later install the binary into $PNPM_HOME/bin; earlier standalone installs put it in $PNPM_HOME itself.
+  path_prepend "$dir/bin"
   path_prepend "$dir"
 }
 
 pnpm_version() {
   add_pnpm_path
   command_version pnpm --version 2>/dev/null || return 1
+}
+
+# ----------------------------------------------------------- setup engine (Rust)
+# toolkit-setup does the same work as the scripts, plus one administrator session, per-item installs and a state file a model
+# or GUI can read. It is used when present; the scripts remain the fallback (and TOOLKIT_SETUP_LEGACY=1 forces them).
+engine_asset_name() {
+  local os arch
+  case "$(uname -s)" in Darwin) os=macos ;; Linux) os=linux ;; *) return 1 ;; esac
+  case "$(uname -m)" in arm64|aarch64) arch=arm64 ;; x86_64|amd64) arch=x64 ;; *) return 1 ;; esac
+  printf 'toolkit-setup-%s-%s' "$os" "$arch"
+}
+
+find_engine() {
+  [[ "${TOOLKIT_SETUP_LEGACY:-}" == "1" ]] && return 1
+  local version downloaded candidate
+  version="$(tr -d '[:space:]' < "$TOOLKIT_ROOT/../VERSION" 2>/dev/null || true)"
+  downloaded="$TOOLKIT_ROOT/.runtime/bin/toolkit-setup"
+  # A downloaded engine is only used for the toolkit version it was fetched for; a local build needs no sidecar.
+  if [[ -x "$downloaded" && -f "$downloaded.version" && "$(tr -d '[:space:]' < "$downloaded.version")" == "$version" ]]; then
+    if "$downloaded" --version >/dev/null 2>&1; then printf '%s' "$downloaded"; return 0; fi
+  fi
+  candidate="$TOOLKIT_ROOT/setup_engine/target/release/toolkit-setup"
+  # An engine that cannot start (missing library, wrong architecture) is skipped so the scripts take over.
+  if [[ -x "$candidate" ]] && "$candidate" --version >/dev/null 2>&1; then printf '%s' "$candidate"; return 0; fi
+  return 1
+}
+
+# Downloads the engine that matches this toolkit version from its GitHub release, verified against the published SHA-256.
+# Fails quietly (the scripts take over) when the release has no engine asset or the checksum does not match.
+fetch_engine() {
+  local version asset base dest expected actual
+  version="$(tr -d '[:space:]' < "$TOOLKIT_ROOT/../VERSION" 2>/dev/null || true)"
+  [[ -n "$version" ]] || return 1
+  asset="$(engine_asset_name)" || return 1
+  base="https://github.com/imyourboyroy/Portable_Web_toolkit/releases/download/v$version"
+  dest="$TOOLKIT_ROOT/.runtime/bin/toolkit-setup"
+  mkdir -p "$(dirname "$dest")"
+  download_file "$base/$asset" "$dest.part" 2>/dev/null || { rm -f "$dest.part"; return 1; }
+  expected="$(download_text "$base/$asset.sha256" 2>/dev/null | awk '{print $1}' | head -n1 || true)"
+  actual="$(sha256_of "$dest.part" || true)"
+  if [[ -z "$expected" || "$expected" != "$actual" ]]; then rm -f "$dest.part"; return 1; fi
+  chmod +x "$dest.part" && mv "$dest.part" "$dest" && printf '%s\n' "$version" > "$dest.version"
 }

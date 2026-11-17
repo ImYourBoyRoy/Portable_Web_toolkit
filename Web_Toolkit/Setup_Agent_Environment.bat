@@ -6,7 +6,7 @@ for %%I in ("%~dp0..") do set "REPO_ROOT=%%~fI"
 echo.
 echo  Portable Web Toolkit - Local Agent Environment
 echo  ==============================================
-echo  Node is NOT required beforehand — bootstrap installs it when missing.
+echo  Node is NOT required beforehand - bootstrap installs it when missing.
 echo  Pass -Yes for coding-agent runs (UAC may still prompt).
 echo.
 

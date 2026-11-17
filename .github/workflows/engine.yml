@@ -1,0 +1,124 @@
+name: Setup engine
+
+# Linux binaries are static (musl: no glibc version to match) and the Windows exe links the C runtime statically (.cargo/config.toml),
+# so a downloaded engine starts on any machine of that OS. Tests run natively on each runner; the Intel Mac build is cross-compiled.
+# Builds and tests the Rust setup engine (Web_Toolkit/setup_engine) on every OS it supports. On a version tag it also attaches
+# the binaries and their SHA-256 files to that tag's GitHub release; the launchers download and verify them from there.
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths:
+      - 'Web_Toolkit/setup_engine/**'
+      - 'Web_Toolkit/Setup_agent_environment/config/**'
+      - '.github/workflows/engine.yml'
+  pull_request:
+    paths:
+      - 'Web_Toolkit/setup_engine/**'
+      - 'Web_Toolkit/Setup_agent_environment/config/**'
+      - '.github/workflows/engine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engine-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Engine (${{ matrix.asset }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: Web_Toolkit/setup_engine
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-latest, asset: toolkit-setup-linux-x64, target: x86_64-unknown-linux-musl, test: true, lint: true }
+          - { runner: ubuntu-24.04-arm, asset: toolkit-setup-linux-arm64, target: aarch64-unknown-linux-musl, test: true, lint: false }
+          - { runner: macos-latest, asset: toolkit-setup-macos-arm64, target: '', test: true, lint: false }
+          - { runner: macos-latest, asset: toolkit-setup-macos-x64, target: x86_64-apple-darwin, test: false, lint: false }
+          - { runner: windows-latest, asset: toolkit-setup-windows-x64.exe, target: '', test: true, lint: false }
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Rust toolchain (current stable, no pin)
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup default stable
+          if [ -n "${{ matrix.target }}" ]; then rustup target add "${{ matrix.target }}"; fi
+          rustc --version
+
+      - name: Format and lint
+        if: matrix.lint
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Test
+        if: matrix.test
+        run: cargo test --locked
+
+      - name: Build release binary
+        run: |
+          if [ -n "${{ matrix.target }}" ]; then
+            cargo build --release --locked --target "${{ matrix.target }}"
+            built="target/${{ matrix.target }}/release/toolkit-setup"
+          else
+            cargo build --release --locked
+            built="target/release/toolkit-setup"
+          fi
+          mkdir -p dist
+          case "${{ matrix.asset }}" in *.exe) cp "$built.exe" "dist/${{ matrix.asset }}" ;; *) cp "$built" "dist/${{ matrix.asset }}" ;; esac
+          cd dist
+          if command -v sha256sum >/dev/null 2>&1; then sha256sum "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"; else shasum -a 256 "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"; fi
+          cat "${{ matrix.asset }}.sha256"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.asset }}
+          path: Web_Toolkit/setup_engine/dist/*
+          if-no-files-found: error
+
+  release:
+    name: Attach binaries to the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create the release if the tag has none, then upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -la dist
+          notes="docs/releases/${TAG}.md"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            if [ -f "$notes" ]; then
+              gh release create "$TAG" --title "Portable Web Toolkit $TAG" --notes-file "$notes"
+            else
+              gh release create "$TAG" --title "Portable Web Toolkit $TAG" --generate-notes
+            fi
+          fi
+          gh release upload "$TAG" dist/* --clobber
